@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       // Shuffle + split to A/B/C
       const { A, B, C } = makeTeams(names);
 
-      const body = [
+      const replyText = [
         'רביעי 20:20',
         '',
         '🔴🔴🔴',
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
         'רביעי שמח!'
       ].join('\n');
 
-      await sendText(WHATSAPP_TOKEN, PHONE_NUMBER_ID, from, body);
+      await sendText(WHATSAPP_TOKEN, PHONE_NUMBER_ID, from, replyText);
 
       return res.status(200).end();
     } catch (e) {
