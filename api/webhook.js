@@ -5,15 +5,20 @@ export default async function handler(req, res) {
   const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID; // from Meta
 
   if (req.method === 'GET') {
-    // Meta webhook verification
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    const challenge = req.query['hub.challenge'] ?? '';
+
+    console.log('VERIFY', { mode, token, challenge });
+
+    if (mode === 'subscribe' && token === VERIFY_TOKEN && challenge !== '') {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       return res.status(200).send(challenge);
     }
-    return res.status(403).end();
+    return res.status(403).send('forbidden');
   }
+
+  if (req.method === 'HEAD') return res.status(200).end();
 
   if (req.method === 'POST') {
     try {
@@ -68,7 +73,7 @@ export default async function handler(req, res) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST']);
+  res.setHeader('Allow', ['GET', 'POST', 'HEAD']);
   return res.status(405).end('Method Not Allowed');
 }
 
