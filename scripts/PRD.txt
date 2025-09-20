@@ -1,0 +1,220 @@
+<context>
+# Overview
+Stanga is a modern, mobile‑first web app to organize casual football (soccer) nights with three rotating teams. It enables groups to:
+- Manage a shared pool of players
+- Create a matchday (date, time, location) with 3 teams of 6
+- Log each 8‑minute game (winner‑stays), including goals, assists, penalties, and outcomes
+- View stats overall and per matchday (top scorers, win rates, standings)
+- Allow anonymous public read; authenticated users can create/edit/delete with an activity audit trail
+
+Constraints/goals:
+- 100% free to build/run on hobby scale using common free tiers
+- Minimal, distraction‑free, fast UX (mobile‑first)
+- Simple auth (Google OAuth or email magic link)
+- Everything editable/deletable with audit metadata (who/when)
+
+# Core Features
+- Players
+  - Create/edit/deactivate players; search by name
+  - Soft delete support and restoration via trash views
+- Matchdays
+  - Create with rules snapshot (team size, game minutes, extra minutes, max goals to win, penalties on tie, points and penalty weighting)
+  - List upcoming/past; detail view with tabs
+- Teams (3 teams of 6 per matchday)
+  - Team identity by unique color (e.g., “Orange Team”) with curated accessible palette
+  - Assign players from pool; enforce team size; optional formation templates and drag‑and‑drop placement
+- Games (winner‑stays rotation)
+  - Start a game (suggested matchup), live timer, goal/assist logging, undo, end reasoning (goals/time/penalties)
+  - Early finish at max goals; auto extra time; penalties flow with per‑kick logging
+  - Queue management: winner stays, waiting team rotates in
+- Stats & Standings
+  - Overall and per‑matchday metrics: goals, assists, win rates, games played, goals per game
+  - Standings table with points rules; penalty wins weighted lower (default 0.5)
+- Activity Log
+  - Append‑only record of who changed what and when with diffs
+- Public Read / Auth for Writes
+  - Anonymous users can browse core content; sign‑in required for mutations
+
+# User Experience
+- Principles
+  - Minimal, mobile‑first, one‑hand navigation, large tap targets, clear hierarchy, undo where possible
+  - Accessible (WCAG AA): contrast, focus states, semantic HTML, prefers‑reduced‑motion
+- Information Architecture
+  - Bottom nav (mobile): Dashboard, Matchdays, Players, Stats, Profile
+  - Matchday detail tabs: Overview, Teams, Games, Stats, Activity
+  - Quick actions on Dashboard: Create Matchday, Manage Players, Resume Current Game
+- Key Screens (mobile‑first)
+  - Auth: Continue with Google or Email; brand wordmark “Stanga”
+  - Dashboard: next matchday card, recent results, top scorers, quick actions
+  - Players: searchable list with avatars/initials; add/edit sheet modal
+  - Matchdays: cards with date/time/location/status
+  - Matchday → Teams: 3 color‑coded teams, validation on size, color selector, formation view with DnD
+  - Matchday → Games: current game panel (timer, scores, goal/assist picker, undo), start new game, recent results, penalties modal
+  - Stats: overall | matchday | players | teams; charts/cards
+  - Activity: reverse‑chronological edits with actor and timestamp
+- Components & Patterns
+  - App shell; cards; list items with avatars; badges; pills; dialogs/sheets; toasts; inline validation; trash views
+  - DnD pitch grid with slot placeholders; player chips draggable; long‑press on mobile
+- Theming & Tokens
+  - System light/dark auto + manual toggle; CSS variables with Tailwind; Inter font
+  - Color tokens: brand emerald 500; team colors (blue/amber/rose); success/error/warning
+- Micro‑interactions
+  - Timer ticks; optional vibrations; score button animations; undo snackbar with “Revert”
+- Accessibility specifics
+  - 44x44 touch targets; focus visible outlines; color not sole signifier; keyboard support
+</context>
+
+<PRD>
+# Technical Architecture
+- System Components
+  - Frontend: Next.js (App Router, React Server/Client Components)
+  - UI: Tailwind CSS + Radix UI primitives + shadcn/ui components
+  - State/Data: React Query (TanStack Query) for client caching; minimal global state via React Context
+  - Forms/Validation: React Hook Form + Zod schemas
+  - Backend: Next.js API routes and/or server actions (no separate server needed)
+  - Hosting: Vercel Serverless/Edge (Hobby)
+  - Real‑time (optional): Pusher Channels or Supabase Realtime
+  - Auth: Auth.js (NextAuth) with Google OAuth and Email (magic link)
+  - ORM/DB: Drizzle ORM with Postgres (Neon or Supabase free tier)
+  - Testing: Vitest + React Testing Library
+  - DnD: dnd‑kit
+
+- Data Models (logical)
+  - User(id, display_name, avatar_url, created_at)
+  - Player(id, full_name, nickname, preferred_position, is_active, created_at, created_by, updated_at, updated_by, deleted_at?, deleted_by?)
+  - Matchday(id, date, start_time, end_time, location_name, location_coords, rules_json, created_at, created_by, updated_at, updated_by)
+  - Team(id, matchday_id, color_token, color_hex, formation_json?, created_at, created_by)
+  - TeamAssignment(id, matchday_id, team_id, player_id, position_label?, x_pct?, y_pct?, created_at, created_by, deleted_at?, deleted_by?)
+  - Game(id, matchday_id, home_team_id, away_team_id, started_at, ended_at, end_reason['goals'|'time'|'penalties'], home_goals, away_goals, winner_team_id, created_at, created_by)
+  - GameEvent(id, game_id, matchday_id, team_id, scorer_player_id, assist_player_id?, minute, type['goal'], created_at, created_by, deleted_at?, deleted_by?)
+  - PenaltyShootout(id, game_id, winner_team_id, home_score, away_score, created_at, created_by)
+  - PenaltyKick(id, penalty_shootout_id, team_id, player_id, order_index, result['scored'|'missed'|'saved'|'post'|'bar'], created_at, created_by)
+  - ActivityLog(id, actor_user_id, entity_type, entity_id, action['create'|'update'|'delete'], diff_json, created_at)
+  - Indexing: player name, matchday date, game matchday_id, game_events game_id, activity created_at
+
+- APIs and Integrations
+  - Next.js API routes/server actions for CRUD on players, matchdays, teams, games, events, penalties, activity
+  - Auth providers: Google OAuth; email magic link via Resend or SMTP (Gmail)
+  - Real‑time updates (optional) for in‑game events and scoreboard via Pusher/Supabase Realtime
+  - Analytics (optional): Vercel Analytics basic
+
+- Infrastructure Requirements
+  - Vercel Hobby for hosting frontend + API
+  - Neon or Supabase Postgres (free instance)
+  - Optional Pusher/Supabase Realtime free dev tier
+  - GitHub Actions for CI (lint, typecheck, tests, deploy) and optional SQL dump backups
+
+# Development Roadmap
+- MVP Requirements (build in logical phases, no timelines)
+  1) Foundation
+     - Initialize Next.js + Tailwind + shadcn/ui + Radix; theme tokens; mode toggle
+     - Configure Auth.js (Google, email) with JWT adapter (no DB) to start; upgradeable to DB sessions
+     - Set up Drizzle ORM + Postgres (Neon/Supabase); migrations and seed scripts
+  2) Players
+     - Players list with search; add/edit/deactivate; soft delete + trash view; audit metadata
+     - Forms with React Hook Form + Zod; optimistic UI with retry
+  3) Matchdays
+     - Create/list matchdays; rules snapshot persisted (team_size, game_minutes, extra_minutes, max_goals_to_win, penalties_on_tie, penalty_win_weight, points map)
+     - Matchday detail scaffold with tabs
+  4) Teams
+     - Create 3 teams per matchday; unique color selection from curated palette; derived names
+     - Assign players from pool; validate team size; formation template selection; DnD positioning (dnd‑kit)
+  5) Games (winner‑stays)
+     - Start/stop timer; goal/assist logging; early finish on max goals; auto extra time; penalties flow with per‑kick logging and winner attribution
+     - Queue logic: winner stays vs waiting team; undo last action; recent results list
+  6) Stats & Standings
+     - Overall and per‑matchday metrics; standings table using rules.points and penalty weighting
+  7) Activity Log
+     - Append‑only log for create/update/delete across entities with actor and diff
+  8) Public Read
+     - Anonymous read across primary content; auth‑guarded writes
+  9) Accessibility & Polish
+     - WCAG AA checks; keyboard support; focus states; haptics; toasts; empty states
+  10) Deploy
+     - CI/CD to Vercel; environment configuration; preview deployments
+
+- Future Enhancements (post‑MVP)
+  - Elo‑like team ranking; balanced auto‑draft
+  - CSV export of stats
+  - Photos/avatars and team badges
+  - Multiple concurrent pitches / parallel games
+  - Multi‑group spaces (separate communities)
+
+# Logical Dependency Chain
+- Foundation first
+  - Set up project tooling (Next.js, Tailwind, shadcn/ui, Drizzle); environment/secrets; DB migrations
+  - Implement auth and session context; basic layout and theming
+- Domain scaffolding
+  - Players CRUD → Matchday create/list/detail with rules snapshot → Teams (colors, assignments)
+- Core gameplay
+  - Games flow (timer, events, queue); penalties; undo; recent results
+- Insights & integrity
+  - Stats & standings; activity log; public read routes; access controls on writes
+- UX polish & deployment
+  - Accessibility, micro‑interactions, empty states; CI/CD and production config
+
+Guiding principle: deliver tangible UX quickly (Players, Matchdays lists/screens) before complex gameplay logic. Keep features atomic and stackable.
+
+# Risks and Mitigations
+- Real‑time complexity for games
+  - Start with client‑driven polling/optimistic updates; add Pusher/Supabase Realtime later
+- Data consistency & auditability
+  - Use transactions for multi‑row writes; store audit metadata and ActivityLog; soft delete patterns
+- Stats correctness
+  - Centralize rules and points calculation; unit tests around standings and weighting
+- Mobile DnD ergonomics
+  - Use dnd‑kit with long‑press; provide alternate non‑DnD assignment controls
+- Performance on low‑end devices
+  - Minimize JS; server components; code‑split; cache with React Query; ISR/SSR where appropriate
+- Accessibility & color contrast
+  - Curated palette; tokenized colors; automated checks; labels/icons not color‑only
+- Auth provider limits and email delivery
+  - Cache provider configs; backoff/retries; local SMTP fallback; clear error states
+- Cost constraints
+  - Stay on free tiers; avoid heavy long‑running processes; serverless‑friendly patterns
+
+# Appendix
+- Rules Snapshot (defaults)
+  - team_size=6, game_minutes=8, extra_minutes=2, max_goals_to_win=2, penalties_on_tie=true
+  - penalty_win_weight=0.5
+  - points: { loss:0, draw:1, penalty_bonus_win:1, regulation_win:3 }
+- Standings Calculation
+  - Regulation/extra‑time win: 3 pts; penalty shootout: both 1 pt, winner +1 bonus; losses 0
+- Validation & Business Rules
+  - Team size cannot exceed rules.team_size
+  - Game requires two distinct teams with at least team_size players assigned
+  - Goal events require scorer linked to a team on the field; assist optional but cannot equal scorer
+  - Early end when a team reaches max_goals_to_win; tie at base time adds extra_minutes, then penalties
+  - Team color must be unique per matchday
+- Theming & Typography
+  - Inter font; scale: H1 28, H2 22, H3 18, Body 16, Small 14; weights 600/400
+- Color Tokens
+  - Brand emerald 500; Team A blue 500; Team B amber 500; Team C rose 500; Success green 500; Error red 500; Warning amber 500
+- Libraries & Tooling
+  - Next.js, Tailwind, Radix, shadcn/ui, React Query, React Hook Form, Zod, Drizzle ORM, Vitest/RTL, dnd‑kit, date‑fns or Day.js, Tremor/Recharts
+- Environments
+  - Local (.env.local with OAuth keys), Vercel preview per PR, prod auto‑deploy from main
+- Telemetry
+  - Basic server logs via Vercel; optional Vercel Analytics
+- Migration/Seeding
+  - Drizzle kit migrations committed; seed script for demo data (players, teams)
+- Security
+  - Public read via SSR/ISR; writes require session; RLS (if Supabase) or application checks; soft delete and audit log
+- Alternative Stack (optional)
+  - All‑Cloudflare path: Pages + Workers, D1 (SQLite) + Drizzle; CF Access/Turnstile
+- Acceptance Criteria (MVP)
+  - Users can sign in with Google or email
+  - Users can add/edit players
+  - Users can create a matchday with rules snapshot
+  - Users can define 3 teams and assign players (team size validated)
+  - Users can start a game, log goals/assists, and complete games respecting rules (8 min, early win at 2 goals, extra time, penalties with per‑kick logging)
+  - Users can see stats overall and per matchday
+  - Users can see matchday standings (points table) using the configured point rules
+  - Users can edit or delete any item and see activity log
+  - Works well on mobile (light/dark)
+  - Anonymous users can view all primary content (public read)
+- Open Questions
+  - Penalty win weight default is 0.5 — confirm preferred value?
+  - Team positions/formation: storing as formation_json on Team (template + slots with coordinates + assigned players). OK?
+</PRD>
+
