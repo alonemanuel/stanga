@@ -17,8 +17,21 @@ export function useZodForm<TSchema extends ZodSchema<any>>(
   });
 }
 
-export function Form({ children, methods }: { children: React.ReactNode; methods: ReturnType<typeof useForm>; }) {
-  return <FormProvider {...methods}>{children}</FormProvider>;
+interface FormProps {
+  children: React.ReactNode;
+  methods: ReturnType<typeof useForm>;
+  onSubmit: (data: any) => void | Promise<void>;
+  className?: string;
+}
+
+export function Form({ children, methods, onSubmit, className }: FormProps) {
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(onSubmit)} className={className}>
+        {children}
+      </form>
+    </FormProvider>
+  );
 }
 
 
