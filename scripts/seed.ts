@@ -1,0 +1,364 @@
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as dotenv from 'dotenv';
+import path from 'path';
+import { createId } from '@paralleldrive/cuid2';
+import * as schema from '../src/lib/db/schema';
+
+// Load environment variables
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+async function main() {
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl) {
+    console.error('DATABASE_URL environment variable is not set');
+    process.exit(1);
+  }
+
+  console.log('🌱 Starting database seeding...');
+  
+  // Create connection
+  const client = postgres(databaseUrl, { prepare: false });
+  const db = drizzle(client, { schema });
+
+  try {
+    // Clear existing data (in reverse dependency order)
+    console.log('🧹 Clearing existing data...');
+    await db.delete(schema.gameEvents);
+    await db.delete(schema.penaltyKicks);
+    await db.delete(schema.penaltyShootouts);
+    await db.delete(schema.games);
+    await db.delete(schema.teamAssignments);
+    await db.delete(schema.teams);
+    await db.delete(schema.matchdays);
+    await db.delete(schema.players);
+    await db.delete(schema.users);
+    await db.delete(schema.activityLog);
+
+    // Seed Users
+    console.log('👥 Seeding users...');
+    const users = await db.insert(schema.users).values([
+      {
+        id: createId(),
+        email: 'admin@stanga.com',
+        fullName: 'Admin User',
+        isActive: true,
+      },
+      {
+        id: createId(),
+        email: 'organizer@stanga.com',
+        fullName: 'Match Organizer',
+        isActive: true,
+      }
+    ]).returning();
+
+    const adminUser = users[0];
+    const organizerUser = users[1];
+
+    // Seed Players
+    console.log('⚽ Seeding players...');
+    const players = await db.insert(schema.players).values([
+      {
+        id: createId(),
+        name: 'Lionel Messi',
+        nickname: 'Leo',
+        position: 'forward',
+        skillLevel: 10,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Cristiano Ronaldo',
+        nickname: 'CR7',
+        position: 'forward',
+        skillLevel: 10,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Kevin De Bruyne',
+        nickname: 'KDB',
+        position: 'midfielder',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Virgil van Dijk',
+        nickname: 'VVD',
+        position: 'defender',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Manuel Neuer',
+        nickname: 'Manu',
+        position: 'goalkeeper',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Kylian Mbappé',
+        nickname: 'Kyky',
+        position: 'forward',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Luka Modrić',
+        nickname: 'Luka',
+        position: 'midfielder',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Sergio Ramos',
+        nickname: 'Sergio',
+        position: 'defender',
+        skillLevel: 8,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Erling Haaland',
+        nickname: 'The Machine',
+        position: 'forward',
+        skillLevel: 9,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Pedri González',
+        nickname: 'Pedri',
+        position: 'midfielder',
+        skillLevel: 8,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Alphonso Davies',
+        nickname: 'Phonzie',
+        position: 'defender',
+        skillLevel: 8,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Thibaut Courtois',
+        nickname: 'Tibo',
+        position: 'goalkeeper',
+        skillLevel: 8,
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      }
+    ]).returning();
+
+    // Default rules for matchdays
+    const defaultRules = {
+      points: {
+        loss: 0,
+        draw: 1,
+        penalty_bonus_win: 1,
+        regulation_win: 3
+      },
+      penalty_win_weight: 0.5,
+      game_duration: 15, // minutes
+      max_goals: 5, // early finish threshold
+      extra_time_duration: 5 // minutes
+    };
+
+    // Seed Matchdays
+    console.log('📅 Seeding matchdays...');
+    const matchdays = await db.insert(schema.matchdays).values([
+      {
+        id: createId(),
+        name: 'Sunday League Championship',
+        description: 'Weekly football tournament at the local park',
+        scheduledAt: new Date('2024-01-21T14:00:00Z'),
+        location: 'Central Park Football Field',
+        maxPlayers: 18,
+        status: 'upcoming',
+        rules: defaultRules,
+        isPublic: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      },
+      {
+        id: createId(),
+        name: 'Friday Night Lights',
+        description: 'Evening matches under the floodlights',
+        scheduledAt: new Date('2024-01-19T19:00:00Z'),
+        location: 'Sports Complex Arena',
+        maxPlayers: 15,
+        status: 'completed',
+        rules: defaultRules,
+        isPublic: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      }
+    ]).returning();
+
+    const upcomingMatchday = matchdays[0];
+    const completedMatchday = matchdays[1];
+
+    // Seed Teams for upcoming matchday
+    console.log('🏆 Seeding teams...');
+    const teams = await db.insert(schema.teams).values([
+      {
+        id: createId(),
+        matchdayId: upcomingMatchday.id,
+        name: 'Red Devils',
+        color: '#DC2626', // Red
+        formation: '4-3-3',
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      },
+      {
+        id: createId(),
+        matchdayId: upcomingMatchday.id,
+        name: 'Blue Warriors',
+        color: '#2563EB', // Blue
+        formation: '4-4-2',
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      },
+      {
+        id: createId(),
+        matchdayId: upcomingMatchday.id,
+        name: 'Green Eagles',
+        color: '#16A34A', // Green
+        formation: '3-5-2',
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      }
+    ]).returning();
+
+    // Assign players to teams (first 6 players to each team)
+    console.log('👕 Assigning players to teams...');
+    const teamAssignments = [];
+    
+    // Red Devils (first 4 players)
+    for (let i = 0; i < 4; i++) {
+      teamAssignments.push({
+        id: createId(),
+        teamId: teams[0].id,
+        playerId: players[i].id,
+        position: players[i].position,
+        positionOrder: i + 1,
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      });
+    }
+
+    // Blue Warriors (next 4 players)
+    for (let i = 4; i < 8; i++) {
+      teamAssignments.push({
+        id: createId(),
+        teamId: teams[1].id,
+        playerId: players[i].id,
+        position: players[i].position,
+        positionOrder: i - 3,
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      });
+    }
+
+    // Green Eagles (last 4 players)
+    for (let i = 8; i < 12; i++) {
+      teamAssignments.push({
+        id: createId(),
+        teamId: teams[2].id,
+        playerId: players[i].id,
+        position: players[i].position,
+        positionOrder: i - 7,
+        isActive: true,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      });
+    }
+
+    await db.insert(schema.teamAssignments).values(teamAssignments);
+
+    // Seed some sample games
+    console.log('🎮 Seeding games...');
+    const games = await db.insert(schema.games).values([
+      {
+        id: createId(),
+        matchdayId: upcomingMatchday.id,
+        homeTeamId: teams[0].id, // Red Devils
+        awayTeamId: teams[1].id, // Blue Warriors
+        status: 'pending',
+        homeScore: 0,
+        awayScore: 0,
+        queuePosition: 1,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      },
+      {
+        id: createId(),
+        matchdayId: upcomingMatchday.id,
+        homeTeamId: teams[2].id, // Green Eagles
+        awayTeamId: teams[0].id, // Red Devils
+        status: 'pending',
+        homeScore: 0,
+        awayScore: 0,
+        queuePosition: 2,
+        createdBy: organizerUser.id,
+        updatedBy: organizerUser.id,
+      }
+    ]).returning();
+
+    console.log('✅ Database seeding completed successfully!');
+    console.log(`📊 Seeded:`);
+    console.log(`   - ${users.length} users`);
+    console.log(`   - ${players.length} players`);
+    console.log(`   - ${matchdays.length} matchdays`);
+    console.log(`   - ${teams.length} teams`);
+    console.log(`   - ${teamAssignments.length} team assignments`);
+    console.log(`   - ${games.length} games`);
+
+  } catch (error) {
+    console.error('❌ Seeding failed:', error);
+    process.exit(1);
+  } finally {
+    await client.end();
+  }
+}
+
+main().catch((error) => {
+  console.error('❌ Seed script failed:', error);
+  process.exit(1);
+});

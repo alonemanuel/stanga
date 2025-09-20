@@ -100,7 +100,7 @@
         "dependencies": [
           "1"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -108,7 +108,7 @@
             "description": "Install necessary packages and configure Drizzle ORM for use with Neon/Supabase Postgres.",
             "dependencies": [],
             "details": "First, install the required packages using the command: `pnpm add drizzle-orm drizzle-kit pg @neondatabase/serverless dotenv`. Then, create a configuration file named `drizzle.config.ts` with the following settings: `out: './drizzle'`, `schema: './db/schema.ts'`, and `dialect: 'postgresql'`. Set up the database connection in `lib/db.ts` using the Neon serverless `createPool` or `client`, and export the `db` object for use in the application.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the packages are installed correctly and the configuration file is set up without syntax errors. Ensure the database connection can be established by running a simple query."
           },
           {
@@ -119,7 +119,7 @@
               "3.1"
             ],
             "details": "In `db/schema.ts`, define the schema for each entity using Drizzle ORM's schema definition functions, ensuring to include soft delete columns (`deletedAt`, `deletedBy`) and necessary indexes. Use the pseudo-code provided as a guide. After defining the schema, generate the migration files using `pnpm drizzle-kit generate`. Apply the migrations to the database with `pnpm drizzle-kit migrate`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the migrations against a test database to ensure they apply without errors. Use introspection to verify that the indexes are created as expected."
           },
           {
@@ -130,7 +130,7 @@
               "3.2"
             ],
             "details": "Create a script named `scripts/seed.ts` that connects to the database and inserts initial data, such as demo players and a sample matchday. Use the Drizzle ORM API to perform the inserts. Ensure the script is idempotent, meaning it can be run multiple times without causing duplicate entries. Execute the script using `pnpm tsx scripts/seed.ts`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the seed script and verify that the data is inserted correctly by querying the database. Ensure that running the script multiple times does not result in duplicate data."
           }
         ]
@@ -455,7 +455,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-20T13:15:40.134Z",
+      "updated": "2025-09-20T13:59:01.972Z",
       "description": "Tasks for master context"
     }
   }
