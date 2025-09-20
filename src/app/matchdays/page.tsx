@@ -47,12 +47,20 @@ export default function MatchdaysPage() {
   }, [supabase.auth]);
   
   // Fetch matchdays with filters
-  const { data: matchdaysData, isLoading, error } = useMatchdays({
+  const { data: matchdaysData, isLoading, error, refetch } = useMatchdays({
     status: statusFilter,
     isPublic: true,
     page: 1,
     limit: 50,
   });
+
+  // Debug: log the data
+  React.useEffect(() => {
+    console.log('Matchdays data:', matchdaysData);
+    console.log('Status filter:', statusFilter);
+    console.log('Loading:', isLoading);
+    console.log('Error:', error);
+  }, [matchdaysData, statusFilter, isLoading, error]);
   
   const deleteMutation = useDeleteMatchday();
   
@@ -124,11 +132,16 @@ export default function MatchdaysPage() {
             View and manage football matchdays
           </p>
         </div>
-        {user && (
-          <Button onClick={() => setShowForm(true)}>
-            Create Matchday
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => refetch()}>
+            Refresh
           </Button>
-        )}
+          {user && (
+            <Button onClick={() => setShowForm(true)}>
+              Create Matchday
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}

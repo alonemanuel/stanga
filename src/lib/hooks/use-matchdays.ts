@@ -47,10 +47,7 @@ async function fetchMatchdays(params: MatchdayQuery): Promise<MatchdaysResponse>
     }
   });
   
-  const response = await fetch(`/api/matchdays?${searchParams.toString()}`, {
-    cache: 'force-cache',
-    next: { tags: ['matchdays'] },
-  });
+  const response = await fetch(`/api/matchdays?${searchParams.toString()}`);
   
   if (!response.ok) {
     throw new Error('Failed to fetch matchdays');
@@ -60,10 +57,7 @@ async function fetchMatchdays(params: MatchdayQuery): Promise<MatchdaysResponse>
 }
 
 async function fetchMatchday(id: string): Promise<MatchdayResponse> {
-  const response = await fetch(`/api/matchdays/${id}`, {
-    cache: 'force-cache',
-    next: { tags: ['matchdays', `matchday-${id}`] },
-  });
+  const response = await fetch(`/api/matchdays/${id}`);
   
   if (!response.ok) {
     throw new Error('Failed to fetch matchday');
@@ -124,7 +118,7 @@ export function useMatchdays(params: MatchdayQuery = { page: 1, limit: 20, isPub
   return useQuery({
     queryKey: ['matchdays', params],
     queryFn: () => fetchMatchdays(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for better UX
   });
 }
 
@@ -145,6 +139,8 @@ export function useCreateMatchday() {
     onSuccess: (data) => {
       // Invalidate and refetch matchdays list
       queryClient.invalidateQueries({ queryKey: ['matchdays'] });
+      // Also remove all cached data to force fresh fetch
+      queryClient.removeQueries({ queryKey: ['matchdays'] });
       toast.success(data.message || 'Matchday created successfully');
     },
     onError: (error: Error) => {

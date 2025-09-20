@@ -5,7 +5,7 @@ import { MatchdayCreateSchema, MatchdayQuerySchema } from '@/lib/validations/mat
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { createId } from '@paralleldrive/cuid2';
-import { and, eq, gte, lt, desc, isNull } from 'drizzle-orm';
+import { and, eq, gte, lt, desc, isNull, or } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 // GET /api/matchdays - List matchdays (public read access)
@@ -31,10 +31,20 @@ export async function GET(request: NextRequest) {
     // Status filter
     const now = new Date();
     if (status === 'upcoming') {
-      conditions.push(gte(matchdays.scheduledAt, now));
+      // Show matchdays that are either in the future OR have status 'upcoming'
       conditions.push(eq(matchdays.status, 'upcoming'));
     } else if (status === 'past') {
-      conditions.push(lt(matchdays.scheduledAt, now));
+      // Show completed or cancelled matchdays, or upcoming ones that are in the past
+      conditions.push(
+        or(
+          eq(matchdays.status, 'completed'),
+          eq(matchdays.status, 'cancelled'),
+          and(
+            eq(matchdays.status, 'upcoming'),
+            lt(matchdays.scheduledAt, now)
+          )
+        )
+      );
     } else if (status && ['active', 'completed', 'cancelled'].includes(status)) {
       conditions.push(eq(matchdays.status, status));
     }
