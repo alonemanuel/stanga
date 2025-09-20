@@ -9,7 +9,7 @@
         "testStrategy": "Unit: render AppShell and BottomNav with RTL; verify nav items, tap target sizes (by computed styles), and focus-visible outlines. Snapshot theme tokens via CSS variables. Integration: verify theme toggle persists and applies prefers-color-scheme. A11y: run vitest-axe on key pages for WCAG AA; ensure nav roles. Lint/typecheck in CI.",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -17,7 +17,7 @@
             "description": "Create the mobile-first Next.js App Router project, install runtime dependencies, initialize Tailwind and shadcn/ui, wire Inter font, define CSS variable tokens (brand/team/status), and lay down initial file structure.",
             "dependencies": [],
             "details": "1) Create app and install deps\n- Run: npx create-next-app@latest stanga --ts --eslint --src-dir --app\n- cd stanga\n- Install UI/runtime deps: pnpm add tailwindcss postcss autoprefixer @radix-ui/react-slot class-variance-authority lucide-react @radix-ui/react-dialog @radix-ui/react-tabs @tanstack/react-query @tanstack/react-query-devtools react-hook-form zod @hookform/resolvers @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities date-fns tremor @tremor/react\n\n2) Tailwind setup\n- Initialize: pnpm dlx tailwindcss init -p\n- Update tailwind.config.(ts|js):\n  - darkMode: 'class'\n  - content includes: './src/app/**/*.{ts,tsx}', './src/components/**/*.{ts,tsx}', './src/lib/**/*.{ts,tsx}', and shadcn/ui paths if prompted\n  - theme.extend:\n    - fontFamily.sans = ['var(--font-sans)', 'system-ui', 'sans-serif']\n    - colors via CSS variables, e.g. 'brand': { DEFAULT: 'hsl(var(--brand))' } and status tokens: success, warning, error\n- In src/app/globals.css add:\n  - :root variables, e.g. --brand: 151 71% 45% (emerald-500), and team tokens (blue/amber/rose) with HSL\n  - .dark overrides of tokens if needed\n  - Base styles: * { outline-offset: 2px } and :focus-visible ring styles using Tailwind layers\n  - Prefers-reduced-motion: @media (prefers-reduced-motion: reduce) to reduce animations/transitions\n\n3) Inter font\n- Create src/lib/fonts.ts, import Inter from 'next/font/google' with subsets ['latin'] and variable '--font-sans'\n- Export the configured font for use in layout\n\n4) shadcn/ui\n- Initialize: pnpm dlx shadcn-ui@latest init (accept defaults; choose Tailwind plugin integration when prompted)\n- Add components: pnpm dlx shadcn-ui@latest add button dialog input select tabs sheet toast\n\n5) Base structure\n- Create directories:\n  - src/app/(public)/(tabs)/dashboard/page.tsx (placeholder), matchdays/page.tsx, players/page.tsx, stats/page.tsx, profile/page.tsx\n  - src/app/(auth)/sign-in/page.tsx (placeholder)\n  - src/components/ui (shadcn components will be generated here)\n  - src/components/layout, src/components/navigation, src/components/theme, src/components/forms, src/components/dnd\n  - src/lib/utils.ts (cn helper if using class-variance-authority)\n- Ensure PostCSS and Tailwind are wired: import './globals.css' in root layout when created in the next subtask.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manual smoke: pnpm dev and visit http://localhost:3000. Verify Tailwind classes apply, Inter font variable appears on body via devtools, and CSS vars exist on :root. Unit: snapshot generated tailwind.config for darkMode:'class'. Lint: pnpm lint to ensure base ESLint config from create-next-app passes."
           },
           {
@@ -28,7 +28,7 @@
               "1.1"
             ],
             "details": "1) ThemeProvider and hook\n- Create src/components/theme/theme-provider.tsx (client component). Responsibilities: manage theme = 'system' | 'light' | 'dark'; on mount, read localStorage 'theme' and apply class to document.documentElement; if 'system', detect prefers-color-scheme; expose context + useTheme() for toggle; write back to localStorage on change. Add suppressHydrationWarning usage guidance.\n- Add a small ThemeToggle client component using shadcn Button for later use in the UI.\n\n2) React Query provider\n- Create src/app/providers.tsx (client). Instantiate a single QueryClient with defaultOptions. Example defaults: queries: { retry: 1, staleTime: 30000, refetchOnWindowFocus: false }.\n- Conditionally include ReactQueryDevtools only in development (dynamic import or process.env.NODE_ENV check).\n- Export Providers that wrap children with QueryClientProvider and ThemeProvider (and leave a placeholder for SessionProvider to be added by the auth task).\n\n3) Root layout and shell\n- Create src/components/layout/AppShell.tsx (server OK, but can be client if needed for responsive logic). Include page landmarks: header (with optional ThemeToggle), main (id='main-content'), and a slot for children. Add a visually-hidden 'Skip to content' link anchored to #main-content positioned at top; make it visible on :focus.\n- Create src/components/navigation/BottomNav.tsx (client). Use nav[aria-label='Primary'] with list of 5 tabs: Dashboard, Matchdays, Players, Stats, Profile. Each item uses lucide-react icons and enforces 44x44px minimum target (Tailwind: min-w-11 min-h-11 px-3 py-2 flex items-center justify-center). Use semantic <a> links via next/link, aria-current='page' when active, and focus-visible styles.\n- Create src/app/layout.tsx as a server component using the Inter font: html lang='en' suppressHydrationWarning, body className includes font variable and 'antialiased'. Wrap children in <Providers>. Render <AppShell> with children and <BottomNav />.\n\n4) App Router patterns and structure\n- Keep server components by default for pages/routes. Mark interactive components with 'use client' (e.g., BottomNav, ThemeToggle, forms, DnD).\n- Maintain route groups created in subtask 1 (app/(public)/(tabs)/...). Add basic placeholder content to each page to validate navigation.\n\n5) Accessibility defaults\n- Ensure focus-visible styles are present via Tailwind utilities (ring-2 ring-offset-2) either globally or via component classes.\n- Confirm semantic landmarks: header, nav, main. Ensure color contrast meets WCAG AA using your tokens; adjust tokens if necessary.\n- Respect prefers-reduced-motion by disabling complex transitions in components when the media query is active.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "RTL unit/integration: render src/app/layout with a test page child. Assert presence of 'Skip to content' link, nav with 5 items, each having role='link' and accessible name. Compute styles to ensure min width/height >= 44px on nav buttons. Verify theme toggle updates html.class and persists to localStorage; simulate reload by re-rendering with stored value. Mock process.env.NODE_ENV to ensure ReactQueryDevtools only appears in dev. Axe: run vitest-axe on the rendered shell to check for no critical violations."
           },
           {
@@ -52,7 +52,9 @@
         "details": "Implementation steps:\n- Install: pnpm add next-auth nodemailer resend\n- Route handler: app/api/auth/[...nextauth]/route.ts exporting NextAuth handler\n- Providers: GoogleProvider with client ID/secret; EmailProvider using SMTP (Gmail) or custom sendVerificationRequest via Resend API\n- Use JWT sessions initially (no DB adapter) for free-tier simplicity\n- Session on client: wrap app with SessionProvider in Providers\n- Auth UI: /sign-in page with buttons \"Continue with Google\" and Email input for magic link; brand wordmark 'Stanga'\n- Write guard helpers: server-side requireAuth() for server actions and API; client-side hooks useSession for conditional rendering; anonymous read routes stay public\n- Middleware: optional /middleware.ts to protect /api/private/* and server actions by convention\nPseudo-code:\n- app/api/auth/[...nextauth]/route.ts\n  import NextAuth from 'next-auth'\n  import GoogleProvider from 'next-auth/providers/google'\n  import EmailProvider from 'next-auth/providers/email'\n  export const authOptions = {\n    session: { strategy: 'jwt' },\n    providers: [\n      GoogleProvider({ clientId: process.env.GOOGLE_ID!, clientSecret: process.env.GOOGLE_SECRET! }),\n      EmailProvider({\n        sendVerificationRequest: async ({ identifier, url }) => {\n          // Resend\n          const resend = new Resend(process.env.RESEND_API_KEY)\n          await resend.emails.send({ to: identifier, from: process.env.EMAIL_FROM!, subject: 'Sign in to Stanga', html: `<a href=\"${url}\">Sign in</a>` })\n        },\n        from: process.env.EMAIL_FROM!\n      })\n    ]\n  }\n  const handler = NextAuth(authOptions)\n  export { handler as GET, handler as POST }\n- lib/auth.ts\n  export async function requireAuth() { const session = await auth(); if (!session?.user) throw new Error('UNAUTHORIZED'); return session }\n- app/(auth)/sign-in/page.tsx\n  'use client'; // UI with Google and Email\nSecurity notes: rate-limit email sign-in attempts; configure NEXTAUTH_URL, NEXTAUTH_SECRET; handle error states with toasts.\n",
         "testStrategy": "Unit: mock next-auth to assert requireAuth throws when not signed in. Integration: render SignIn page and assert providers present. E2E-lite: simulate POST to /api/auth/signin/email using msw to ensure Resend sendVerificationRequest called. Negative tests: deny write server action when useSession() unauthenticated. Accessibility: verify sign-in buttons are reachable via keyboard.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "1"
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -95,7 +97,9 @@
         "details": "Implementation steps:\n- Install: pnpm add drizzle-orm drizzle-kit pg @neondatabase/serverless dotenv\n- Drizzle config: drizzle.config.ts with out: ./drizzle, schema: ./db/schema.ts, dialect:'postgresql'\n- Connection: lib/db.ts using neon serverless createPool or client; export db\n- Schema (db/schema.ts) matching PRD models, with soft delete columns and indexes\n- Migrations: pnpm drizzle-kit generate; pnpm drizzle-kit migrate\n- Seed: scripts/seed.ts to insert demo players and a sample matchday; pnpm tsx scripts/seed.ts\n- Indexes: player name, matchday date, game matchday_id, game_events game_id, activity created_at\n- Environment: set DATABASE_URL for Neon/Supabase; ensure SSL for serverless\nPseudo-code schema (excerpt):\n  import { pgTable, serial, text, integer, boolean, timestamp, jsonb, index } from 'drizzle-orm/pg-core'\n  export const users = pgTable('users', {\n    id: serial('id').primaryKey(),\n    displayName: text('display_name').notNull(),\n    avatarUrl: text('avatar_url'),\n    createdAt: timestamp('created_at').defaultNow().notNull()\n  })\n  export const players = pgTable('players', {\n    id: serial('id').primaryKey(),\n    fullName: text('full_name').notNull(),\n    nickname: text('nickname'),\n    preferredPosition: text('preferred_position'),\n    isActive: boolean('is_active').default(true).notNull(),\n    createdAt: timestamp('created_at').defaultNow().notNull(),\n    createdBy: integer('created_by'),\n    updatedAt: timestamp('updated_at'),\n    updatedBy: integer('updated_by'),\n    deletedAt: timestamp('deleted_at'),\n    deletedBy: integer('deleted_by')\n  }, (t)=>({ nameIdx: index('players_full_name_idx').on(t.fullName) }))\n  export const matchdays = pgTable('matchdays', {\n    id: serial('id').primaryKey(),\n    date: timestamp('date').notNull(),\n    startTime: timestamp('start_time'),\n    endTime: timestamp('end_time'),\n    locationName: text('location_name'),\n    locationCoords: text('location_coords'),\n    rules: jsonb('rules_json').notNull(),\n    createdAt: timestamp('created_at').defaultNow().notNull(),\n    createdBy: integer('created_by'),\n    updatedAt: timestamp('updated_at'),\n    updatedBy: integer('updated_by')\n  }, (t)=>({ dateIdx: index('matchdays_date_idx').on(t.date) }))\n  // ... teams, teamAssignments, games, gameEvents, penaltyShootouts, penaltyKicks, activityLog\n- Transactions: ensure multi-row writes (e.g., end game + penalty records) use db.transaction\n- Soft delete pattern: set deleted_at/_by instead of delete\n- Typesafe queries: export types with InferModel\n",
         "testStrategy": "Run migrations against a local/test Postgres (Neon branch) in CI. Unit: schema type inference compiles. Integration: seed then query counts for each table. Property: ensure indexes exist via introspection (drizzle-kit generate returns index DDL). Transaction test: simulate end game write bundle and assert atomicity on forced error. Clean-up: truncate tables between tests.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "1"
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -138,7 +142,10 @@
         "details": "Implementation steps:\n- Zod schemas: PlayerCreate, PlayerUpdate with constraints (name required)\n- Server routes/actions:\n  - GET /api/players?query=... (public) with pagination and search on full_name\n  - POST /api/players (auth required) create with created_by\n  - PATCH /api/players/:id (auth) update with updated_by\n  - DELETE /api/players/:id (auth) soft delete (set deleted_at/by)\n  - POST /api/players/:id/restore (auth)\n- Activity: log create/update/delete with diff_json\n- UI:\n  - app/players/page.tsx list with search, filters (active/deleted), avatars/initials\n  - Add/Edit sheet modal using RHF + ZodResolver, inline validation\n  - Trash tab or view toggle to list deleted players\n  - Optimistic updates with React Query useMutation; rollback on failure\n- Accessibility: large tap targets, keyboard support\n- Public read: list accessible to unauthenticated users\nPseudo-code:\n- zod\n  const PlayerCreate = z.object({ fullName: z.string().min(2), nickname: z.string().optional(), preferredPosition: z.string().optional() })\n- API handler (route.ts)\n  export async function POST(req){ const user = await requireAuth(); const body = await req.json(); const data = PlayerCreate.parse(body); await db.insert(players).values({ ...data, createdBy: user.id }); await logActivity(user.id,'Player',id,'create',diff(null,data)); return NextResponse.json({ ok:true }) }\n- Client\n  const { data, isLoading } = useQuery({ queryKey:['players', query], queryFn: fetchPlayers })\n  const mutation = useMutation({ mutationFn: createPlayer, onMutate: optimisticInsert, onError: rollback })\n",
         "testStrategy": "Unit: validate Zod schemas for edge cases. Integration: mock db and test API handlers create/update/delete/restore; verify ActivityLog calls with minimal diff. RTL: create player via form, see optimistic row added, then confirmed; soft delete moves player to Trash and restore brings back. A11y: form labels, error messages announced. Security: unauthenticated POST must fail with 401.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "2",
+          "3"
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -182,7 +189,10 @@
         "details": "Implementation steps:\n- Rules defaults per PRD: team_size=6, game_minutes=8, extra_minutes=2, max_goals_to_win=2, penalties_on_tie=true, penalty_win_weight=0.5, points map\n- Zod schemas: RulesSnapshot schema (strict), MatchdayCreate schema\n- Routes/actions:\n  - GET /api/matchdays?status=upcoming|past (public)\n  - POST /api/matchdays (auth) create with rules_json snapshot\n  - GET /api/matchdays/:id (public) detail payload\n- UI:\n  - app/matchdays/page.tsx list cards with date/time/location/status\n  - app/matchdays/[id]/page.tsx with Tabs (Overview, Teams, Games, Stats, Activity); Overview shows rules snapshot and meta\n  - Dashboard card shows next matchday and quick actions\n- Data fetching: public pages use fetch with cache:'force-cache' and revalidateTag('matchdays') on writes\nPseudo-code:\n- zod\n  const RulesSnapshot = z.object({ team_size: z.number().int().min(1), game_minutes: z.number().int().positive(), extra_minutes: z.number().int().nonnegative(), max_goals_to_win: z.number().int().positive(), penalties_on_tie: z.boolean(), penalty_win_weight: z.number().min(0).max(1), points: z.object({ loss:z.number(), draw:z.number(), penalty_bonus_win:z.number(), regulation_win:z.number() }) })\n  const MatchdayCreate = z.object({ date: z.string().datetime(), location_name: z.string().min(2).optional(), location_coords: z.string().optional(), rules: RulesSnapshot })\n- create action\n  const res = await db.insert(matchdays).values({ date:new Date(input.date), locationName: input.location_name, locationCoords: input.location_coords, rules: input.rules, createdBy: user.id })\n  revalidateTag('matchdays')\n",
         "testStrategy": "Unit: RulesSnapshot schema validation for boundaries. Integration: create then fetch detail returns same rules snapshot (immutability). UI: RTL to switch tabs and assert content. Caching: ensure GET response uses caching headers and revalidates after POST. Security: only authenticated can create, anonymous can read.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "2",
+          "3"
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -226,7 +236,10 @@
         "details": "Implementation steps:\n- Palette: blue/amber/rose tokens (accessible contrast). Enforce uniqueness per matchday at DB and UI\n- DB: Team(color_token, color_hex, formation_json?); TeamAssignment(matchday_id, team_id, player_id, optional position/coords)\n- Rules: team size cannot exceed rules.team_size; color unique per matchday\n- Routes/actions:\n  - POST /api/matchdays/:id/teams (auth) to initialize 3 teams from palette with derived names (e.g., 'Blue Team')\n  - PATCH /api/teams/:id (auth) to update color or formation_json (validate uniqueness)\n  - POST /api/teams/:id/assign (auth) to assign player; DELETE /api/team-assignments/:id (auth) to unassign; also soft delete support\n- UI:\n  - app/matchdays/[id]/teams: three columns/cards color-coded; show count per team; error when exceeding team_size\n  - DnD pitch grid: DndContext with PointerSensor({ activationConstraint:{ delay:200, tolerance:5 }}) for long-press; Droppable slots; Draggable player chips; update position x_pct/y_pct\n  - Fallback controls: select dropdown to assign/unassign\n- Validation: server-side check team size, prevent duplicates, ensure player exists and active\nPseudo-code:\n- color uniqueness check\n  await db.transaction(async(tx)=>{ const clash = await tx.select().from(teams).where(and(eq(teams.matchdayId, mid), eq(teams.colorToken, input.colorToken))) ; if(clash.length) throw new Error('COLOR_TAKEN'); await tx.update(teams).set({ colorToken: input.colorToken, colorHex: resolveHex(input.colorToken) }).where(eq(teams.id, input.id)) })\n- assign player\n  const count = await db.$count(teamAssignments, and(eq(teamAssignments.teamId, teamId), isNull(teamAssignments.deletedAt)))\n  if(count >= rules.team_size) throw new Error('TEAM_FULL')\n  await db.insert(teamAssignments).values({ matchdayId, teamId, playerId, createdBy: user.id })\n",
         "testStrategy": "Unit: server validation rejects duplicate colors and oversized teams. Integration: initialize 3 teams and assign players up to team_size; DnD interaction test using RTL + user-event/pointer to drag player chip to team; verify accessible fallback works via keyboard. Regression: soft delete of assignment then reassign allowed. A11y: color not sole signifier—include labels/badges.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "4",
+          "5"
+        ],
         "status": "pending",
         "subtasks": [
           {
@@ -270,9 +283,44 @@
         "details": "Implementation steps:\n- DB: Game, GameEvent(type 'goal'), PenaltyShootout, PenaltyKick tables per schema\n- Constraints:\n  - Start game requires two distinct teams with at least team_size players assigned\n  - Goal event: scorer belongs to a current team on field; assist optional and not equal to scorer\n  - Early end when a team reaches max_goals_to_win; tie at base time adds extra_minutes, then penalties\n- Routes/actions:\n  - POST /api/matchdays/:id/games/start (auth): creates Game with home_team_id and away_team_id based on queue suggestion\n  - POST /api/games/:id/goal (auth): insert GameEvent, update running score in memory; undo via soft delete last event\n  - POST /api/games/:id/end (auth): set ended_at, end_reason; compute winner_team_id\n  - POST /api/games/:id/penalties/start|/kick|/end (auth): manage shootout and kicks and compute winner\n- Queue logic for three teams (A,B,C), winner-stays rotation:\n  Pseudo-code:\n    // At init pick first two arbitrarily (e.g., A vs B), waiting=C\n    function nextMatch(prevMatch) {\n      const { winner, loser, waiting } = prevMatch // winner teamId, loser teamId, waiting teamId\n      return { home: winner, away: waiting, waiting: loser }\n    }\n- Timer:\n  Client-side timer with useEffect and requestAnimationFrame or setInterval; server records started_at; authoritative decisions use timestamps for end\n  Pseudo-code:\n    const BASE = rules.game_minutes*60\n    const EXTRA = rules.extra_minutes*60\n    if (timeElapsed >= BASE && tied) phase='EXTRA'; if(timeElapsed >= BASE+EXTRA && tied && rules.penalties_on_tie) phase='PEN'\n- Early finish:\n  When any side reaches max_goals_to_win, auto end game with reason 'goals'\n- Penalties:\n  Store PenaltyShootout row; for each kick insert PenaltyKick(order_index, result). Winner when one side becomes uncatchable or after equal kicks + sudden death\n  Pseudo-code sudden death:\n    if (k>=5 && homeScore!==awayScore && kicksEqual) winner = homeScore>awayScore?home:away\n- Undo:\n  Keep stack of unsent actions in client state; server supports undo last GameEvent by setting deleted_at\n- Recent results: query recent games for matchday\n- Optional realtime: placeholder Pusher channel names; initially poll with React Query refetchInterval during active game\nUI:\n- app/matchdays/[id]/games: current game panel (timer, score buttons with vibrations), goal/assist picker (filter players by current teams), undo button; penalties modal when needed; recent results list.\n",
         "testStrategy": "Unit: goal validation (assist != scorer), early finish triggers at max goals, queue rotation correctness. Use fake timers to simulate timer phases and extras. Penalty shootout logic unit tests including sudden death. Integration: start game -> log goals -> undo -> end game and verify DB state and ActivityLog write. UI RTL: click score buttons increments, undo snackbar reverts. Negative: reject start when teams lack players.",
         "priority": "medium",
-        "dependencies": [],
+        "dependencies": [
+          "6"
+        ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Game Lifecycle and Timer",
+            "description": "Develop the core game lifecycle management including starting a game, managing the live timer, and handling game end conditions such as early finish and extra time.",
+            "dependencies": [],
+            "details": "1. Set up the database schema for Game and GameEvent tables. Ensure the Game table includes fields for started_at, ended_at, and end_reason. 2. Implement the POST /api/matchdays/:id/games/start endpoint to create a new game with home_team_id and away_team_id based on queue suggestions. 3. Develop the client-side timer using useEffect and requestAnimationFrame or setInterval to track game time. Ensure the server records the started_at timestamp and uses it for authoritative decisions. 4. Implement logic to automatically end the game when a team reaches max_goals_to_win or when the base time is reached and the game is tied, triggering extra time or penalties as needed.",
+            "status": "pending",
+            "testStrategy": "Unit tests for game start and end conditions, including early finish and extra time triggers. Use fake timers to simulate timer phases."
+          },
+          {
+            "id": 2,
+            "title": "Implement Goal/Assist Logging and Undo Functionality",
+            "description": "Develop the functionality for logging goals and assists during a game, including the ability to undo the last action.",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "1. Extend the GameEvent table to include goal events with fields for scorer and optional assist, ensuring the assist is not equal to the scorer. 2. Implement the POST /api/games/:id/goal endpoint to log a goal event, update the running score in memory, and support undo functionality by soft deleting the last event. 3. Develop client-side UI components for logging goals and assists, including a goal/assist picker that filters players by current teams. 4. Implement an undo button in the UI that interacts with the server to undo the last logged event.",
+            "status": "pending",
+            "testStrategy": "Unit tests for goal validation (assist != scorer) and undo functionality. Integration tests for logging goals, updating scores, and undoing actions."
+          },
+          {
+            "id": 3,
+            "title": "Implement Winner-Stays Queue and Penalty Shootout Management",
+            "description": "Develop the winner-stays queue logic for team rotation and manage penalty shootouts with per-kick logging.",
+            "dependencies": [
+              "7.1",
+              "7.2"
+            ],
+            "details": "1. Implement the queue logic for rotating teams using the winner-stays format. Develop a function to determine the next match based on the previous match's winner, loser, and waiting team. 2. Set up the database schema for PenaltyShootout and PenaltyKick tables. 3. Implement endpoints for managing penalty shootouts: POST /api/games/:id/penalties/start, /kick, and /end. Ensure each kick is logged with order_index and result, and determine the winner when one side becomes uncatchable or after equal kicks plus sudden death. 4. Develop client-side UI components for managing penalty shootouts, including a penalties modal and per-kick logging interface.",
+            "status": "pending",
+            "testStrategy": "Unit tests for queue rotation correctness and penalty shootout logic, including sudden death scenarios. Integration tests for penalty shootout management and winner determination."
+          }
+        ]
       },
       {
         "id": 8,
@@ -283,7 +331,39 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Stats Calculators in lib/stats.ts",
+            "description": "Develop pure functions to compute overall and per-matchday metrics such as goals, assists, win rates, games played, and goals per game. These functions should take input from database queries and avoid any UI coupling.",
+            "dependencies": [],
+            "details": "Create a new file lib/stats.ts. Implement functions like computePlayerStats(events) to calculate player-specific metrics and computeStandings(games, rules) to aggregate standings based on the provided rules. Ensure that these functions are modular and can be easily tested with different datasets.",
+            "status": "pending",
+            "testStrategy": "Write unit tests using deterministic fixtures to validate the correctness of each metric calculation. Include edge cases such as no games played or all games ending in penalties."
+          },
+          {
+            "id": 2,
+            "title": "Develop API Endpoints for Stats Retrieval",
+            "description": "Create server actions/handlers to expose the computed stats via API endpoints. Implement caching mechanisms to optimize performance.",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "In the server directory, create handlers for GET /api/stats/overall and GET /api/stats/matchday/:id. Use the functions from lib/stats.ts to fetch and compute the necessary data. Implement caching strategies using tags to ensure that results are efficiently cached and invalidated when necessary.",
+            "status": "pending",
+            "testStrategy": "Perform integration tests to ensure that the API endpoints return the correct data and that caching mechanisms work as expected. Use property tests to verify that the sum of points in a penalty-decided game equals draw*2 + weighted bonus."
+          },
+          {
+            "id": 3,
+            "title": "Design and Implement Stats UI",
+            "description": "Create a user interface to display the computed stats and standings. The UI should include tabs for overall, matchday, players, and teams, and use visual elements like cards and charts.",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "In the app/stats directory, develop a React component with tabs for different stats views. Use libraries like Tremor or Recharts to create charts for visualizing data such as top scorers and win rates. Ensure the UI is responsive and accessible.",
+            "status": "pending",
+            "testStrategy": "Use React Testing Library (RTL) to render the UI components and verify that they display the correct data. Test the responsiveness and accessibility of the UI, ensuring it meets WCAG AA standards."
+          }
+        ]
       },
       {
         "id": 9,
@@ -294,7 +374,39 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Database Schema and Index Setup for Activity Log",
+            "description": "Create the database schema for the ActivityLog table and set up necessary indexes.",
+            "dependencies": [],
+            "details": "Define a new table named ActivityLog with columns: actor_user_id, entity_type, entity_id, action, diff_json, and created_at. Ensure that the created_at column has an index to facilitate reverse chronological queries. Use the database migration tool to apply these changes to the database.",
+            "status": "pending",
+            "testStrategy": "Verify that the table is created with the correct columns and that the index on created_at is functioning by running queries and checking performance."
+          },
+          {
+            "id": 2,
+            "title": "Implement Logging and Diff Utilities",
+            "description": "Develop utilities for logging activities and generating JSON diffs for entity changes.",
+            "dependencies": [
+              "9.1"
+            ],
+            "details": "Create a logging utility function, logActivity, that inserts a new record into the ActivityLog table with the provided parameters. Develop a diff utility function that generates a minimal structured diff between old and new entity states, capturing only the changed fields. Consider using a format similar to rfc6902 if needed for more complex diffs.",
+            "status": "pending",
+            "testStrategy": "Unit test the diff utility to ensure it correctly identifies changes between two states. Test the logActivity function by simulating entity changes and verifying that the correct log entries are created in the database."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Activity Logging and Develop UI for Review",
+            "description": "Integrate the logging utility into server actions and create a UI component to display the activity log.",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "Modify server actions for create, update, and delete operations across entities (Players, Matchdays, Teams, Games) to call the logActivity function with appropriate parameters. Develop a UI component within the app/matchdays/[id]/activity path and a global Activity page to display log entries in reverse chronological order. Include features such as actor avatar, action description, entity link, and relative time display.",
+            "status": "pending",
+            "testStrategy": "Integration test to ensure that log entries are created for each mutating action. Use UI testing to verify that the activity log displays correctly, with accurate information and in the correct order. Ensure security measures are in place to prevent unauthorized log modifications."
+          }
+        ]
       },
       {
         "id": 10,
@@ -305,12 +417,45 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Public Read with SSR/ISR Caching",
+            "description": "Enable anonymous public read access for specific routes using Next.js server components with caching.",
+            "dependencies": [],
+            "details": "Use Next.js server components to render public routes such as Dashboard, Matchdays, Players, and Stats. Implement caching by using the 'revalidate' property for pages and 'revalidateTag' for specific data tags like 'players', 'matchdays', 'games', and 'stats'. Ensure that data fetching is optimized for performance and cache invalidation occurs post-mutations.",
+            "status": "pending",
+            "testStrategy": "Perform integration testing to ensure that unauthenticated users can access and read the content on public routes. Verify that cache invalidation occurs correctly after data mutations by checking if 'revalidateTag' triggers a refetch of updated content."
+          },
+          {
+            "id": 2,
+            "title": "Enforce Access Controls for Write Operations",
+            "description": "Implement access control mechanisms to ensure authentication is required for all write operations.",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "Ensure all server actions that involve write operations check for authentication using a 'requireAuth' function. Organize the application structure to separate public and private routes, using conventions like 'app/(private)' for write UIs. Implement middleware to block write operations for anonymous users, redirecting them to sign-in or returning a 401 error.",
+            "status": "pending",
+            "testStrategy": "Test that unauthenticated users are unable to perform write operations and are redirected or receive a 401 error. Verify that authenticated users can perform write operations without issues."
+          },
+          {
+            "id": 3,
+            "title": "Set Up CI/CD Pipeline with Environment Configuration and Scheduled Backups",
+            "description": "Configure a CI/CD pipeline using GitHub Actions to deploy to Vercel and set up environment variables and scheduled database backups.",
+            "dependencies": [
+              "10.1",
+              "10.2"
+            ],
+            "details": "Create a GitHub Actions workflow to automate the CI/CD process. On pull requests, run tasks such as 'pnpm install', linting, type checking, testing, and building. On merging to the main branch, deploy the application to Vercel using 'vercel-cli' with necessary environment variables like VERCEL_TOKEN and project IDs. Set up a nightly cron job to back up the database using 'pg_dump', storing the backups in GitHub artifacts or cloud storage. Ensure all necessary environment variables are configured in Vercel and committed in a '.env.example' file.",
+            "status": "pending",
+            "testStrategy": "Verify the CI/CD pipeline by creating pull requests and merging them to the main branch, ensuring deployments occur as expected. Test the database backup process by checking the availability and integrity of backup files in the specified storage location."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-20T12:23:50.420Z",
+      "updated": "2025-09-20T12:58:41.136Z",
       "description": "Tasks for master context"
     }
   }

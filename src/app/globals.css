@@ -78,6 +78,20 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Brand and team tokens (HSL) for theming and charts */
+:root {
+  /* brand emerald 500 (#10B981) */
+  --brand: 152 84% 35%;
+  /* team colors */
+  --team-blue: 217 91% 60%;   /* #3B82F6 */
+  --team-amber: 38 92% 50%;   /* #F59E0B */
+  --team-rose: 351 89% 57%;   /* #EF4444 approximation */
+  /* status */
+  --success: 142 72% 45%;     /* #22C55E */
+  --error: 0 84% 60%;         /* #EF4444 */
+  --warning: 38 92% 50%;      /* #F59E0B */
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
