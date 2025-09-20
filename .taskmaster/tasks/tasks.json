@@ -40,7 +40,7 @@
               "1.2"
             ],
             "details": "1) RHF + Zod utilities\n- Create src/components/forms/Form.tsx (client) exporting a FormProvider wrapper and a typed useZodForm helper that wires zodResolver from @hookform/resolvers/zod.\n- Create simple field adapters using shadcn inputs: TextField (label + Input + error), SelectField, and a SubmitButton that shows pending state.\n- Add an example page: src/app/(public)/(tabs)/players/form-example/page.tsx demonstrating a small form (name: string min 2, email: email) with zod schema, RHF, and onSubmit showing a toast.\n\n2) DnD Kit baseline with mobile long-press\n- Create src/components/dnd/DndProvider.tsx (client) that configures DndContext with sensors: PointerSensor with activationConstraint={{ delay: 250, tolerance: 5 }} and modifiers if needed. Export a wrapper component to standardize sensors across the app.\n- Create src/components/dnd/DraggableList.tsx (client) as a minimal sortable list using @dnd-kit/sortable to validate integration. Ensure touch-action CSS is set to manipulation on draggable items for better mobile behavior.\n- Place a demo route at src/app/(public)/(tabs)/players/dnd-example/page.tsx rendering DraggableList under DndProvider.\n\n3) Testing setup\n- Install dev deps: pnpm add -D vitest @testing-library/react @testing-library/user-event @testing-library/jest-dom jsdom vitest-axe eslint-plugin-react-hooks eslint-plugin-jsx-a11y\n- Create vitest.config.ts with test.environment = 'jsdom', setupFiles = ['./src/tests/setupTests.ts'], and alias '@' -> './src' if desired.\n- Create src/tests/setupTests.ts: import '@testing-library/jest-dom'; extend expect; configure userEvent; export an axe helper for convenience.\n- Add package.json scripts: \"test\": \"vitest run\", \"test:watch\": \"vitest\", \"coverage\": \"vitest run --coverage\".\n- Author tests:\n  - AppShell/BottomNav: renders 5 items, correct aria-current, tap targets >= 44px.\n  - Theme persistence: toggling theme sets html.class and persists; re-render respects stored preference.\n  - A11y: vitest-axe run on dashboard page returns no violations.\n  - Forms: render form-example, type invalid values and assert inline error messages from Zod; submit valid data and assert toast is shown.\n  - DnD: render DraggableList and simulate drag with pointer events; assert order changes.\n\n4) Linting\n- Update .eslintrc.* to include plugins: react-hooks and jsx-a11y with their recommended configs. Ensure 'react-hooks/rules-of-hooks' and 'react-hooks/exhaustive-deps' are enabled. Add basic a11y rules (e.g., anchor-is-valid).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run pnpm test to execute unit/integration and a11y tests. Verify form example shows Zod-driven errors and passes on valid submission. Confirm DnD example reorders items on simulated drag and on mobile-like pointer delay. Run pnpm lint to ensure new ESLint plugins enforce hooks and a11y rules."
           }
         ]
@@ -455,7 +455,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-20T12:58:41.136Z",
+      "updated": "2025-09-20T13:09:39.862Z",
       "description": "Tasks for master context"
     }
   }
