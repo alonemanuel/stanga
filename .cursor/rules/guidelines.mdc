@@ -1,0 +1,10 @@
+---
+description: Code modification guidelines
+globs:
+alwaysApply: true
+---
+
+### Code modification guidelines
+
+- Before making any code changes, carefully read `design.md`, `stack.md`, and `prd.md` and ensure proposed edits align with them.
+- Each of those files is the Single Source of Truth (SST) for its scope (UX/UI, technology stack, and product). If you make changes, reflect them in the appropriate file(s) in the same PR.
