@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
+import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -24,6 +25,7 @@ interface Matchday {
 export default function MatchdaysPage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'upcoming' | 'past'>('upcoming');
+  const [showForm, setShowForm] = React.useState(false);
   
   const supabase = createClient();
   
@@ -59,6 +61,10 @@ export default function MatchdaysPage() {
       await deleteMutation.mutateAsync(id);
     }
   };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+  };
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -88,6 +94,26 @@ export default function MatchdaysPage() {
     }
   };
 
+  if (showForm) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">Create New Matchday</h1>
+          <p className="text-muted-foreground">
+            Set up a new football matchday with custom rules
+          </p>
+        </div>
+        
+        <div className="bg-card border rounded-lg p-6">
+          <MatchdayForm
+            onSuccess={handleFormSuccess}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
@@ -99,7 +125,7 @@ export default function MatchdaysPage() {
           </p>
         </div>
         {user && (
-          <Button onClick={() => {/* TODO: Add create matchday functionality */}}>
+          <Button onClick={() => setShowForm(true)}>
             Create Matchday
           </Button>
         )}
@@ -147,7 +173,7 @@ export default function MatchdaysPage() {
             {statusFilter === 'upcoming' ? 'No upcoming matchdays found' : 'No past matchdays found'}
           </p>
           {statusFilter === 'upcoming' && user && (
-            <Button onClick={() => {/* TODO: Add create matchday functionality */}} className="mt-4">
+            <Button onClick={() => setShowForm(true)} className="mt-4">
               Create Your First Matchday
             </Button>
           )}
