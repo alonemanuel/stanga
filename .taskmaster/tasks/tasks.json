@@ -146,7 +146,7 @@
           "2",
           "3"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -154,7 +154,7 @@
             "description": "Create Zod schemas for player creation and update, and implement server-side API routes for CRUD operations.",
             "dependencies": [],
             "details": "1. Define Zod schemas for PlayerCreate and PlayerUpdate with constraints such as required full name. 2. Implement server-side API routes: GET /api/players for listing with pagination and search, POST /api/players for creating a player, PATCH /api/players/:id for updating, DELETE /api/players/:id for soft deleting, and POST /api/players/:id/restore for restoring a player. Ensure all mutating routes require authentication and log activities using a logging utility.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit test Zod schemas for validation edge cases. Integration test API routes with mocked database to ensure correct behavior and activity logging."
           },
           {
@@ -165,7 +165,7 @@
               "4.1"
             ],
             "details": "1. Create a page at app/players/page.tsx to display a list of players with search and filter capabilities (active/deleted). 2. Implement add/edit functionality using a sheet modal with React Hook Form and ZodResolver for inline validation. 3. Add a trash view or toggle to list deleted players. Ensure the UI supports optimistic updates using React Query's useMutation, with rollback on failure.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use React Testing Library to test UI components, ensuring search and filter functionalities work. Verify optimistic updates and rollback behavior."
           },
           {
@@ -177,7 +177,7 @@
               "4.2"
             ],
             "details": "1. Implement large tap targets and keyboard navigation support across the players module UI. 2. Ensure the players list is accessible to unauthenticated users by configuring public read access. 3. Verify that all UI components meet WCAG AA standards for accessibility.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run accessibility tests using tools like axe-core to ensure compliance with WCAG standards. Verify public read access by testing unauthenticated access to the players list."
           }
         ]
@@ -193,7 +193,7 @@
           "2",
           "3"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -201,7 +201,7 @@
             "description": "Develop the backend logic to create a matchday with a rules snapshot using Zod schemas and a POST endpoint.",
             "dependencies": [],
             "details": "1. Define the Zod schemas for RulesSnapshot and MatchdayCreate. Ensure that the RulesSnapshot schema includes all required fields such as team_size, game_minutes, etc., with appropriate validation rules. 2. Implement the POST /api/matchdays endpoint to handle authenticated requests for creating a matchday. Use the MatchdayCreate schema to validate incoming data and extract the rules snapshot. 3. Insert the validated matchday data into the database, capturing the rules snapshot as JSON. Ensure that the 'createdBy' field is populated with the authenticated user's ID. 4. Use the revalidateTag('matchdays') function to ensure cache invalidation after a successful creation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit test the Zod schemas for validation boundaries. Integration test the POST endpoint to ensure that a matchday can be created with valid data and that the rules snapshot is stored correctly."
           },
           {
@@ -212,7 +212,7 @@
               "5.1"
             ],
             "details": "1. Implement the GET /api/matchdays?status=upcoming|past endpoint to retrieve matchdays based on their status. Ensure that the endpoint is public and uses caching strategies with fetch cache:'force-cache'. 2. Develop the UI component in app/matchdays/page.tsx to display matchday cards. Each card should show the date, time, location, and status of the matchday. 3. Ensure that the UI fetches data from the API and handles the display of both upcoming and past matchdays. Implement pagination or infinite scrolling if necessary.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Integration test the GET endpoint to verify correct filtering and caching behavior. UI tests should ensure that matchday cards are rendered correctly and that the list updates when new data is available."
           },
           {
@@ -224,7 +224,7 @@
               "5.2"
             ],
             "details": "1. Implement the GET /api/matchdays/:id endpoint to fetch detailed information about a specific matchday. Ensure that this endpoint is public and returns all necessary data for the detail view. 2. Develop the UI in app/matchdays/[id]/page.tsx to include tabs for Overview, Teams, Games, Stats, and Activity. Use a tab component to switch between these views. 3. Populate the Overview tab with the rules snapshot and meta information about the matchday. Ensure that each tab can fetch and display relevant data, such as team rosters, game results, and activity logs.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Integration test the detail endpoint to ensure it returns correct and complete data. UI tests should verify that each tab displays the correct content and that switching between tabs works smoothly."
           }
         ]
@@ -455,7 +455,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-20T13:59:01.972Z",
+      "updated": "2025-09-20T14:17:42.448Z",
       "description": "Tasks for master context"
     }
   }
