@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useMatchday } from "@/lib/hooks/use-matchdays";
+import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
+import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -17,9 +18,11 @@ type TabType = 'overview' | 'teams' | 'games' | 'stats' | 'activity';
 export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
+  const [isEditing, setIsEditing] = React.useState(false);
   
   const supabase = createClient();
   const { data: matchdayData, isLoading, error } = useMatchday(params.id);
+  const updateMutation = useUpdateMatchday();
   
   // Get current user
   React.useEffect(() => {
@@ -37,6 +40,23 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  const handleEditSuccess = () => {
+    setIsEditing(false);
+  };
+
+  const handleStartMatchday = async () => {
+    if (!matchdayData) return;
+    
+    try {
+      await updateMutation.mutateAsync({
+        id: params.id,
+        data: { status: 'active' }
+      });
+    } catch (error) {
+      // Error handling is done in the mutation hook
+    }
+  };
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -88,6 +108,46 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   }
 
   const matchday = matchdayData.data;
+
+  // Show edit form if editing
+  if (isEditing) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsEditing(false)}
+            >
+              ← Back
+            </Button>
+          </div>
+          <h1 className="text-2xl font-semibold">Edit Matchday</h1>
+          <p className="text-muted-foreground">
+            Update matchday information and rules
+          </p>
+        </div>
+        
+        <div className="bg-card border rounded-lg p-6">
+          <MatchdayForm
+            matchday={{
+              id: matchday.id,
+              name: matchday.name,
+              description: matchday.description,
+              scheduledAt: matchday.scheduledAt,
+              location: matchday.location,
+              maxPlayers: matchday.maxPlayers,
+              rules: matchday.rules,
+              isPublic: matchday.isPublic,
+            }}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setIsEditing(false)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { id: TabType; label: string; disabled?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
@@ -240,10 +300,10 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         </div>
         {user && matchday.status === 'upcoming' && (
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
               Edit Matchday
             </Button>
-            <Button>
+            <Button onClick={handleStartMatchday} loading={updateMutation.isPending}>
               Start Matchday
             </Button>
           </div>

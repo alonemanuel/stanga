@@ -4,19 +4,40 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, SelectField } from "@/components/forms/fields";
 import { useZodForm, Form } from "@/components/forms/Form";
-import { MatchdayCreateSchema, DEFAULT_RULES, type MatchdayCreate } from "@/lib/validations/matchday";
-import { useCreateMatchday } from "@/lib/hooks/use-matchdays";
+import { MatchdayCreateSchema, MatchdayUpdateSchema, DEFAULT_RULES, type MatchdayCreate, type MatchdayUpdate } from "@/lib/validations/matchday";
+import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 
 interface MatchdayFormProps {
+  matchday?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    scheduledAt: string;
+    location?: string | null;
+    maxPlayers: number;
+    rules: any;
+    isPublic: boolean;
+  };
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function MatchdayForm({ onSuccess, onCancel }: MatchdayFormProps) {
+export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProps) {
+  const isEditing = !!matchday;
   const createMutation = useCreateMatchday();
+  const updateMutation = useUpdateMatchday();
   
-  const methods = useZodForm(MatchdayCreateSchema, {
-    defaultValues: {
+  const schema = isEditing ? MatchdayUpdateSchema : MatchdayCreateSchema;
+  const methods = useZodForm(schema, {
+    defaultValues: isEditing ? {
+      name: matchday.name,
+      description: matchday.description || "",
+      scheduledAt: matchday.scheduledAt.slice(0, 16), // Convert to datetime-local format
+      location: matchday.location || "",
+      maxPlayers: matchday.maxPlayers,
+      rules: matchday.rules,
+      isPublic: matchday.isPublic,
+    } : {
       name: "",
       description: "",
       scheduledAt: "",
@@ -27,16 +48,23 @@ export function MatchdayForm({ onSuccess, onCancel }: MatchdayFormProps) {
     },
   });
 
-  const onSubmit = async (data: MatchdayCreate) => {
+  const onSubmit = async (data: MatchdayCreate | MatchdayUpdate) => {
     try {
-      await createMutation.mutateAsync(data);
+      if (isEditing) {
+        await updateMutation.mutateAsync({
+          id: matchday.id,
+          data: data as MatchdayUpdate,
+        });
+      } else {
+        await createMutation.mutateAsync(data as MatchdayCreate);
+      }
       onSuccess?.();
     } catch (error) {
       // Error handling is done in the mutation hooks
     }
   };
 
-  const isLoading = createMutation.isPending;
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   // Generate datetime-local input value (YYYY-MM-DDTHH:MM)
   const getDefaultDateTime = () => {
@@ -46,12 +74,14 @@ export function MatchdayForm({ onSuccess, onCancel }: MatchdayFormProps) {
   };
 
   React.useEffect(() => {
-    // Set default scheduled time to next hour
-    const nextHour = new Date();
-    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-    nextHour.setMinutes(nextHour.getMinutes() - nextHour.getTimezoneOffset());
-    methods.setValue('scheduledAt', nextHour.toISOString().slice(0, 16));
-  }, [methods]);
+    // Set default scheduled time to next hour (only for new matchdays)
+    if (!isEditing) {
+      const nextHour = new Date();
+      nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+      nextHour.setMinutes(nextHour.getMinutes() - nextHour.getTimezoneOffset());
+      methods.setValue('scheduledAt', nextHour.toISOString().slice(0, 16));
+    }
+  }, [methods, isEditing]);
 
   return (
     <Form methods={methods} onSubmit={onSubmit} className="space-y-4">
@@ -219,7 +249,7 @@ export function MatchdayForm({ onSuccess, onCancel }: MatchdayFormProps) {
           type="submit"
           loading={isLoading}
         >
-          Create Matchday
+          {isEditing ? 'Update Matchday' : 'Create Matchday'}
         </Button>
       </div>
     </Form>
