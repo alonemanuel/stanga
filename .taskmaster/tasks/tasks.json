@@ -140,7 +140,40 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Player Zod Schemas and API Routes",
+            "description": "Create Zod schemas for player creation and update, and implement server-side API routes for CRUD operations.",
+            "dependencies": [],
+            "details": "1. Define Zod schemas for PlayerCreate and PlayerUpdate with constraints such as required full name. 2. Implement server-side API routes: GET /api/players for listing with pagination and search, POST /api/players for creating a player, PATCH /api/players/:id for updating, DELETE /api/players/:id for soft deleting, and POST /api/players/:id/restore for restoring a player. Ensure all mutating routes require authentication and log activities using a logging utility.",
+            "status": "pending",
+            "testStrategy": "Unit test Zod schemas for validation edge cases. Integration test API routes with mocked database to ensure correct behavior and activity logging."
+          },
+          {
+            "id": 2,
+            "title": "Develop Players List and Management UI",
+            "description": "Build the user interface for listing players, including search, filters, and management features like add/edit and trash view.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "1. Create a page at app/players/page.tsx to display a list of players with search and filter capabilities (active/deleted). 2. Implement add/edit functionality using a sheet modal with React Hook Form and ZodResolver for inline validation. 3. Add a trash view or toggle to list deleted players. Ensure the UI supports optimistic updates using React Query's useMutation, with rollback on failure.",
+            "status": "pending",
+            "testStrategy": "Use React Testing Library to test UI components, ensuring search and filter functionalities work. Verify optimistic updates and rollback behavior."
+          },
+          {
+            "id": 3,
+            "title": "Enhance Accessibility and Public Read Access",
+            "description": "Ensure the players module is accessible and supports public read access for unauthenticated users.",
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
+            "details": "1. Implement large tap targets and keyboard navigation support across the players module UI. 2. Ensure the players list is accessible to unauthenticated users by configuring public read access. 3. Verify that all UI components meet WCAG AA standards for accessibility.",
+            "status": "pending",
+            "testStrategy": "Run accessibility tests using tools like axe-core to ensure compliance with WCAG standards. Verify public read access by testing unauthenticated access to the players list."
+          }
+        ]
       },
       {
         "id": 5,
@@ -151,7 +184,40 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Matchday Creation with Rules Snapshot",
+            "description": "Develop the backend logic to create a matchday with a rules snapshot using Zod schemas and a POST endpoint.",
+            "dependencies": [],
+            "details": "1. Define the Zod schemas for RulesSnapshot and MatchdayCreate. Ensure that the RulesSnapshot schema includes all required fields such as team_size, game_minutes, etc., with appropriate validation rules. 2. Implement the POST /api/matchdays endpoint to handle authenticated requests for creating a matchday. Use the MatchdayCreate schema to validate incoming data and extract the rules snapshot. 3. Insert the validated matchday data into the database, capturing the rules snapshot as JSON. Ensure that the 'createdBy' field is populated with the authenticated user's ID. 4. Use the revalidateTag('matchdays') function to ensure cache invalidation after a successful creation.",
+            "status": "pending",
+            "testStrategy": "Unit test the Zod schemas for validation boundaries. Integration test the POST endpoint to ensure that a matchday can be created with valid data and that the rules snapshot is stored correctly."
+          },
+          {
+            "id": 2,
+            "title": "Develop Matchday Listing for Upcoming and Past Events",
+            "description": "Create the backend and frontend components to list upcoming and past matchdays, including a public GET endpoint and a UI page.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "1. Implement the GET /api/matchdays?status=upcoming|past endpoint to retrieve matchdays based on their status. Ensure that the endpoint is public and uses caching strategies with fetch cache:'force-cache'. 2. Develop the UI component in app/matchdays/page.tsx to display matchday cards. Each card should show the date, time, location, and status of the matchday. 3. Ensure that the UI fetches data from the API and handles the display of both upcoming and past matchdays. Implement pagination or infinite scrolling if necessary.",
+            "status": "pending",
+            "testStrategy": "Integration test the GET endpoint to verify correct filtering and caching behavior. UI tests should ensure that matchday cards are rendered correctly and that the list updates when new data is available."
+          },
+          {
+            "id": 3,
+            "title": "Implement Matchday Detail View with Tabs",
+            "description": "Create the detail view for a matchday with tabs for Overview, Teams, Games, Stats, and Activity, including data fetching and UI scaffolding.",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "1. Implement the GET /api/matchdays/:id endpoint to fetch detailed information about a specific matchday. Ensure that this endpoint is public and returns all necessary data for the detail view. 2. Develop the UI in app/matchdays/[id]/page.tsx to include tabs for Overview, Teams, Games, Stats, and Activity. Use a tab component to switch between these views. 3. Populate the Overview tab with the rules snapshot and meta information about the matchday. Ensure that each tab can fetch and display relevant data, such as team rosters, game results, and activity logs.",
+            "status": "pending",
+            "testStrategy": "Integration test the detail endpoint to ensure it returns correct and complete data. UI tests should verify that each tab displays the correct content and that switching between tabs works smoothly."
+          }
+        ]
       },
       {
         "id": 6,
@@ -162,7 +228,40 @@
         "priority": "medium",
         "dependencies": [],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Teams with Unique Colors",
+            "description": "Create an API endpoint to initialize 3 teams with unique colors from a curated palette for each matchday.",
+            "dependencies": [],
+            "details": "Implement a POST /api/matchdays/:id/teams endpoint that initializes 3 teams using the blue, amber, and rose color tokens. Ensure that each team has a unique color per matchday by checking the database for existing color assignments. Use a transaction to enforce atomicity and handle errors if a color is already taken. Assign derived names to teams based on their color, such as 'Blue Team'.",
+            "status": "pending",
+            "testStrategy": "Unit test the endpoint to ensure it rejects duplicate colors and correctly initializes teams with unique colors. Integration test by initializing teams for a matchday and verifying the database entries."
+          },
+          {
+            "id": 2,
+            "title": "Implement Player Assignment with Validation",
+            "description": "Develop functionality to assign players to teams while validating team size and ensuring players are active.",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "Create a POST /api/teams/:id/assign endpoint to assign players to a team. Validate that the team size does not exceed the maximum allowed by checking the current number of active assignments. Ensure the player being assigned exists and is active. Implement a DELETE /api/team-assignments/:id endpoint for unassigning players, supporting soft deletes by marking assignments as deleted rather than removing them from the database.",
+            "status": "pending",
+            "testStrategy": "Unit test server-side validation to ensure it prevents oversized teams and checks player activity. Integration test the assignment and unassignment process, verifying database updates and soft delete functionality."
+          },
+          {
+            "id": 3,
+            "title": "Design UI for Team Management with DnD",
+            "description": "Create a user interface for managing teams, including drag-and-drop (DnD) functionality for player positioning and accessible fallback controls.",
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
+            "details": "Develop a UI component at app/matchdays/[id]/teams that displays three color-coded columns or cards for each team. Implement a DnD pitch grid using DndContext and PointerSensor for long-press activation, with Droppable slots and Draggable player chips. Provide fallback controls using a select dropdown for assigning and unassigning players. Ensure the UI shows the player count per team and displays errors when the team size limit is exceeded.",
+            "status": "pending",
+            "testStrategy": "Integration test the DnD functionality using React Testing Library and user-event/pointer to simulate dragging player chips. Verify that the accessible fallback controls work via keyboard interactions. Ensure the UI updates correctly when players are assigned or unassigned."
+          }
+        ]
       },
       {
         "id": 7,
