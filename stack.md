@@ -71,6 +71,12 @@ Indexes: player name, matchday date, game matchday_id, game_events game_id, acti
 - Preview: Vercel preview per PR
 - Prod: main branch auto‑deploy
 
+### Local prerequisites
+
+- Node.js: >= 20 LTS (Next 15 and shadcn CLI require >=18.18; recommend 20+)
+- Package manager: npm (default). pnpm optional.
+- Node version manager recommended: nvm or fnm
+
 ## Costs (as of 2025, typical free tiers)
 
 - Vercel Hobby: free; limits on serverless/edge invocations
