@@ -55,27 +55,15 @@ export function PlayerForm({ player, onSuccess, onCancel }: PlayerFormProps) {
     },
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PlayerCreate | PlayerUpdate) => {
     try {
-      // Transform the data to match the schema expectations
-      const transformedData = {
-        ...data,
-        // Convert empty string to null for position
-        position: data.position === "" ? null : data.position,
-        // Convert string to number for skillLevel
-        skillLevel: typeof data.skillLevel === 'string' ? parseInt(data.skillLevel, 10) : data.skillLevel,
-        // Convert empty string to null for optional fields
-        nickname: data.nickname === "" ? null : data.nickname,
-        notes: data.notes === "" ? null : data.notes,
-      };
-
       if (isEditing) {
         await updateMutation.mutateAsync({
           id: player.id,
-          data: transformedData as PlayerUpdate,
+          data: data as PlayerUpdate,
         });
       } else {
-        await createMutation.mutateAsync(transformedData as PlayerCreate);
+        await createMutation.mutateAsync(data as PlayerCreate);
       }
       
       onSuccess?.();
