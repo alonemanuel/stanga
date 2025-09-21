@@ -235,9 +235,10 @@ async function main() {
       {
         id: createId(),
         matchdayId: upcomingMatchday.id,
-        name: 'Red Devils',
-        color: '#DC2626', // Red
-        formation: '4-3-3',
+        name: 'Blue Team',
+        colorToken: 'blue',
+        colorHex: '#3b82f6',
+        formationJson: { formation: '4-3-3' },
         isActive: true,
         createdBy: organizerUser.id,
         updatedBy: organizerUser.id,
@@ -245,9 +246,10 @@ async function main() {
       {
         id: createId(),
         matchdayId: upcomingMatchday.id,
-        name: 'Blue Warriors',
-        color: '#2563EB', // Blue
-        formation: '4-4-2',
+        name: 'Amber Team',
+        colorToken: 'amber',
+        colorHex: '#f59e0b',
+        formationJson: { formation: '4-4-2' },
         isActive: true,
         createdBy: organizerUser.id,
         updatedBy: organizerUser.id,
@@ -255,23 +257,25 @@ async function main() {
       {
         id: createId(),
         matchdayId: upcomingMatchday.id,
-        name: 'Green Eagles',
-        color: '#16A34A', // Green
-        formation: '3-5-2',
+        name: 'Rose Team',
+        colorToken: 'rose',
+        colorHex: '#f43f5e',
+        formationJson: { formation: '3-5-2' },
         isActive: true,
         createdBy: organizerUser.id,
         updatedBy: organizerUser.id,
       }
     ]).returning();
 
-    // Assign players to teams (first 6 players to each team)
+    // Assign players to teams (first 4 players to each team)
     console.log('👕 Assigning players to teams...');
     const teamAssignments = [];
     
-    // Red Devils (first 4 players)
+    // Blue Team (first 4 players)
     for (let i = 0; i < 4; i++) {
       teamAssignments.push({
         id: createId(),
+        matchdayId: upcomingMatchday.id,
         teamId: teams[0].id,
         playerId: players[i].id,
         position: players[i].position,
@@ -282,10 +286,11 @@ async function main() {
       });
     }
 
-    // Blue Warriors (next 4 players)
+    // Amber Team (next 4 players)
     for (let i = 4; i < 8; i++) {
       teamAssignments.push({
         id: createId(),
+        matchdayId: upcomingMatchday.id,
         teamId: teams[1].id,
         playerId: players[i].id,
         position: players[i].position,
@@ -296,10 +301,11 @@ async function main() {
       });
     }
 
-    // Green Eagles (last 4 players)
+    // Rose Team (last 4 players)
     for (let i = 8; i < 12; i++) {
       teamAssignments.push({
         id: createId(),
+        matchdayId: upcomingMatchday.id,
         teamId: teams[2].id,
         playerId: players[i].id,
         position: players[i].position,
@@ -318,8 +324,8 @@ async function main() {
       {
         id: createId(),
         matchdayId: upcomingMatchday.id,
-        homeTeamId: teams[0].id, // Red Devils
-        awayTeamId: teams[1].id, // Blue Warriors
+        homeTeamId: teams[0].id, // Blue Team
+        awayTeamId: teams[1].id, // Amber Team
         status: 'pending',
         homeScore: 0,
         awayScore: 0,
@@ -330,8 +336,8 @@ async function main() {
       {
         id: createId(),
         matchdayId: upcomingMatchday.id,
-        homeTeamId: teams[2].id, // Green Eagles
-        awayTeamId: teams[0].id, // Red Devils
+        homeTeamId: teams[2].id, // Rose Team
+        awayTeamId: teams[0].id, // Blue Team
         status: 'pending',
         homeScore: 0,
         awayScore: 0,

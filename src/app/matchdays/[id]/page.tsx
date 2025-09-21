@@ -3,14 +3,15 @@
 import * as React from "react";
 import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
+import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 interface MatchdayDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 type TabType = 'overview' | 'teams' | 'games' | 'stats' | 'activity';
@@ -19,9 +20,20 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const [user, setUser] = React.useState<User | null>(null);
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
   const [isEditing, setIsEditing] = React.useState(false);
+  const [matchdayId, setMatchdayId] = React.useState<string>('');
   
   const supabase = createClient();
-  const { data: matchdayData, isLoading, error } = useMatchday(params.id);
+  
+  // Await params and set matchdayId
+  React.useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setMatchdayId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
+  
+  const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const updateMutation = useUpdateMatchday();
   
   // Get current user
@@ -50,7 +62,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     
     try {
       await updateMutation.mutateAsync({
-        id: params.id,
+        id: matchdayId,
         data: { status: 'active' }
       });
     } catch (error) {
@@ -151,7 +163,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
 
   const tabs: { id: TabType; label: string; disabled?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'teams', label: 'Teams', disabled: true },
+    { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games', disabled: true },
     { id: 'stats', label: 'Stats', disabled: true },
     { id: 'activity', label: 'Activity', disabled: true },
@@ -252,9 +264,10 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         );
       case 'teams':
         return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Teams management coming soon...</p>
-          </div>
+          <TeamManagement 
+            matchdayId={matchdayId}
+            maxPlayersPerTeam={matchday.rules.team_size}
+          />
         );
       case 'games':
         return (
