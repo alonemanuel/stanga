@@ -568,6 +568,7 @@ interface RecentGameItemProps {
 
 function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
   const { data: goalsData, isLoading } = useGameGoals(game.id);
+  const { data: penaltyData } = usePenalties(game.id);
   
   return (
     <div className="bg-muted/50 rounded-lg overflow-hidden">
@@ -585,9 +586,14 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
             <span className="text-sm font-medium">{game.homeTeam?.name}</span>
           </div>
           
-          <div className="text-lg font-bold">
-            {game.homeScore} - {game.awayScore}
-          </div>
+                  <div className="text-lg font-bold">
+                    {game.homeScore} - {game.awayScore}
+                    {penaltyData && penaltyData.status === 'completed' && (
+                      <span className="text-sm text-orange-600 ml-2">
+                        ({penaltyData.homeTeamScore}-{penaltyData.awayTeamScore} pens)
+                      </span>
+                    )}
+                  </div>
           
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium">{game.awayTeam?.name}</span>

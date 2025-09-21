@@ -42,6 +42,22 @@ interface AddGoalFormProps {
 function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: AddGoalFormProps) {
   const [selectedScorer, setSelectedScorer] = React.useState<string>('');
   const [selectedAssist, setSelectedAssist] = React.useState<string>('');
+  const scorerSelectRef = React.useRef<HTMLSelectElement>(null);
+
+  // Auto-focus the scorer selection when component mounts
+  React.useEffect(() => {
+    if (scorerSelectRef.current) {
+      scorerSelectRef.current.focus();
+      // Open the dropdown on desktop browsers
+      if ('showPicker' in scorerSelectRef.current) {
+        try {
+          (scorerSelectRef.current as any).showPicker();
+        } catch (e) {
+          // Ignore errors - not all browsers support showPicker
+        }
+      }
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +78,7 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: 
             {isPenaltyMode ? 'Penalty Taker (optional)' : 'Scorer (optional)'}
           </label>
           <select
+            ref={scorerSelectRef}
             value={selectedScorer}
             onChange={(e) => setSelectedScorer(e.target.value)}
             className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -349,18 +366,6 @@ export function GoalList({
       ) : (
         <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
           <div className="text-sm">No goals scored yet</div>
-          {!isAddingGoal && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsAddingGoal(true)}
-              disabled={isLoading}
-              className="mt-2"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add First Goal
-            </Button>
-          )}
         </div>
       )}
     </div>
