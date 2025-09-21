@@ -209,9 +209,29 @@ export function useAssignPlayer() {
         
         console.log('🔄 Optimistically adding player to team', { teamId, playerId: data.playerId });
         
-        // Try to get player data from players cache
-        const playersData = queryClient.getQueryData(['players']) as any;
-        const playerInfo = playersData?.data?.find((p: any) => p.id === data.playerId);
+        // Try to get player data from any players cache
+        let playerInfo = null;
+        
+        // Get all queries that start with 'players'
+        const allPlayersQueries = queryClient.getQueriesData({ queryKey: ['players'] });
+        console.log('🔍 Available players queries:', allPlayersQueries.length, allPlayersQueries.map(([key]) => key));
+        
+        for (const [queryKey, queryData] of allPlayersQueries) {
+          const playersData = queryData as any;
+          console.log('🔍 Checking cache key:', queryKey, 'data structure:', playersData?.data ? `${playersData.data.length} players` : 'no data');
+          
+          if (playersData?.data && Array.isArray(playersData.data)) {
+            playerInfo = playersData.data.find((p: any) => p.id === data.playerId);
+            if (playerInfo) {
+              console.log('🎯 Found player data in cache:', playerInfo, 'from key:', queryKey);
+              break;
+            }
+          }
+        }
+        
+        if (!playerInfo) {
+          console.log('⚠️ Player data not found in any cache, using fallback');
+        }
         
         const updatedTeams = oldData.data.map((team: any) => {
           if (team.id === teamId) {
