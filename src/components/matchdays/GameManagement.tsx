@@ -381,8 +381,8 @@ interface RecentGamesProps {
   matchdayId: string;
 }
 
-interface GameGoalDisplayProps {
-  goals: Array<{
+interface ChronologicalGoalsListProps {
+  homeGoals: Array<{
     id: string;
     playerId: string;
     playerName: string;
@@ -390,45 +390,100 @@ interface GameGoalDisplayProps {
     assistId?: string;
     assistName?: string;
   }>;
-  teamName: string;
-  teamColorHex: string;
+  awayGoals: Array<{
+    id: string;
+    playerId: string;
+    playerName: string;
+    minute: number;
+    assistId?: string;
+    assistName?: string;
+  }>;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeTeamColor: string;
+  awayTeamColor: string;
 }
 
-function GameGoalDisplay({ goals, teamName, teamColorHex }: GameGoalDisplayProps) {
-  if (goals.length === 0) {
+function ChronologicalGoalsList({ 
+  homeGoals, 
+  awayGoals, 
+  homeTeamName, 
+  awayTeamName, 
+  homeTeamColor, 
+  awayTeamColor 
+}: ChronologicalGoalsListProps) {
+  // Combine all goals and add team information
+  const allGoals = [
+    ...homeGoals.map(goal => ({
+      ...goal,
+      teamName: homeTeamName,
+      teamColor: homeTeamColor,
+      isHome: true
+    })),
+    ...awayGoals.map(goal => ({
+      ...goal,
+      teamName: awayTeamName,
+      teamColor: awayTeamColor,
+      isHome: false
+    }))
+  ];
+
+  // Sort by minute (chronological order)
+  const sortedGoals = allGoals.sort((a, b) => a.minute - b.minute);
+
+  if (sortedGoals.length === 0) {
     return (
-      <div className="text-sm text-gray-500 italic">
-        No goals scored
+      <div className="text-center text-sm text-gray-500 py-2">
+        No goals were scored in this game
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <div 
-          className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: teamColorHex }}
-        />
-        {teamName} Goals ({goals.length})
+    <div className="space-y-3">
+      <div className="text-sm font-medium text-gray-700">
+        Goals in chronological order ({sortedGoals.length})
       </div>
-      <div className="space-y-1 pl-5">
-        {goals.map((goal, index) => (
-          <div key={goal.id} className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-mono text-xs">#{index + 1}</span>
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span>{goal.playerName || 'Unknown Player'}</span>
-            </div>
-            {goal.assistName && (
-              <>
+      
+      <div className="space-y-2">
+        {sortedGoals.map((goal, index) => (
+          <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+            {/* Team color indicator */}
+            <div 
+              className="w-4 h-4 rounded-full flex-shrink-0"
+              style={{ backgroundColor: goal.teamColor }}
+            />
+            
+            {/* Goal details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
+                  #{index + 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <User className="h-3 w-3 text-gray-500" />
+                  <span className="font-medium truncate">
+                    {goal.playerName || 'Unknown Player'}
+                  </span>
+                </div>
+                {goal.assistName && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-xs text-gray-600 truncate">
+                      Assist: {goal.assistName}
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                <span className="font-medium">{goal.teamName}</span>
                 <span className="text-gray-400">•</span>
-                <span className="text-xs">Assist: {goal.assistName}</span>
-              </>
-            )}
-            <div className="flex items-center gap-1 text-xs">
-              <Clock className="h-3 w-3" />
-              <span>{goal.minute}'</span>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{goal.minute}' minute</span>
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -540,32 +595,15 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
               Loading goal details...
             </div>
           ) : goalsData ? (
-            <div className="pt-3 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Left side - Home team goals (matches layout above) */}
-                <div className="text-left">
-                  <GameGoalDisplay 
-                    goals={goalsData.homeTeamGoals}
-                    teamName={game.homeTeam?.name || 'Home Team'}
-                    teamColorHex={game.homeTeam?.colorHex || '#3b82f6'}
-                  />
-                </div>
-                
-                {/* Right side - Away team goals (matches layout above) */}
-                <div className="text-left">
-                  <GameGoalDisplay 
-                    goals={goalsData.awayTeamGoals}
-                    teamName={game.awayTeam?.name || 'Away Team'}
-                    teamColorHex={game.awayTeam?.colorHex || '#ef4444'}
-                  />
-                </div>
-              </div>
-              
-              {goalsData.homeTeamGoals.length === 0 && goalsData.awayTeamGoals.length === 0 && (
-                <div className="text-center text-sm text-gray-500 py-2">
-                  No goals were scored in this game
-                </div>
-              )}
+            <div className="pt-3">
+              <ChronologicalGoalsList 
+                homeGoals={goalsData.homeTeamGoals}
+                awayGoals={goalsData.awayTeamGoals}
+                homeTeamName={game.homeTeam?.name || 'Home Team'}
+                awayTeamName={game.awayTeam?.name || 'Away Team'}
+                homeTeamColor={game.homeTeam?.colorHex || '#3b82f6'}
+                awayTeamColor={game.awayTeam?.colorHex || '#ef4444'}
+              />
             </div>
           ) : (
             <div className="py-4 text-center text-sm text-red-500">
