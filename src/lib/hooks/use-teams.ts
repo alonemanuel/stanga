@@ -209,14 +209,18 @@ export function useAssignPlayer() {
         
         console.log('🔄 Optimistically adding player to team', { teamId, playerId: data.playerId });
         
+        // Try to get player data from players cache
+        const playersData = queryClient.getQueryData(['players']) as any;
+        const playerInfo = playersData?.data?.find((p: any) => p.id === data.playerId);
+        
         const updatedTeams = oldData.data.map((team: any) => {
           if (team.id === teamId) {
-            // Create a mock assignment for optimistic update
+            // Create a mock assignment for optimistic update with real player data if available
             const mockAssignment = {
               id: `temp-${Date.now()}`,
               playerId: data.playerId,
               teamId: teamId,
-              player: {
+              player: playerInfo || {
                 id: data.playerId,
                 name: 'Loading...',
                 skillLevel: 5,
@@ -240,15 +244,10 @@ export function useAssignPlayer() {
     onSuccess: (data, variables) => {
       console.log('✅ Assign player - onSuccess called', { data, variables });
       
-      // Force immediate refetch of the specific matchday teams query
-      queryClient.refetchQueries({ 
-        queryKey: ['teams', 'matchday'], 
-        exact: false 
-      });
-      // Also refetch players queries in case they're affected
-      queryClient.refetchQueries({ queryKey: ['players'] });
+      // Don't refetch immediately - let optimistic updates persist
+      // The cache will naturally refresh on next mount/focus/interval
+      console.log('🎯 Keeping optimistic updates, skipping immediate refetch');
       
-      console.log('🔄 Forced refetch for teams and players');
       toast.success(data.message || 'Player assigned successfully');
     },
     onError: (error: Error, variables, context) => {
@@ -260,12 +259,15 @@ export function useAssignPlayer() {
       }
       toast.error(error.message);
     },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.refetchQueries({ 
-        queryKey: ['teams', 'matchday'], 
-        exact: false 
-      });
+    onSettled: (data, error) => {
+      // Only refetch on error to ensure consistency, let optimistic updates persist on success
+      if (error) {
+        console.log('🔄 Refetching due to error');
+        queryClient.refetchQueries({ 
+          queryKey: ['teams', 'matchday'], 
+          exact: false 
+        });
+      }
     },
   });
 }
@@ -314,15 +316,10 @@ export function useUnassignPlayer() {
     onSuccess: (data) => {
       console.log('✅ Unassign player - onSuccess called', { data });
       
-      // Force immediate refetch of the specific matchday teams query
-      queryClient.refetchQueries({ 
-        queryKey: ['teams', 'matchday'], 
-        exact: false 
-      });
-      // Also refetch players queries in case they're affected
-      queryClient.refetchQueries({ queryKey: ['players'] });
+      // Don't refetch immediately - let optimistic updates persist
+      // The cache will naturally refresh on next mount/focus/interval
+      console.log('🎯 Keeping optimistic updates, skipping immediate refetch');
       
-      console.log('🔄 Forced refetch for teams and players');
       toast.success(data.message || 'Player unassigned successfully');
     },
     onError: (error: Error, variables, context) => {
@@ -334,12 +331,15 @@ export function useUnassignPlayer() {
       }
       toast.error(error.message);
     },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.refetchQueries({ 
-        queryKey: ['teams', 'matchday'], 
-        exact: false 
-      });
+    onSettled: (data, error) => {
+      // Only refetch on error to ensure consistency, let optimistic updates persist on success
+      if (error) {
+        console.log('🔄 Refetching due to error');
+        queryClient.refetchQueries({ 
+          queryKey: ['teams', 'matchday'], 
+          exact: false 
+        });
+      }
     },
   });
 }

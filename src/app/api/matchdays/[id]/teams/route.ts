@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { matchdays, teams } from '@/lib/db/schema';
+import { matchdays, teams, teamAssignments, players } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { getAvailableColors, resolveColorHex, resolveTeamName } from '@/lib/teams';
@@ -156,12 +156,54 @@ export async function GET(
         isNull(teams.deletedAt)
       ))
       .orderBy(teams.createdAt);
+
+    // Get team assignments for each team
+    const teamsWithAssignments = await Promise.all(
+      matchdayTeams.map(async (team) => {
+        const assignments = await db
+          .select({
+            id: teamAssignments.id,
+            matchdayId: teamAssignments.matchdayId,
+            teamId: teamAssignments.teamId,
+            playerId: teamAssignments.playerId,
+            position: teamAssignments.position,
+            positionOrder: teamAssignments.positionOrder,
+            xPct: teamAssignments.xPct,
+            yPct: teamAssignments.yPct,
+            createdAt: teamAssignments.createdAt,
+            createdBy: teamAssignments.createdBy,
+            deletedAt: teamAssignments.deletedAt,
+            player: {
+              id: players.id,
+              name: players.name,
+              nickname: players.nickname,
+              position: players.position,
+              skillLevel: players.skillLevel,
+              isActive: players.isActive,
+            },
+          })
+          .from(teamAssignments)
+          .innerJoin(players, eq(teamAssignments.playerId, players.id))
+          .where(and(
+            eq(teamAssignments.teamId, team.id),
+            isNull(teamAssignments.deletedAt),
+            isNull(players.deletedAt)
+          ))
+          .orderBy(teamAssignments.positionOrder);
+
+        return {
+          ...team,
+          assignments,
+          playerCount: assignments.length,
+        };
+      })
+    );
     
     return NextResponse.json({
-      data: matchdayTeams,
+      data: teamsWithAssignments,
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
       },
     });
     
