@@ -1,0 +1,180 @@
+---
+description: Standard workflow for working on TaskMaster tasks and creating PRs
+globs: **/*
+alwaysApply: true
+---
+
+# Task-to-PR Workflow
+
+This document outlines the correct workflow for working on TaskMaster tasks and managing pull requests.
+
+## **Standard Task Development Workflow**
+
+### **1. Task Selection & Setup**
+```bash
+# Get next available task
+task-master next
+
+# Create branch for the task
+git checkout -b task-<id>/<descriptive-name>
+
+# Set task to in-progress
+task-master set-status --id=<id> --status=in-progress
+```
+
+### **2. Implementation Phase**
+- Implement the required changes
+- Follow existing code patterns and conventions
+- Test changes locally (`npm run build`, etc.)
+- Update subtasks with progress using `task-master update-subtask`
+
+### **3. PR Creation**
+```bash
+# Commit changes
+git add .
+git commit -m "feat: descriptive commit message (task <id>)"
+
+# Push branch
+git push -u origin task-<id>/<descriptive-name>
+
+# Create PR
+gh pr create --title "Task <id>: Description" --body "..." --draft
+```
+
+### **4. User Review & Approval**
+- Wait for user to review the changes
+- Make any requested modifications
+- User provides final approval (typically says "DONE" or similar)
+
+### **5. Task Completion (CRITICAL ORDER)**
+
+**✅ CORRECT ORDER:**
+```bash
+# 1. FIRST: Mark task as done in TaskMaster
+task-master set-status --id=<id> --status=done
+
+# 2. THEN: Mark PR as ready (if draft)
+gh pr ready <pr-number>
+
+# 3. FINALLY: Merge the PR
+gh pr merge <pr-number> --squash
+# OR use GitHub MCP tools:
+# mcp_github_merge_pull_request
+```
+
+**❌ INCORRECT ORDER:**
+```bash
+# DON'T do this - merging before marking task as done
+gh pr merge <pr-number>  # ❌ Wrong!
+task-master set-status --id=<id> --status=done  # ❌ Too late!
+```
+
+## **Why This Order Matters**
+
+### **Task Status Before Merge:**
+- ✅ Ensures task completion is recorded before code goes live
+- ✅ Maintains clear audit trail of when work was actually finished
+- ✅ Prevents confusion about task status vs. code deployment status
+- ✅ Allows for proper tracking of development velocity
+
+### **Merge After Task Completion:**
+- ✅ Code deployment happens after work is officially complete
+- ✅ Consistent workflow that's predictable and repeatable
+- ✅ Proper separation of task management from code deployment
+
+## **Branch Management**
+
+### **After Successful Merge:**
+```bash
+# Switch back to main and clean up
+git checkout main
+git pull origin main
+git branch -d task-<id>/<descriptive-name>  # Delete local branch
+git remote prune origin  # Clean up remote tracking branches
+```
+
+### **Branch Naming Convention:**
+- Format: `task-<id>/<short-description>`
+- Examples: 
+  - `task-29/edit-delete-icons`
+  - `task-22/auto-fill-name`
+  - `task-15/user-authentication`
+
+## **Commit Message Format**
+
+### **Standard Format:**
+```
+<type>: <description> (task <id>)
+
+<optional body with more details>
+
+Closes task <id>
+```
+
+### **Types:**
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `refactor:` - Code refactoring
+- `style:` - UI/styling changes
+- `docs:` - Documentation updates
+- `test:` - Adding or updating tests
+
+### **Examples:**
+```bash
+git commit -m "feat: replace edit text with icons and add delete functionality (task 29)
+
+- Replace 'Edit Matchday' text with pencil icon
+- Add trash icon for delete functionality with confirmation
+- Implement proper accessibility with aria-labels
+
+Closes task 29"
+```
+
+## **Error Recovery**
+
+### **If You Merge Before Marking Task Done:**
+1. Acknowledge the mistake
+2. Mark the task as done immediately after
+3. Note the correct order for future reference
+4. Continue with proper workflow on next task
+
+### **If PR Has Conflicts:**
+1. Pull latest changes from main
+2. Resolve conflicts locally
+3. Push resolved changes
+4. Continue with normal workflow
+
+## **TaskMaster Integration**
+
+### **Key Commands:**
+- `task-master next` - Get next available task
+- `task-master show <id>` - View task details
+- `task-master set-status --id=<id> --status=<status>` - Update task status
+- `task-master update-subtask --id=<id> --prompt="notes"` - Log progress
+
+### **Task Statuses:**
+- `pending` - Ready to work on
+- `in-progress` - Currently being worked on
+- `done` - Completed and verified ✅
+- `deferred` - Postponed
+- `cancelled` - No longer needed
+
+## **Best Practices**
+
+### **✅ DO:**
+- Always mark task as done BEFORE merging PR
+- Use descriptive branch names and commit messages
+- Test changes locally before creating PR
+- Log progress in subtasks during implementation
+- Follow the standard workflow consistently
+
+### **❌ DON'T:**
+- Merge PR before marking task as done
+- Skip testing changes locally
+- Use vague commit messages
+- Work on multiple tasks in the same branch
+- Forget to clean up branches after merge
+
+---
+
+**Remember: Task completion status should always be updated BEFORE code deployment (PR merge).**

@@ -767,7 +767,7 @@
         "description": "In the matchday view, replace the 'Edit Matchday' text with a pencil icon and add a trash icon for deleting matchdays with a confirmation dialog.",
         "details": "To enhance the matchday view, replace the 'Edit Matchday' text with a pencil icon using a library like FontAwesome or Material Icons. Ensure the icon is styled appropriately and includes an aria-label for accessibility. Next to the pencil icon, add a trash icon to enable matchday deletion. Implement a confirmation dialog that appears when the trash icon is clicked, asking users to confirm the deletion to prevent accidental removals. Use a modal dialog component for the confirmation, ensuring it is accessible and keyboard navigable. Update the backend to handle matchday deletion requests securely, ensuring only authorized users can delete matchdays. Update the UI to reflect the deletion immediately upon confirmation.",
         "testStrategy": "Verify that the 'Edit Matchday' text is replaced with a pencil icon and that it is visually aligned and accessible. Test the trash icon to ensure it triggers a confirmation dialog when clicked. Confirm that the dialog is accessible and can be navigated using the keyboard. Test the deletion process by confirming the dialog and ensuring the matchday is removed from the view and the backend. Check that unauthorized users cannot delete matchdays and that the UI updates correctly after deletion.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           5,
           18
@@ -778,7 +778,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:13:03.810Z",
+      "updated": "2025-09-21T13:27:12.806Z",
       "description": "Tasks for master context"
     }
   }
