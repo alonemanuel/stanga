@@ -594,7 +594,7 @@
         "description": "Remove the profile tab from the main navigation and integrate profile access through a dropdown menu in the header.",
         "details": "To update the profile access pattern, first remove the existing profile tab from the main navigation bar. Then, modify the header component to include a user profile icon or the user's name. Implement a dropdown menu that appears when the user clicks on this icon or name. The dropdown should contain options such as 'View Profile', 'Settings', and 'Sign Out'. Use Tailwind CSS for styling the dropdown to ensure it matches the application's design. Ensure the dropdown is accessible, with keyboard navigation and ARIA roles. Consider using React's useState or useReducer hooks to manage the dropdown's open/close state. Additionally, ensure that the dropdown menu is responsive and works well on both desktop and mobile devices.",
         "testStrategy": "Verify that the profile tab is no longer present in the main navigation. Test the header menu to ensure the dropdown appears when clicking the profile icon or name. Check that all options in the dropdown are functional and lead to the correct pages. Use browser developer tools to ensure the dropdown is styled correctly and is accessible. Conduct cross-browser testing to ensure consistent behavior. Perform user testing to confirm that the new access pattern is intuitive and improves navigation.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           11,
           2
@@ -635,7 +635,7 @@
         "description": "Wrap the Stanga brand wordmark in the header with a Link component to navigate to the homepage.",
         "details": "To implement this feature, locate the header component where the Stanga brand wordmark is rendered. Use a Link component from the Next.js framework to wrap the wordmark text. This Link should route to the root path ('/'), ensuring that clicking the wordmark redirects users to the homepage. Ensure that the Link component is styled appropriately to maintain the current design of the header. Consider accessibility by ensuring the link has a descriptive aria-label, such as 'Navigate to homepage'. Verify that the wordmark remains visually consistent with the rest of the header elements, especially if there are hover or active states defined in the CSS.",
         "testStrategy": "Manually test the header to ensure that clicking the Stanga brand wordmark redirects to the homepage. Verify that the Link component is correctly wrapping the wordmark by inspecting the DOM. Use browser developer tools to ensure that the link has the correct href attribute pointing to the root path ('/'). Test the functionality across different browsers to ensure consistent behavior. Additionally, check that the link is accessible by using screen reader tools to verify the presence of an aria-label.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           11,
           12
@@ -646,7 +646,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T10:43:45.848Z",
+      "updated": "2025-09-21T10:46:18.932Z",
       "description": "Tasks for master context"
     }
   }

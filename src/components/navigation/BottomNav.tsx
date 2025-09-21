@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, Users, BarChart3, User } from "lucide-react";
+import { Home, CalendarDays, Users, BarChart3 } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -15,7 +15,6 @@ const items: NavItem[] = [
   { href: "/matchdays", label: "Matchdays", icon: CalendarDays },
   { href: "/players", label: "Players", icon: Users },
   { href: "/stats", label: "Stats", icon: BarChart3 },
-  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function BottomNav() {
@@ -25,7 +24,7 @@ export function BottomNav() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <ul className="mx-auto grid max-w-screen-sm grid-cols-5">
+      <ul className="mx-auto grid max-w-screen-sm grid-cols-4">
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
