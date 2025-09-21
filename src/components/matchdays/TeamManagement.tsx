@@ -17,7 +17,7 @@ import { useMatchdayTeams, useInitializeTeams, useAssignPlayer, useUnassignPlaye
 import { usePlayers } from "@/lib/hooks/use-players";
 import { TEAM_COLORS, type ColorToken } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface TeamManagementProps {
   matchdayId: string;
@@ -44,7 +44,7 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
       }
     );

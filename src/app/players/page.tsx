@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlayerForm } from "@/components/players/PlayerForm";
 import { usePlayers, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Player {
   id: string;
@@ -39,7 +39,7 @@ export default function PlayersPage() {
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
       }
     );
