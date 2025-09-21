@@ -8,7 +8,7 @@ import { useZodForm, Form } from "@/components/forms/Form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
+import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const EmailSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -40,7 +40,7 @@ export default function SignInPage() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: AuthChangeEvent, session: Session | null) => {
         if (session?.user) {
           router.push('/');
         }
