@@ -75,6 +75,7 @@ interface ActiveGameProps {
 
 function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const { data: playersData } = usePlayers();
+  const { data: teamsData } = useMatchdayTeams(matchdayId);
   const { data: goalsData, isLoading: goalsLoading } = useGameGoals(game.id);
   const addGoalMutation = useAddGoal();
   const editGoalMutation = useEditGoal();
@@ -84,11 +85,23 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const [showPenalties, setShowPenalties] = React.useState(false);
   
   const players = playersData?.data || [];
-  const activePlayers = players.filter(p => p.isActive);
+  const teams = teamsData?.data || [];
   
-  // Get team players for goal assignment
-  const homeTeamPlayers = activePlayers; // TODO: Filter to actual team players when team assignments are available
-  const awayTeamPlayers = activePlayers; // TODO: Filter to actual team players when team assignments are available
+  // Get team players for goal assignment from team assignments
+  const homeTeam = teams.find(t => t.id === game.homeTeamId);
+  const awayTeam = teams.find(t => t.id === game.awayTeamId);
+  
+  const homeTeamPlayers = homeTeam?.assignments?.map(assignment => ({
+    id: assignment.player.id,
+    name: assignment.player.name,
+    isActive: assignment.player.isActive
+  })).filter(p => p.isActive) || [];
+  
+  const awayTeamPlayers = awayTeam?.assignments?.map(assignment => ({
+    id: assignment.player.id,
+    name: assignment.player.name,
+    isActive: assignment.player.isActive
+  })).filter(p => p.isActive) || [];
   
   // Check if game should show penalties (tied and ended)
   React.useEffect(() => {
