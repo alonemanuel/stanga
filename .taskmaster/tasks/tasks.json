@@ -662,11 +662,123 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Enhance Matchday Creation Form with Auto-Fill Name Feature",
+        "description": "Modify the matchday creation form to make the name field optional and auto-fill it based on the date if left empty.",
+        "details": "To implement this feature, update the matchday creation form to allow the name field to be optional. When the user leaves the name field empty, automatically generate a default name using the format 'DD/MM Matchday', where 'DD' is the day and 'MM' is the month of the matchday date. This involves modifying the form validation logic to accept an empty name field and adding a function to generate the default name based on the selected date. Ensure that the generated name is displayed in the form before submission, allowing users to see the default name and make changes if desired. Update the backend to handle cases where the name is not provided, using the generated default name for storage. Consider edge cases such as different date formats and ensure the feature is compatible with existing matchday creation logic.",
+        "testStrategy": "Verify that the matchday creation form accepts an empty name field and correctly auto-fills it with a default name based on the date. Test various date inputs to ensure the default name is generated in the correct format. Check that the default name is visible in the form before submission and can be edited by the user. Ensure that the backend correctly stores the default name when the name field is left empty. Conduct regression testing to confirm that existing matchday creation functionality remains unaffected.",
+        "status": "pending",
+        "dependencies": [
+          5
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Remove Unnecessary Fields from Matchday Creation Form",
+        "description": "Eliminate the description field and public matchday checkbox from the matchday creation form and related backend logic.",
+        "details": "To streamline the matchday creation process, remove the description field from the form UI and the associated data model. Additionally, eliminate the public matchday checkbox, as all matchdays will be public by default. This requires updating the form validation logic to exclude these fields and modifying the backend API to no longer expect or process these fields. Ensure that any references to these fields in the codebase, including database schemas and API endpoints, are removed or updated. Adjust any business logic that previously depended on the public/private status of matchdays to assume all matchdays are public.",
+        "testStrategy": "Verify that the matchday creation form no longer displays the description field or the public matchday checkbox. Test the form submission to ensure it functions correctly without these fields and that matchdays are created as public by default. Check the database and API responses to confirm that the removed fields are not being processed or stored. Conduct regression testing to ensure no other functionalities are affected by these changes.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          22
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Move Team Size to Matchday Settings and Implement Adjustment Controls",
+        "description": "Replace the max players setting with team size in matchday settings, moving it from game rules, and implement plus/minus buttons for adjustment.",
+        "details": "To implement this task, first update the matchday settings schema to include team size and remove the max players field. Modify the UI to display the team size setting within the matchday settings section, replacing the current max players field. Implement plus and minus buttons next to the team size input field to allow users to easily adjust the team size incrementally. Additionally, provide an option for users to manually input a team size value. Ensure that the UI updates dynamically as users interact with the controls. Update any backend logic to handle the new team size field appropriately, ensuring that it is stored and retrieved correctly from the database. Consider using a UI library for the plus/minus buttons to ensure consistency with existing UI components.",
+        "testStrategy": "Verify that the matchday settings UI displays the team size field instead of max players. Test the plus and minus buttons to ensure they increment and decrement the team size correctly. Check that manual input of team size is accepted and updates the field appropriately. Ensure that the team size value is correctly saved to and retrieved from the database. Conduct UI tests to confirm that the controls are responsive and accessible. Validate that the backend logic correctly processes the team size field during matchday creation and updates.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          22
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Add Plus/Minus Controls for Number of Teams in Matchday Creation",
+        "description": "Implement plus/minus buttons and manual input for adjusting the number of teams in the matchday creation form to enhance user experience.",
+        "details": "To implement this feature, update the matchday creation form to include a new field for the number of teams. Add plus and minus buttons adjacent to this field to allow users to increment or decrement the number of teams easily. Ensure the field also supports manual input for direct number entry. Use React state to manage the value of the number of teams, updating the state on button clicks or manual input changes. Consider accessibility by ensuring the buttons are keyboard navigable and have appropriate ARIA labels. Update the form validation logic to ensure the number of teams is within a reasonable range (e.g., 2 to 20). Modify the backend API to accept and process the number of teams field, updating any relevant data models or schemas as necessary.",
+        "testStrategy": "Verify that the matchday creation form displays the number of teams field with functional plus and minus buttons. Test that clicking the plus button increments the number of teams and the minus button decrements it, ensuring the value stays within the allowed range. Check that manual input is accepted and updates the field correctly. Ensure the form submits successfully with the number of teams included and that the backend processes this data correctly. Conduct accessibility testing to confirm that the controls are usable via keyboard and screen readers.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          22,
+          24
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "Make Game Rules Section Collapsible and Prefilled in Matchday Creation",
+        "description": "Implement a collapsible game rules section in the matchday creation form, collapsed by default with sensible default values pre-filled.",
+        "details": "To enhance the user experience in the matchday creation form, modify the form to include a collapsible panel for the game rules section. Use a UI library such as Material-UI or Bootstrap to implement the collapsible functionality, ensuring that the section is collapsed by default to minimize visual clutter. Prefill the game rules section with sensible default values that can be customized by the user upon expansion. Manage the toggle state using React state or context to ensure consistent behavior across the application. Ensure that the default values are meaningful and align with common user preferences or organizational standards. Additionally, ensure that the collapsible section is accessible, with appropriate aria attributes and keyboard navigability.",
+        "testStrategy": "Verify that the game rules section is collapsed by default when the matchday creation form loads. Test the expand/collapse functionality by clicking the toggle button and ensure the section expands and collapses smoothly. Check that the default values are prefilled correctly and can be modified by the user. Use browser developer tools to inspect the aria attributes and ensure they are correctly set for accessibility. Conduct cross-browser testing to ensure consistent behavior across different environments.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          20
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Remove Penalties on Tie Checkbox and Penalty Win Weight Field from Game Rules",
+        "description": "Eliminate the 'penalties on tie' checkbox and 'penalty win weight' field from the game rules configuration to simplify the interface.",
+        "details": "To simplify the game rules configuration, start by identifying the UI components and backend logic associated with the 'penalties on tie' checkbox and the 'penalty win weight' field. Remove these elements from the game rules UI, ensuring that any related state management and event handlers are also deleted. On the backend, update the data models and API endpoints to no longer expect or process these fields. This may involve modifying database schemas and removing any business logic that handles penalties on tie scenarios. Ensure that all references to these fields in the codebase are removed or updated to reflect their removal. Consider updating any documentation or user guides that mention these fields.",
+        "testStrategy": "Verify that the game rules configuration UI no longer displays the 'penalties on tie' checkbox or the 'penalty win weight' field. Test the game rules submission process to ensure it functions correctly without these fields. Check the backend logs and API responses to confirm that no requests related to these fields are processed. Conduct a code review to ensure all references to these fields have been removed. Update and review any documentation to ensure it no longer references the removed fields.",
+        "status": "pending",
+        "dependencies": [
+          26
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Make Location Field Optional in Matchday Creation",
+        "description": "Modify the matchday creation process to make the location field optional, removing the current validation requirement for at least 2 characters.",
+        "details": "To implement this task, update the matchday creation form and backend validation logic to make the location field optional. This involves modifying the Zod schema for matchday creation to allow an empty string or null value for the location field. Remove any frontend validation that enforces a minimum character count for this field. Ensure that the backend API can handle matchday creation requests without a location specified, and update any related database schemas or models to accept null or empty values for the location field. Additionally, review any UI components that display the location to ensure they handle cases where the location is not provided gracefully, such as displaying 'Location not specified' or leaving the field blank.",
+        "testStrategy": "Verify that the matchday creation form allows submission without a location specified and that no validation errors occur. Test the backend API to ensure it accepts matchday creation requests with an empty or null location field. Check the database to confirm that matchdays can be created without a location and that the field is stored correctly as null or empty. Review the UI to ensure it displays matchdays without a location appropriately, without errors or placeholders that suggest a location is required.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          22,
+          23
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Replace 'Edit Matchday' Text with Pencil Icon and Add Delete Functionality",
+        "description": "In the matchday view, replace the 'Edit Matchday' text with a pencil icon and add a trash icon for deleting matchdays with a confirmation dialog.",
+        "details": "To enhance the matchday view, replace the 'Edit Matchday' text with a pencil icon using a library like FontAwesome or Material Icons. Ensure the icon is styled appropriately and includes an aria-label for accessibility. Next to the pencil icon, add a trash icon to enable matchday deletion. Implement a confirmation dialog that appears when the trash icon is clicked, asking users to confirm the deletion to prevent accidental removals. Use a modal dialog component for the confirmation, ensuring it is accessible and keyboard navigable. Update the backend to handle matchday deletion requests securely, ensuring only authorized users can delete matchdays. Update the UI to reflect the deletion immediately upon confirmation.",
+        "testStrategy": "Verify that the 'Edit Matchday' text is replaced with a pencil icon and that it is visually aligned and accessible. Test the trash icon to ensure it triggers a confirmation dialog when clicked. Confirm that the dialog is accessible and can be navigated using the keyboard. Test the deletion process by confirming the dialog and ensuring the matchday is removed from the view and the backend. Check that unauthorized users cannot delete matchdays and that the UI updates correctly after deletion.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          18
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T12:41:35.682Z",
+      "updated": "2025-09-21T13:00:54.997Z",
       "description": "Tasks for master context"
     }
   }
