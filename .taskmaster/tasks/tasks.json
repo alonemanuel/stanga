@@ -1191,11 +1191,38 @@
             "testStrategy": "Verify that the page loads correctly and both tables display accurate data. Test navigation to and from the stats tab. Conduct cross-browser testing to ensure consistent behavior."
           }
         ]
+      },
+      {
+        "id": 40,
+        "title": "Remove 'Team' Suffix from Team Names in Team Management Interface",
+        "description": "Update the team management interface to remove the 'team' suffix from team names, simplifying the display to show only the team name.",
+        "details": "To implement this change, first identify all components and templates within the team management interface where team names are displayed. This may include lists, dropdowns, and detail views. Update the logic responsible for rendering team names to exclude the 'team' suffix. This can be achieved by modifying the string formatting or template logic to display only the base name (e.g., 'Blue' instead of 'Blue Team'). Ensure that any backend services or APIs that provide team names are also updated to reflect this change, if necessary. Review the codebase for any hardcoded instances of team names and update them accordingly. Consider potential impacts on related features such as search or filtering, and test these thoroughly.",
+        "testStrategy": "Verify that all instances of team names in the team management interface no longer include the 'team' suffix by manually inspecting the UI. Check dropdowns, lists, and detail views to ensure consistency. Conduct regression testing on related features such as team search and filtering to confirm they function correctly with the updated team names. Use browser developer tools to inspect elements and ensure no residual 'team' suffixes remain in the rendered HTML or JavaScript.",
+        "status": "pending",
+        "dependencies": [
+          12
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 41,
+        "title": "Automatically Display Pre-Populated Empty Teams Based on Matchday Settings",
+        "description": "Modify the system to automatically display the correct number of empty teams (2, 3, or 4) based on matchday settings, eliminating the need for users to click 'Initialize Teams'.",
+        "details": "To implement this feature, first update the matchday settings logic to determine the number of teams required based on the current matchday configuration. Remove the 'Initialize Teams' button from the UI. Modify the team display component to automatically render the appropriate number of empty team slots when a matchday is accessed. Ensure that these slots are ready for player assignment immediately. Update any related state management logic to support this automatic initialization. Consider edge cases such as changes in matchday settings that might alter the number of teams required, and ensure the UI updates accordingly.",
+        "testStrategy": "Verify that upon accessing a matchday, the correct number of empty team slots are displayed automatically without requiring user interaction. Test various matchday settings to ensure the number of teams adjusts correctly. Check that the UI updates dynamically if matchday settings are changed. Ensure that the system remains stable and responsive during these updates. Conduct user testing to confirm that the workflow is intuitive and meets user expectations.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          24
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T16:37:33.402Z",
+      "updated": "2025-09-21T16:46:12.481Z",
       "description": "Tasks for master context"
     }
   }
