@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -17,7 +18,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center space-x-2">
-            <h1 className="font-semibold text-lg tracking-tight">Stanga</h1>
+            <Link 
+              href="/" 
+              aria-label="Navigate to homepage"
+              className="font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:rounded-sm"
+            >
+              <h1>Stanga</h1>
+            </Link>
           </div>
           <nav className="flex items-center space-x-2" role="navigation" aria-label="Header navigation">
             <ModeToggle />
