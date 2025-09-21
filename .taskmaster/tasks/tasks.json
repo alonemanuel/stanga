@@ -1218,11 +1218,53 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 42,
+        "title": "Fix Player Count Display in Team View",
+        "description": "Correct the player count display in the team view to show the current and target number of players in the format 'current/target'.",
+        "details": "To fix the player count display issue, first locate the component responsible for rendering the team view. Identify where the player count is being calculated and displayed. Update the logic to fetch the target number of players from the matchday settings, ensuring that both the current and target numbers are available. Modify the display format to 'current/target', such as '1/5'. Ensure that the data source for the target number is accurate and reflects the matchday settings. Update any related API endpoints or data fetching logic if necessary to include the target player count. Consider edge cases where the target number might not be set and handle these gracefully in the UI.",
+        "testStrategy": "Verify that the team view correctly displays the player count in the 'current/target' format for various scenarios, including different matchday settings. Test with different numbers of current players and ensure the display updates dynamically. Check that the target number is accurate and reflects the matchday settings. Conduct regression testing to ensure no other parts of the team view are affected by the changes. Use unit tests to validate any updated logic for fetching or calculating player counts.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          31
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 43,
+        "title": "Redesign Quick Assign as Scrollable Player Selection Interface",
+        "description": "Transform the current quick assign feature to a scrollable interface, allowing users to view and select from all available players.",
+        "details": "To redesign the quick assign feature, replace the existing interface that displays only three players with a new scrollable view. This view should list all available players, allowing users to scroll through and select players to add to their team. Utilize the existing players module (Task 4) to fetch player data, ensuring that the list is dynamically populated with current player information. Implement a user-friendly UI that supports smooth scrolling and intuitive player selection. Consider using a virtualized list to handle large numbers of players efficiently. Ensure that the interface is responsive and accessible, with clear visual indicators for selected players. Integrate with the existing team assignment logic to update team rosters in real-time as players are selected.",
+        "testStrategy": "Verify that the scrollable player selection interface displays all available players correctly. Test the scrolling functionality to ensure it is smooth and responsive. Check that selecting a player updates the team roster immediately and accurately. Validate that the interface is accessible, with appropriate keyboard navigation and screen reader support. Test on various devices and screen sizes to ensure consistent performance and usability.",
+        "status": "pending",
+        "dependencies": [
+          4,
+          34
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 44,
+        "title": "Implement Team Color Picker with Automatic Name Updates",
+        "description": "Develop a feature allowing users to change team colors via a color picker, automatically updating the team name to match the selected color.",
+        "details": "To implement this feature, first design a user-friendly color picker interface that can be integrated into the team settings page. Use a library like 'react-color' for the color picker component. When a user selects a new color, update the team's color attribute in the database and automatically change the team's name to reflect the new color (e.g., 'Red Team' for red). Ensure that the color picker is accessible and works across different devices. Update the backend API to handle color changes and name updates atomically to maintain data consistency. Consider edge cases such as duplicate team names and provide a fallback mechanism (e.g., appending a number to the name).",
+        "testStrategy": "Verify that the color picker is displayed correctly and allows users to select a color. Test that selecting a color updates the team's color and name in the database and UI. Check for data consistency by ensuring that the color and name are updated atomically. Test the feature on various devices and browsers to ensure compatibility. Simulate edge cases such as selecting the same color for multiple teams and verify that the fallback mechanism works correctly.",
+        "status": "pending",
+        "dependencies": [
+          32,
+          41
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T16:46:12.481Z",
+      "updated": "2025-09-21T16:47:05.556Z",
       "description": "Tasks for master context"
     }
   }
