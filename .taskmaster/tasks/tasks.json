@@ -736,13 +736,66 @@
         "description": "Eliminate the description field and public matchday checkbox from the matchday creation form and related backend logic.",
         "details": "To streamline the matchday creation process, remove the description field from the form UI and the associated data model. Additionally, eliminate the public matchday checkbox, as all matchdays will be public by default. This requires updating the form validation logic to exclude these fields and modifying the backend API to no longer expect or process these fields. Ensure that any references to these fields in the codebase, including database schemas and API endpoints, are removed or updated. Adjust any business logic that previously depended on the public/private status of matchdays to assume all matchdays are public.",
         "testStrategy": "Verify that the matchday creation form no longer displays the description field or the public matchday checkbox. Test the form submission to ensure it functions correctly without these fields and that matchdays are created as public by default. Check the database and API responses to confirm that the removed fields are not being processed or stored. Conduct regression testing to ensure no other functionalities are affected by these changes.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           22
         ],
         "priority": "medium",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Remove Description Field from Form UI",
+            "description": "Eliminate the description field from the matchday creation form UI.",
+            "dependencies": [],
+            "details": "Locate the form component responsible for rendering the matchday creation form. Identify the section of the code where the description field is defined. Remove the HTML or JSX code for the description field. Ensure that any associated state management or event handlers related to the description field are also removed.",
+            "status": "done",
+            "testStrategy": "Verify that the description field is no longer visible in the matchday creation form by manually inspecting the UI."
+          },
+          {
+            "id": 2,
+            "title": "Remove Public Matchday Checkbox from Form UI",
+            "description": "Eliminate the public matchday checkbox from the matchday creation form UI.",
+            "dependencies": [],
+            "details": "In the form component, locate the section of the code where the public matchday checkbox is defined. Remove the HTML or JSX code for the checkbox. Ensure that any associated state management or event handlers related to the checkbox are also removed.",
+            "status": "done",
+            "testStrategy": "Verify that the public matchday checkbox is no longer visible in the matchday creation form by manually inspecting the UI."
+          },
+          {
+            "id": 3,
+            "title": "Update Form Validation Logic",
+            "description": "Modify the form validation logic to exclude the description field and public matchday checkbox.",
+            "dependencies": [
+              "23.1",
+              "23.2"
+            ],
+            "details": "Review the form validation logic to identify any rules or checks related to the description field and public matchday checkbox. Remove or update these validation rules to ensure they no longer expect these fields. Test the form validation to ensure it functions correctly without these fields.",
+            "status": "done",
+            "testStrategy": "Submit the form without the removed fields and verify that no validation errors occur related to the description or public matchday fields."
+          },
+          {
+            "id": 4,
+            "title": "Modify Backend API to Exclude Removed Fields",
+            "description": "Update the backend API to no longer expect or process the description field and public matchday checkbox.",
+            "dependencies": [
+              "23.3"
+            ],
+            "details": "Identify the API endpoints responsible for handling matchday creation. Remove any references to the description field and public matchday checkbox from the request payload processing logic. Update the data models and database schemas to exclude these fields if necessary.",
+            "status": "done",
+            "testStrategy": "Test the API endpoints to ensure they function correctly without the removed fields and that matchdays are created as public by default."
+          },
+          {
+            "id": 5,
+            "title": "Adjust Business Logic for Public Matchdays",
+            "description": "Update any business logic that previously depended on the public/private status of matchdays to assume all matchdays are public.",
+            "dependencies": [
+              "23.4"
+            ],
+            "details": "Review the codebase for any business logic that differentiates between public and private matchdays. Modify this logic to assume all matchdays are public. Ensure that any conditional checks or features related to private matchdays are removed or updated.",
+            "status": "done",
+            "testStrategy": "Review and test the application to ensure that all matchdays are treated as public and that no functionality is broken due to the removal of the private status logic."
+          }
+        ]
       },
       {
         "id": 24,
@@ -832,7 +885,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:13:40.812Z",
+      "updated": "2025-09-21T13:30:16.443Z",
       "description": "Tasks for master context"
     }
   }

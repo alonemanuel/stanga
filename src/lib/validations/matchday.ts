@@ -39,7 +39,6 @@ export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
 
 // Schema for creating a matchday
 export const MatchdayCreateSchema = z.object({
-  description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable().transform(val => val === '' ? null : val),
   scheduledAt: z.string().min(1, 'Date and time is required').refine((val) => {
     // Accept datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO
     const date = new Date(val);
@@ -48,12 +47,10 @@ export const MatchdayCreateSchema = z.object({
   location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable().transform(val => val === '' ? null : val),
   maxPlayers: z.coerce.number().int().min(6).max(30).default(18),
   rules: RulesSnapshotSchema.default(DEFAULT_RULES),
-  isPublic: z.boolean().default(true),
 });
 
 // Schema for updating a matchday
 export const MatchdayUpdateSchema = z.object({
-  description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable(),
   scheduledAt: z.string().refine((val) => {
     const date = new Date(val);
     return !isNaN(date.getTime());
@@ -61,7 +58,6 @@ export const MatchdayUpdateSchema = z.object({
   location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable(),
   maxPlayers: z.coerce.number().int().min(6).max(30).optional(),
   status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional(),
-  isPublic: z.boolean().optional(),
 });
 
 // Schema for query parameters

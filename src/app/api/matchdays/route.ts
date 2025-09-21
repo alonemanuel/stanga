@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
     const matchdaysList = await db
       .select({
         id: matchdays.id,
-        description: matchdays.description,
         scheduledAt: matchdays.scheduledAt,
         location: matchdays.location,
         maxPlayers: matchdays.maxPlayers,
@@ -130,12 +129,11 @@ export async function POST(request: NextRequest) {
       .insert(matchdays)
       .values({
         id: createId(),
-        description: matchdayData.description,
         scheduledAt: new Date(matchdayData.scheduledAt),
         location: matchdayData.location,
         maxPlayers: matchdayData.maxPlayers,
         rules: matchdayData.rules,
-        isPublic: matchdayData.isPublic,
+        isPublic: true, // All matchdays are public by default
         createdBy: user.id,
         updatedBy: user.id,
       })

@@ -10,7 +10,6 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Matchday {
   id: string;
-  description?: string | null;
   scheduledAt: string;
   location?: string | null;
   maxPlayers: number;
@@ -199,11 +198,6 @@ export default function MatchdaysPage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h3>
-                  {matchday.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {matchday.description}
-                    </p>
-                  )}
                 </div>
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(matchday.status)}`}>
                   {matchday.status.charAt(0).toUpperCase() + matchday.status.slice(1)}

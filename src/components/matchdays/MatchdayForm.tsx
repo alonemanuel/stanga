@@ -10,12 +10,10 @@ import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays"
 interface MatchdayFormProps {
   matchday?: {
     id: string;
-    description?: string | null;
     scheduledAt: string;
     location?: string | null;
     maxPlayers: number;
     rules: any;
-    isPublic: boolean;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -30,19 +28,15 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
   const schema = isEditing ? MatchdayUpdateSchema : MatchdayCreateSchema;
   const methods = useZodForm(schema, {
     defaultValues: isEditing ? {
-      description: matchday.description || "",
       scheduledAt: matchday.scheduledAt.slice(0, 16), // Convert to datetime-local format
       location: matchday.location || "",
       maxPlayers: matchday.maxPlayers,
       rules: matchday.rules,
-      isPublic: matchday.isPublic,
     } : {
-      description: "",
       scheduledAt: "",
       location: "",
       maxPlayers: 18,
       rules: DEFAULT_RULES,
-      isPublic: true,
     },
   });
 
@@ -84,14 +78,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
   return (
     <Form methods={methods} onSubmit={onSubmit} className="space-y-4">
       <TextField
-        name="description"
-        label="Description"
-        placeholder="Optional description of the matchday"
-        multiline
-        rows={3}
-      />
-      
-      <TextField
         name="scheduledAt"
         label="Date & Time"
         type="datetime-local"
@@ -104,30 +90,12 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
         placeholder="e.g., Central Park Field 1"
       />
       
-      <div className="grid grid-cols-2 gap-4">
-        <TextField
-          name="maxPlayers"
-          label="Max Players"
-          type="number"
-          placeholder="18"
-        />
-        
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Public Matchday
-          </label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              {...methods.register('isPublic')}
-              className="rounded border-input"
-            />
-            <span className="text-sm text-muted-foreground">
-              Allow public viewing
-            </span>
-          </div>
-        </div>
-      </div>
+      <TextField
+        name="maxPlayers"
+        label="Max Players"
+        type="number"
+        placeholder="18"
+      />
 
       {/* Rules Section */}
       <div className="border rounded-lg p-4 space-y-4">

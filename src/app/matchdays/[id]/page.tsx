@@ -208,12 +208,10 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
           <MatchdayForm
             matchday={{
               id: matchday.id,
-              description: matchday.description,
               scheduledAt: matchday.scheduledAt,
               location: matchday.location,
               maxPlayers: matchday.maxPlayers,
               rules: matchday.rules,
-              isPublic: matchday.isPublic,
             }}
             onSuccess={handleEditSuccess}
             onCancel={() => setIsEditing(false)}
@@ -265,12 +263,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   </span>
                 </div>
               </div>
-              {matchday.description && (
-                <div className="mt-4">
-                  <label className="text-sm font-medium text-muted-foreground">Description</label>
-                  <p className="text-sm mt-1">{matchday.description}</p>
-                </div>
-              )}
             </CollapsibleSection>
 
             {/* Rules Snapshot */}
