@@ -16,14 +16,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     
     // Get game details
     const game = await db
-      .select({
-        game: games,
-        homeTeam: teams,
-        awayTeam: teams
-      })
+      .select()
       .from(games)
-      .leftJoin(teams, eq(teams.id, games.homeTeamId))
-      .leftJoin(teams, eq(teams.id, games.awayTeamId))
       .where(and(eq(games.id, gameId), isNull(games.deletedAt)))
       .limit(1);
     
@@ -34,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    const currentGame = game[0].game;
+    const currentGame = game[0];
     
     // Get all goal events for this game
     const goalEvents = await db
