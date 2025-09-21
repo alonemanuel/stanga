@@ -7,11 +7,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   // Add some debugging and ensure proper static generation
-  experimental: {
-    logging: {
-      level: 'verbose',
-    },
-  },
+  // Note: logging config removed as it's not available in Next.js 15
   // Ensure all pages are properly generated
   trailingSlash: false,
 };
