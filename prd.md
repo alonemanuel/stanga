@@ -132,7 +132,9 @@ Matchday standings table:
 
 ## 7) Screens (mobile‑first)
 
-1) Auth: “Continue with Google” + email
+**App Shell**: Sticky header with Stanga brand wordmark and dark/light theme toggle button, positioned at top and visible during scrolling.
+
+1) Auth: "Continue with Google" + email
 2) Dashboard: next matchday; quick actions (Create matchday, Manage players)
 3) Players: list, search, add/edit
 4) Matchdays: list of cards (date/time/location, progress)
@@ -159,6 +161,7 @@ Matchday standings table:
 - Reliability: no data loss; optimistic UI with safe retries
 - Security: public read, auth required to write; all writes attributed
 - Accessibility: WCAG AA color contrast; large tap targets; keyboard support on desktop
+- UX: Sticky header with brand identity and theme toggle for consistent navigation
 - Cost: stays within free tiers for hosting, DB, auth
 
 ## 10) Analytics and Success

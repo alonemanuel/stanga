@@ -69,23 +69,29 @@ export const teams = pgTable('teams', {
   ...auditFields,
   matchdayId: text('matchday_id').references(() => matchdays.id).notNull(),
   name: text('name').notNull(),
-  color: text('color').notNull(), // Hex color code
-  formation: text('formation').default('4-4-2'), // Formation string
+  colorToken: text('color_token').notNull(), // 'blue', 'amber', 'rose'
+  colorHex: text('color_hex').notNull(), // Hex color code
+  formationJson: jsonb('formation_json'), // Formation data as JSON
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => ({
   matchdayIdx: index('teams_matchday_idx').on(table.matchdayId),
   activeIdx: index('teams_active_idx').on(table.isActive),
+  colorIdx: index('teams_color_idx').on(table.matchdayId, table.colorToken), // Unique color per matchday
 }));
 
 // Team assignments (players to teams for a matchday)
 export const teamAssignments = pgTable('team_assignments', {
   ...auditFields,
+  matchdayId: text('matchday_id').references(() => matchdays.id).notNull(),
   teamId: text('team_id').references(() => teams.id).notNull(),
   playerId: text('player_id').references(() => players.id).notNull(),
   position: text('position'), // Position within the team
   positionOrder: integer('position_order'), // For ordering within position
+  xPct: integer('x_pct'), // X position percentage for DnD grid
+  yPct: integer('y_pct'), // Y position percentage for DnD grid
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => ({
+  matchdayTeamPlayerIdx: index('team_assignments_matchday_team_player_idx').on(table.matchdayId, table.teamId, table.playerId),
   teamPlayerIdx: index('team_assignments_team_player_idx').on(table.teamId, table.playerId),
   playerIdx: index('team_assignments_player_idx').on(table.playerId),
   activeIdx: index('team_assignments_active_idx').on(table.isActive),

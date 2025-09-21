@@ -51,9 +51,10 @@
 
 ## Components
 
-- App shell: bottom nav (mobile), left nav (desktop)
+- App shell: sticky header with brand wordmark and theme toggle, bottom nav (mobile), left nav (desktop)
 - Cards, List items with leading avatar, Badge (team color), Pill counters
 - Inputs: segmented controls for team selection, numeric steppers for score
+- Interactive elements: all clickable elements use pointer cursor for clear affordance
 - DnD pitch: grid with slot placeholders; player chips draggable; long‑press on mobile
 - Color picker: curated palette ensuring contrast/accessibility
 - Dialogs/sheets: create/edit entities; destructive action confirms
@@ -103,6 +104,7 @@ Dark mode
 - Minimum touch target 44x44
 - Focus visible outlines; prefers-reduced-motion support
 - Color alone never conveys state; include labels/icons
+- Pointer cursor on all clickable elements (buttons, links, interactive cards, form controls)
 
 ## Empty States & Errors
 

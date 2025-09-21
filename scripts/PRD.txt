@@ -53,7 +53,8 @@ Constraints/goals:
   - Stats: overall | matchday | players | teams; charts/cards
   - Activity: reverse‑chronological edits with actor and timestamp
 - Components & Patterns
-  - App shell; cards; list items with avatars; badges; pills; dialogs/sheets; toasts; inline validation; trash views
+  - App shell with sticky header; cards; list items with avatars; badges; pills; dialogs/sheets; toasts; inline validation; trash views
+  - Sticky header with Stanga brand wordmark and dark/light theme toggle button
   - DnD pitch grid with slot placeholders; player chips draggable; long‑press on mobile
 - Theming & Tokens
   - System light/dark auto + manual toggle; CSS variables with Tailwind; Inter font
@@ -108,6 +109,7 @@ Constraints/goals:
 - MVP Requirements (build in logical phases, no timelines)
   1) Foundation
      - Initialize Next.js + Tailwind + shadcn/ui + Radix; theme tokens; mode toggle
+     - Implement sticky header with Stanga brand wordmark and theme toggle button
      - Configure Auth.js (Google, email) with JWT adapter (no DB) to start; upgradeable to DB sessions
      - Set up Drizzle ORM + Postgres (Neon/Supabase); migrations and seed scripts
   2) Players
@@ -143,6 +145,7 @@ Constraints/goals:
 # Logical Dependency Chain
 - Foundation first
   - Set up project tooling (Next.js, Tailwind, shadcn/ui, Drizzle); environment/secrets; DB migrations
+  - Implement sticky header with brand wordmark and theme toggle
   - Implement auth and session context; basic layout and theming
 - Domain scaffolding
   - Players CRUD → Matchday create/list/detail with rules snapshot → Teams (colors, assignments)

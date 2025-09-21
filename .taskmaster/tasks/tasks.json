@@ -240,15 +240,15 @@
           "4",
           "5"
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
             "title": "Initialize Teams with Unique Colors",
             "description": "Create an API endpoint to initialize 3 teams with unique colors from a curated palette for each matchday.",
             "dependencies": [],
-            "details": "Implement a POST /api/matchdays/:id/teams endpoint that initializes 3 teams using the blue, amber, and rose color tokens. Ensure that each team has a unique color per matchday by checking the database for existing color assignments. Use a transaction to enforce atomicity and handle errors if a color is already taken. Assign derived names to teams based on their color, such as 'Blue Team'.",
-            "status": "pending",
+            "details": "Implement a POST /api/matchdays/:id/teams endpoint that initializes 3 teams using the blue, amber, and rose color tokens. Ensure that each team has a unique color per matchday by checking the database for existing color assignments. Use a transaction to enforce atomicity and handle errors if a color is already taken. Assign derived names to teams based on their color, such as 'Blue Team'.\n<info added on 2025-09-20T16:02:59.768Z>\nUpdate the database schema to add the following fields: `colorToken` and `colorHex` to the `teams` table, `formationJson` to replace the existing `formation` text field in the `teams` table, and `matchdayId` to the `teamAssignments` table. Create a database migration to implement these schema changes. Define constants for the blue, amber, and rose color tokens with their respective hex values, and develop utility functions for color validation and resolution. Implement the `POST /api/matchdays/:id/teams` endpoint to initialize three teams with unique colors from the palette, ensuring the matchday exists and the user is authenticated. Use a database transaction to maintain atomicity and validate color uniqueness. Generate team names based on their colors, such as \"Blue Team\". Add validation schemas for team creation.\n</info added on 2025-09-20T16:02:59.768Z>\n<info added on 2025-09-20T16:05:38.585Z>\nSubtask 6.1 implementation completed successfully. The following key features were accomplished:\n\n1. Database schema updates were made to the `teams` and `teamAssignments` tables, including the addition of fields for color tokens, hex values, and DnD positioning.\n2. A curated color palette system was established, with utility functions for color validation and resolution.\n3. Comprehensive validation schemas were created for team operations.\n4. The `POST /api/matchdays/:id/teams` endpoint was implemented to initialize teams with unique colors, ensuring proper authentication, validation, and error handling.\n5. A `GET /api/matchdays/:id/teams` endpoint was added for team retrieval, with activity logging for audit purposes.\n6. The implementation ensures color uniqueness per matchday, automatic team name generation, transaction-based team creation, and comprehensive error handling.\n7. Testing confirmed endpoint functionality, database constraints, and transaction rollback on failure.\n</info added on 2025-09-20T16:05:38.585Z>",
+            "status": "done",
             "testStrategy": "Unit test the endpoint to ensure it rejects duplicate colors and correctly initializes teams with unique colors. Integration test by initializing teams for a matchday and verifying the database entries."
           },
           {
@@ -258,8 +258,8 @@
             "dependencies": [
               "6.1"
             ],
-            "details": "Create a POST /api/teams/:id/assign endpoint to assign players to a team. Validate that the team size does not exceed the maximum allowed by checking the current number of active assignments. Ensure the player being assigned exists and is active. Implement a DELETE /api/team-assignments/:id endpoint for unassigning players, supporting soft deletes by marking assignments as deleted rather than removing them from the database.",
-            "status": "pending",
+            "details": "Create a POST /api/teams/:id/assign endpoint to assign players to a team. Validate that the team size does not exceed the maximum allowed by checking the current number of active assignments. Ensure the player being assigned exists and is active. Implement a DELETE /api/team-assignments/:id endpoint for unassigning players, supporting soft deletes by marking assignments as deleted rather than removing them from the database.\n<info added on 2025-09-20T16:06:05.586Z>\n**Implementation Plan:**\n\n1. **Create Teams API Endpoints:**\n   - `POST /api/teams/:id/assign` - Assign player to team\n   - `DELETE /api/team-assignments/:id` - Unassign player (soft delete)\n   - `PATCH /api/teams/:id` - Update team properties (color, formation)\n\n2. **Validation Logic:**\n   - Check team size against matchday rules (rules.team_size)\n   - Validate player exists and is active\n   - Prevent duplicate assignments\n   - Ensure team exists and belongs to valid matchday\n\n3. **Database Operations:**\n   - Use transactions for assignment operations\n   - Implement soft delete for team assignments\n   - Count active assignments for team size validation\n   - Activity logging for all operations\n\n4. **Error Handling:**\n   - 404 for non-existent teams/players/assignments\n   - 409 for team full or duplicate assignment\n   - 400 for validation errors\n   - Proper error messages\n\nStarting with the team assignment endpoints...\n</info added on 2025-09-20T16:06:05.586Z>\n<info added on 2025-09-20T16:07:56.715Z>\nSubtask 6.2 implementation completed successfully!\n\n**What was accomplished:**\n\n1. **Player Assignment API (`POST /api/teams/:id/assign`):**\n   - Validates team exists and belongs to valid matchday\n   - Checks player exists and is active\n   - Prevents duplicate assignments (409 conflict)\n   - Validates team size against matchday rules (rules.team_size)\n   - Returns 409 \"Team is full\" when max capacity reached\n   - Creates assignment with proper audit fields and activity logging\n   - Supports DnD positioning with xPct/yPct fields\n   - Transaction-based for data consistency\n\n2. **Player Unassignment API (`DELETE /api/team-assignments/:id`):**\n   - Implements soft delete (sets deletedAt timestamp)\n   - Validates assignment exists and is not already deleted\n   - Includes team and player names in response and activity log\n   - Proper error handling for non-existent assignments\n   - Activity logging with metadata for audit trail\n\n3. **Team Management API (`PATCH /api/teams/:id`):**\n   - Update team properties (name, colorToken, formationJson)\n   - Color uniqueness validation per matchday\n   - Auto-updates team name when color changes (if using default pattern)\n   - Proper validation and error handling\n   - Activity logging for all changes\n\n4. **Team Details API (`GET /api/teams/:id`):**\n   - Retrieves team with matchday information\n   - Public read access with caching headers\n   - Proper 404 handling for non-existent teams\n\n5. **Assignment Details API (`GET /api/team-assignments/:id`):**\n   - Retrieves assignment with team and player details\n   - Public read access with caching headers\n   - Includes full relationship data\n\n**Key Validation Features:**\n- Team size limits enforced from matchday rules\n- Player existence and active status validation\n- Duplicate assignment prevention\n- Color uniqueness per matchday\n- Proper error codes (404, 409, 400, 401, 500)\n- Comprehensive error messages\n\n**Database Operations:**\n- Transaction-based assignment creation\n- Soft delete implementation for assignments\n- Activity logging for all operations\n- Cache invalidation with revalidateTag\n- Proper foreign key relationships maintained\n\n**Error Handling:**\n- Authentication required for all mutating operations\n- Zod validation for request bodies\n- Detailed error messages for debugging\n- Proper HTTP status codes\n- Graceful handling of edge cases\n\nAll endpoints are ready for integration with the UI layer!\n</info added on 2025-09-20T16:07:56.715Z>",
+            "status": "done",
             "testStrategy": "Unit test server-side validation to ensure it prevents oversized teams and checks player activity. Integration test the assignment and unassignment process, verifying database updates and soft delete functionality."
           },
           {
@@ -330,7 +330,7 @@
         "testStrategy": "Unit: deterministic fixtures to validate standings including penalty weighting scenarios; property tests for invariants (sum of points in a penalty-decided game equals draw*2 + weighted bonus). Integration: API returns cached stats and invalidates on relevant revalidateTag. UI RTL: render standings table, top scorers list; ensure numbers match fixture. Performance: ensure calculators are linear and memoized.",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -338,7 +338,7 @@
             "description": "Develop pure functions to compute overall and per-matchday metrics such as goals, assists, win rates, games played, and goals per game. These functions should take input from database queries and avoid any UI coupling.",
             "dependencies": [],
             "details": "Create a new file lib/stats.ts. Implement functions like computePlayerStats(events) to calculate player-specific metrics and computeStandings(games, rules) to aggregate standings based on the provided rules. Ensure that these functions are modular and can be easily tested with different datasets.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Write unit tests using deterministic fixtures to validate the correctness of each metric calculation. Include edge cases such as no games played or all games ending in penalties."
           },
           {
@@ -349,7 +349,7 @@
               "8.1"
             ],
             "details": "In the server directory, create handlers for GET /api/stats/overall and GET /api/stats/matchday/:id. Use the functions from lib/stats.ts to fetch and compute the necessary data. Implement caching strategies using tags to ensure that results are efficiently cached and invalidated when necessary.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Perform integration tests to ensure that the API endpoints return the correct data and that caching mechanisms work as expected. Use property tests to verify that the sum of points in a penalty-decided game equals draw*2 + weighted bonus."
           },
           {
@@ -360,7 +360,7 @@
               "8.2"
             ],
             "details": "In the app/stats directory, develop a React component with tabs for different stats views. Use libraries like Tremor or Recharts to create charts for visualizing data such as top scorers and win rates. Ensure the UI is responsive and accessible.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use React Testing Library (RTL) to render the UI components and verify that they display the correct data. Test the responsiveness and accessibility of the UI, ensuring it meets WCAG AA standards."
           }
         ]
@@ -451,11 +451,147 @@
             "testStrategy": "Verify the CI/CD pipeline by creating pull requests and merging them to the main branch, ensuring deployments occur as expected. Test the database backup process by checking the availability and integrity of backup files in the specified storage location."
           }
         ]
+      },
+      {
+        "id": 11,
+        "title": "Implement Sticky Header with Dark Theme Toggle",
+        "description": "Develop a sticky header for the Stanga app that remains visible during scrolling and includes a dark/light theme toggle button.",
+        "details": "The sticky header should be positioned at the top of the app shell and include the Stanga brand wordmark. It should be designed with a mobile-first approach, ensuring proper touch targets and accessibility support. Use Tailwind CSS for styling and ensure the header is responsive. The theme toggle should switch between dark and light modes, persisting the user's preference using local storage. Ensure the header is accessible, with appropriate ARIA roles and labels for the toggle button. Consider using Radix UI components for the toggle to ensure accessibility and consistency with the existing UI system.",
+        "testStrategy": "Verify the header remains fixed at the top during scrolling on both desktop and mobile views. Test the theme toggle functionality to ensure it correctly switches themes and persists the user's choice across sessions. Use RTL to simulate user interactions with the toggle and check for accessibility compliance using tools like axe-core. Ensure the header is responsive and touch targets are appropriately sized for mobile devices.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          10
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Sticky Header Structure",
+            "description": "Develop the basic structure of the sticky header, ensuring it remains fixed at the top of the app shell.",
+            "dependencies": [],
+            "details": "Use HTML and Tailwind CSS to create a header element that includes the Stanga brand wordmark. Ensure the header is positioned at the top of the app shell and remains visible during scrolling. Implement a mobile-first design approach, ensuring that the header is responsive and touch-friendly.",
+            "status": "pending",
+            "testStrategy": "Verify the header remains fixed at the top during scrolling on both desktop and mobile views."
+          },
+          {
+            "id": 2,
+            "title": "Implement Dark/Light Theme Toggle",
+            "description": "Add a toggle button to the header for switching between dark and light themes.",
+            "dependencies": [
+              "11.1"
+            ],
+            "details": "Use Radix UI components to create an accessible toggle button. Implement functionality to switch between dark and light themes using Tailwind CSS classes. Store the user's theme preference in local storage to persist across sessions.",
+            "status": "pending",
+            "testStrategy": "Test the theme toggle functionality to ensure it correctly switches themes and persists the user's choice across sessions."
+          },
+          {
+            "id": 3,
+            "title": "Enhance Accessibility",
+            "description": "Ensure the sticky header and theme toggle are accessible, with appropriate ARIA roles and labels.",
+            "dependencies": [
+              "11.2"
+            ],
+            "details": "Add ARIA roles and labels to the header and toggle button to improve accessibility. Ensure that all interactive elements have appropriate focus states and are navigable via keyboard.",
+            "status": "pending",
+            "testStrategy": "Use accessibility testing tools to verify compliance with WCAG standards and ensure all elements are accessible."
+          },
+          {
+            "id": 4,
+            "title": "Style Header with Tailwind CSS",
+            "description": "Apply styling to the header and its components using Tailwind CSS to ensure a consistent look and feel.",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "Use Tailwind CSS to style the header, ensuring it is visually appealing and consistent with the rest of the app. Pay special attention to responsive design, ensuring the header looks good on all screen sizes.",
+            "status": "pending",
+            "testStrategy": "Check the header's appearance on various devices and screen sizes to ensure responsiveness and visual consistency."
+          },
+          {
+            "id": 5,
+            "title": "Integrate and Test Header in App",
+            "description": "Integrate the sticky header into the main app shell and conduct comprehensive testing.",
+            "dependencies": [
+              "11.4"
+            ],
+            "details": "Integrate the completed sticky header into the main app shell. Conduct end-to-end testing to ensure the header functions correctly within the app context, including theme toggling and accessibility features.",
+            "status": "pending",
+            "testStrategy": "Perform end-to-end testing to verify the header's integration, functionality, and accessibility within the app."
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Implement Pointer Cursor for Clickable Elements",
+        "description": "Ensure all clickable elements in the app display a pointer cursor for better user experience.",
+        "details": "Update the global CSS or component styles to apply a pointer cursor to all clickable elements, including buttons, links, interactive cards, and form controls. This can be achieved by using a universal CSS rule or by updating individual component styles. Ensure that the pointer cursor is applied consistently across the application to enhance user experience and accessibility. Consider using CSS classes or utility-first CSS frameworks like Tailwind CSS to manage styles efficiently. Verify that the cursor change does not interfere with existing hover or active states of elements.",
+        "testStrategy": "Manually test various clickable elements across the application to ensure the pointer cursor appears when hovering over them. Use browser developer tools to inspect elements and verify the CSS rules are applied correctly. Conduct cross-browser testing to ensure consistent behavior in different environments. Additionally, perform accessibility testing to confirm that the pointer cursor enhances usability without introducing any new issues.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          10
+        ],
+        "priority": "low",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Identify Clickable Elements",
+            "description": "Identify all clickable elements in the application that require a pointer cursor.",
+            "dependencies": [],
+            "details": "Conduct a thorough review of the application to list all clickable elements such as buttons, links, interactive cards, and form controls. Document these elements to ensure comprehensive coverage in the subsequent steps.",
+            "status": "pending",
+            "testStrategy": "Verify the list includes all clickable elements by cross-referencing with the application's UI components and design specifications."
+          },
+          {
+            "id": 2,
+            "title": "Create Global CSS Rule for Pointer Cursor",
+            "description": "Develop a global CSS rule to apply a pointer cursor to all identified clickable elements.",
+            "dependencies": [
+              "12.1"
+            ],
+            "details": "Add a CSS rule in the global stylesheet that targets all clickable elements identified in subtask 12.1. Use a universal selector or specific class names to ensure the pointer cursor is applied. Consider using a utility-first CSS framework like Tailwind CSS if applicable.",
+            "status": "pending",
+            "testStrategy": "Inspect elements using browser developer tools to ensure the pointer cursor is applied to all targeted elements."
+          },
+          {
+            "id": 3,
+            "title": "Update Component Styles for Consistency",
+            "description": "Update individual component styles to ensure consistent application of the pointer cursor across the application.",
+            "dependencies": [
+              "12.2"
+            ],
+            "details": "Review and modify component-specific stylesheets to ensure the pointer cursor is consistently applied. This may involve adding or modifying CSS classes or utility classes in component styles.",
+            "status": "pending",
+            "testStrategy": "Manually test each component to verify the pointer cursor appears when hovering over clickable elements, ensuring no conflicts with existing hover or active states."
+          },
+          {
+            "id": 4,
+            "title": "Integrate with Utility-First CSS Framework",
+            "description": "Integrate the pointer cursor styles with a utility-first CSS framework like Tailwind CSS for efficient style management.",
+            "dependencies": [
+              "12.3"
+            ],
+            "details": "If using a utility-first CSS framework, create or update utility classes to manage the pointer cursor style. Ensure these utilities are applied across the application where needed.",
+            "status": "pending",
+            "testStrategy": "Check that the utility classes are correctly applied and that the pointer cursor appears as expected on all clickable elements."
+          },
+          {
+            "id": 5,
+            "title": "Conduct Cross-Browser Testing",
+            "description": "Perform cross-browser testing to ensure consistent pointer cursor behavior across different browsers.",
+            "dependencies": [
+              "12.4"
+            ],
+            "details": "Test the application in various browsers such as Chrome, Firefox, Safari, and Edge to ensure the pointer cursor appears consistently on all clickable elements. Address any discrepancies found during testing.",
+            "status": "pending",
+            "testStrategy": "Use browser testing tools or services to automate cross-browser testing and document any issues for resolution."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-20T14:17:42.448Z",
+      "updated": "2025-09-21T07:07:43.729Z",
       "description": "Tasks for master context"
     }
   }
