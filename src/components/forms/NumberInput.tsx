@@ -92,8 +92,7 @@ export function NumberInput({
           max={max}
           step={step}
           placeholder={placeholder}
-          className="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center"
-          aria-describedby={`${name}-range`}
+          className="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
         
         <Button
@@ -108,10 +107,6 @@ export function NumberInput({
           +
         </Button>
       </div>
-      
-      <p id={`${name}-range`} className="text-xs text-muted-foreground">
-        Range: {min} - {max}
-      </p>
     </div>
   );
 }
