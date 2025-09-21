@@ -6,8 +6,6 @@ export const RulesSnapshotSchema = z.object({
   game_minutes: z.coerce.number().int().positive().default(8),
   extra_minutes: z.coerce.number().int().nonnegative().default(2),
   max_goals_to_win: z.coerce.number().int().positive().default(2),
-  penalties_on_tie: z.boolean().default(true),
-  penalty_win_weight: z.coerce.number().min(0).max(1).default(0.5),
   points: z.object({
     loss: z.coerce.number().default(0),
     draw: z.coerce.number().default(1),
@@ -27,8 +25,6 @@ export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
   game_minutes: 8,
   extra_minutes: 2,
   max_goals_to_win: 2,
-  penalties_on_tie: true,
-  penalty_win_weight: 0.5,
   points: {
     loss: 0,
     draw: 1,

@@ -157,31 +157,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">
-                Penalties on Tie
-              </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  {...methods.register('rules.penalties_on_tie')}
-                  className="rounded border-input"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Use penalty shootouts for ties
-                </span>
-              </div>
-            </div>
-            
-            <TextField
-              name="rules.penalty_win_weight"
-              label="Penalty Win Weight"
-              type="number"
-              step="0.1"
-              placeholder={`${DEFAULT_RULES.penalty_win_weight}`}
-            />
-          </div>
 
           {/* Points System */}
           <div className="space-y-3">
