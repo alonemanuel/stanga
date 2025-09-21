@@ -9,9 +9,9 @@ import { eq, and, isNull, count } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // POST /api/teams/[id]/assign - Assign player to team (auth required)
@@ -133,7 +133,7 @@ export async function POST(
       
       // Log activity
       await logActivity({
-        entityType: 'team_assignment',
+        entityType: 'team',
         entityId: newAssignment.id,
         action: 'create',
         actorId: user.id,

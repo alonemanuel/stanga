@@ -11,9 +11,9 @@ import {
 import { eq, and, isNull } from 'drizzle-orm';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/stats/matchday/[id] - Get statistics for a specific matchday
@@ -92,7 +92,7 @@ export async function GET(
         id: teams.id,
         name: teams.name,
         matchdayId: teams.matchdayId,
-        color: teams.color,
+        color: teams.colorToken,
       })
       .from(teams)
       .where(and(

@@ -9,9 +9,9 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // POST /api/matchdays/[id]/teams - Initialize 3 teams with unique colors (auth required)

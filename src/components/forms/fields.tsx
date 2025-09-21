@@ -12,9 +12,10 @@ interface TextFieldProps {
   required?: boolean;
   multiline?: boolean;
   rows?: number;
+  step?: string;
 }
 
-export function TextField({ name, label, type = "text", placeholder, required, multiline, rows = 3 }: TextFieldProps) {
+export function TextField({ name, label, type = "text", placeholder, required, multiline, rows = 3, step }: TextFieldProps) {
   const { register, formState: { errors } } = useFormContext();
   const error = (errors as any)?.[name]?.message as string | undefined;
   
@@ -42,6 +43,7 @@ export function TextField({ name, label, type = "text", placeholder, required, m
         <input
           {...commonProps}
           type={type}
+          step={step}
         />
       )}
       {error ? (

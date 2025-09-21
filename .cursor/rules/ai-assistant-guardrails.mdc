@@ -1,0 +1,10 @@
+---
+description: Guardrails for AI-generated code (async correctness, error handling, safety)
+globs: src/**/*.{ts,tsx}, scripts/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+- **async/await correctness**
+  - All promises must be awaited, or intentionally ignored with `void` plus a `.catch(...)` handler.
+  - Do not mix `then` chains with `await` in the same function unless necessary.
+  - Use `Promise.all` for independent concurrency; avoid accidental sequential awaits.

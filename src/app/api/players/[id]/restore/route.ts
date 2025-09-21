@@ -6,9 +6,9 @@ import { logActivity, generateDiff } from '@/lib/activity-log';
 import { eq, and, isNotNull } from 'drizzle-orm';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // POST /api/players/[id]/restore - Restore soft deleted player (auth required)

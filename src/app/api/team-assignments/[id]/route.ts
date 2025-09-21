@@ -7,9 +7,9 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // DELETE /api/team-assignments/[id] - Unassign player from team (soft delete, auth required)
@@ -62,7 +62,7 @@ export async function DELETE(
     
     // Log activity
     await logActivity({
-      entityType: 'team_assignment',
+      entityType: 'team',
       entityId: assignmentId,
       action: 'delete',
       actorId: user.id,

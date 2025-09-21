@@ -12,15 +12,15 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    plugins: {
-      "react-hooks": await import("eslint-plugin-react-hooks"),
-      "jsx-a11y": await import("eslint-plugin-jsx-a11y"),
-    },
     rules: {
+      // React & a11y
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
       "jsx-a11y/anchor-is-valid": "warn",
       "jsx-a11y/no-autofocus": "off",
+
+      // Allow intentional ignore via `void` as a statement
+      "no-void": ["error", { allowAsStatement: true }],
     },
     ignores: [
       "node_modules/**",

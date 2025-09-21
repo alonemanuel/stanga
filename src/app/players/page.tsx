@@ -50,7 +50,9 @@ export default function PlayersPage() {
   // Fetch players with filters
   const { data: playersData, isLoading, error } = usePlayers({
     query: searchQuery,
-    position: positionFilter || undefined,
+    position: (positionFilter && ['goalkeeper', 'defender', 'midfielder', 'forward'].includes(positionFilter)) 
+      ? positionFilter as 'goalkeeper' | 'defender' | 'midfielder' | 'forward'
+      : undefined,
     isActive: !showDeleted,
     page: 1,
     limit: 50,
@@ -115,7 +117,7 @@ export default function PlayersPage() {
         
         <div className="bg-card border rounded-lg p-6">
           <PlayerForm
-            player={editingPlayer}
+            player={editingPlayer || undefined}
             onSuccess={handleFormSuccess}
             onCancel={() => setShowForm(false)}
           />

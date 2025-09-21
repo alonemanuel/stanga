@@ -11,7 +11,6 @@ expect.extend(matchers);
 
 // Polyfills/mocks for JSDOM
 if (!window.matchMedia) {
-  // @ts-expect-error jsdom env
   window.matchMedia = (query: string) => ({
     matches: false,
     media: query,

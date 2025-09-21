@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FormProvider, useForm, type UseFormProps } from "react-hook-form";
+import { FormProvider, useForm, type UseFormProps, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { z, type ZodSchema } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -10,26 +10,32 @@ export function useZodForm<TSchema extends ZodSchema<any>>(
   options?: Omit<UseFormProps<z.infer<TSchema>>, "resolver">
 ) {
   return useForm<z.infer<TSchema>>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema as any),
     mode: "onSubmit",
     reValidateMode: "onChange",
     ...options,
   });
 }
 
-interface FormProps {
+interface FormProps<T extends FieldValues = FieldValues> {
   children: React.ReactNode;
-  methods: ReturnType<typeof useForm>;
-  onSubmit: (data: any) => void | Promise<void>;
+  methods: UseFormReturn<T>;
+  onSubmit?: (data: T) => void | Promise<void>;
   className?: string;
 }
 
-export function Form({ children, methods, onSubmit, className }: FormProps) {
+export function Form<T extends FieldValues = FieldValues>({ children, methods, onSubmit, className }: FormProps<T>) {
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} className={className}>
-        {children}
-      </form>
+      {onSubmit ? (
+        <form onSubmit={methods.handleSubmit(onSubmit)} className={className}>
+          {children}
+        </form>
+      ) : (
+        <div className={className}>
+          {children}
+        </div>
+      )}
     </FormProvider>
   );
 }

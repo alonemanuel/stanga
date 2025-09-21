@@ -8,9 +8,9 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/matchdays/[id] - Get single matchday (public read access)

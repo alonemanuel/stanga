@@ -43,14 +43,16 @@ export function PlayerForm({ player, onSuccess, onCancel }: PlayerFormProps) {
     defaultValues: isEditing ? {
       name: player.name,
       nickname: player.nickname || "",
-      position: player.position || "",
-      skillLevel: String(player.skillLevel), // Convert to string for SelectField
+      position: (player.position && ['goalkeeper', 'defender', 'midfielder', 'forward'].includes(player.position)) 
+        ? player.position as 'goalkeeper' | 'defender' | 'midfielder' | 'forward' 
+        : null,
+      skillLevel: player.skillLevel,
       notes: player.notes || "",
     } : {
       name: "",
       nickname: "",
-      position: "",
-      skillLevel: "5", // Keep as string since SelectField returns strings
+      position: null,
+      skillLevel: 5,
       notes: "",
     },
   });

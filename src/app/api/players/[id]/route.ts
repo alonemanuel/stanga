@@ -7,9 +7,9 @@ import { logActivity, generateDiff } from '@/lib/activity-log';
 import { eq, and, isNull } from 'drizzle-orm';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/players/[id] - Get single player (public read access)

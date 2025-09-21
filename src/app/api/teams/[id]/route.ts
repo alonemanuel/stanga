@@ -4,14 +4,14 @@ import { teams, matchdays } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { TeamUpdateSchema } from '@/lib/validations/team';
-import { resolveColorHex, resolveTeamName } from '@/lib/teams';
+import { resolveColorHex, resolveTeamName, isValidColorToken } from '@/lib/teams';
 import { eq, and, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/teams/[id] - Get team details (public read access)
@@ -125,7 +125,7 @@ export async function PATCH(
       updateFields.colorToken = updateData.colorToken;
       updateFields.colorHex = resolveColorHex(updateData.colorToken);
       // Auto-update name if it matches the old color pattern
-      if (oldTeam.name === resolveTeamName(oldTeam.colorToken)) {
+      if (isValidColorToken(oldTeam.colorToken) && oldTeam.name === resolveTeamName(oldTeam.colorToken)) {
         updateFields.name = resolveTeamName(updateData.colorToken);
       }
     }

@@ -14,6 +14,7 @@ export default function StatsPage() {
   const { data: overallStats, isLoading: overallLoading, error: overallError } = useOverallStats();
   const { data: matchdaysData } = useMatchdays({ 
     status: 'completed', 
+    isPublic: true,
     page: 1, 
     limit: 50 
   });

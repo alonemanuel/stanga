@@ -42,7 +42,7 @@ async function fetchMatchdays(params: MatchdayQuery): Promise<MatchdaysResponse>
   const searchParams = new URLSearchParams();
   
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
+    if (value !== undefined && value !== null && String(value) !== '') {
       searchParams.append(key, String(value));
     }
   });
