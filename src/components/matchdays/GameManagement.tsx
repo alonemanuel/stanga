@@ -524,12 +524,6 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="text-xs text-muted-foreground">
-            {game.endReason === 'early_finish' && 'Early finish'}
-            {game.endReason === 'regulation' && 'Full time'}
-            {game.endReason === 'penalties' && 'Penalties'}
-          </div>
-          
           {isExpanded ? (
             <ChevronUp className="h-4 w-4 text-gray-500" />
           ) : (
@@ -547,20 +541,24 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
             </div>
           ) : goalsData ? (
             <div className="pt-3 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Home team goals */}
-                <GameGoalDisplay 
-                  goals={goalsData.homeTeamGoals}
-                  teamName={game.homeTeam?.name || 'Home Team'}
-                  teamColorHex={game.homeTeam?.colorHex || '#3b82f6'}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                {/* Left side - Home team goals (matches layout above) */}
+                <div className="text-left">
+                  <GameGoalDisplay 
+                    goals={goalsData.homeTeamGoals}
+                    teamName={game.homeTeam?.name || 'Home Team'}
+                    teamColorHex={game.homeTeam?.colorHex || '#3b82f6'}
+                  />
+                </div>
                 
-                {/* Away team goals */}
-                <GameGoalDisplay 
-                  goals={goalsData.awayTeamGoals}
-                  teamName={game.awayTeam?.name || 'Away Team'}
-                  teamColorHex={game.awayTeam?.colorHex || '#ef4444'}
-                />
+                {/* Right side - Away team goals (matches layout above) */}
+                <div className="text-left">
+                  <GameGoalDisplay 
+                    goals={goalsData.awayTeamGoals}
+                    teamName={game.awayTeam?.name || 'Away Team'}
+                    teamColorHex={game.awayTeam?.colorHex || '#ef4444'}
+                  />
+                </div>
               </div>
               
               {goalsData.homeTeamGoals.length === 0 && goalsData.awayTeamGoals.length === 0 && (
