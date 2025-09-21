@@ -533,6 +533,7 @@ function ChronologicalGoalsList({
                         {goal.playerName || 'Unknown Player'}
                       </span>
                     </div>
+                    <span className="text-xs text-gray-500">{goal.minute}'</span>
                     {goal.assistName && (
                       <>
                         <span className="text-gray-400">•</span>
@@ -541,15 +542,6 @@ function ChronologicalGoalsList({
                         </span>
                       </>
                     )}
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                    <span className="font-medium">{goal.teamName}</span>
-                    <span className="text-gray-400">•</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{goal.minute}' minute</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -591,9 +583,7 @@ function ChronologicalGoalsList({
                         {penalty.playerName}
                       </span>
                     </div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {penalty.teamName} • Penalty kick
+                    <span className="text-xs text-gray-500">Penalty</span>
                   </div>
                 </div>
               </div>
