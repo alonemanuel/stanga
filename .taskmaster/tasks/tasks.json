@@ -832,7 +832,7 @@
         "description": "Implement a collapsible game rules section in the matchday creation form, collapsed by default with sensible default values pre-filled.",
         "details": "To enhance the user experience in the matchday creation form, modify the form to include a collapsible panel for the game rules section. Use a UI library such as Material-UI or Bootstrap to implement the collapsible functionality, ensuring that the section is collapsed by default to minimize visual clutter. Prefill the game rules section with sensible default values that can be customized by the user upon expansion. Manage the toggle state using React state or context to ensure consistent behavior across the application. Ensure that the default values are meaningful and align with common user preferences or organizational standards. Additionally, ensure that the collapsible section is accessible, with appropriate aria attributes and keyboard navigability.",
         "testStrategy": "Verify that the game rules section is collapsed by default when the matchday creation form loads. Test the expand/collapse functionality by clicking the toggle button and ensure the section expands and collapses smoothly. Check that the default values are prefilled correctly and can be modified by the user. Use browser developer tools to inspect the aria attributes and ensure they are correctly set for accessibility. Conduct cross-browser testing to ensure consistent behavior across different environments.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           1,
           20
@@ -885,7 +885,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:49:22.652Z",
+      "updated": "2025-09-21T14:02:50.391Z",
       "description": "Tasks for master context"
     }
   }
