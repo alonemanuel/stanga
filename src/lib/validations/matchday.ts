@@ -39,31 +39,27 @@ export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
 
 // Schema for creating a matchday
 export const MatchdayCreateSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
-  description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable().transform(val => val === '' ? null : val),
   scheduledAt: z.string().min(1, 'Date and time is required').refine((val) => {
     // Accept datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, 'Invalid date format'),
-  location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable().transform(val => val === '' ? null : val),
-  maxPlayers: z.coerce.number().int().min(6).max(30).default(18),
+  location: z.string().max(200, 'Location must be less than 200 characters').optional().nullable().transform(val => val === '' ? null : val),
+  teamSize: z.coerce.number().int().min(3).max(15).default(9),
+  numberOfTeams: z.coerce.number().int().min(2).max(20).default(2),
   rules: RulesSnapshotSchema.default(DEFAULT_RULES),
-  isPublic: z.boolean().default(true),
 });
 
 // Schema for updating a matchday
 export const MatchdayUpdateSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters').optional(),
-  description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable(),
   scheduledAt: z.string().refine((val) => {
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, 'Invalid date format').optional(),
-  location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable(),
-  maxPlayers: z.coerce.number().int().min(6).max(30).optional(),
+  location: z.string().max(200, 'Location must be less than 200 characters').optional().nullable(),
+  teamSize: z.coerce.number().int().min(3).max(15).optional(),
+  numberOfTeams: z.coerce.number().int().min(2).max(20).optional(),
   status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional(),
-  isPublic: z.boolean().optional(),
 });
 
 // Schema for query parameters

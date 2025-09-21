@@ -8,6 +8,7 @@ import { GameManagement } from "@/components/matchdays/GameManagement";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2 } from "lucide-react";
+import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface MatchdayDetailPageProps {
@@ -227,13 +228,11 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
           <MatchdayForm
             matchday={{
               id: matchday.id,
-              name: matchday.name,
-              description: matchday.description,
               scheduledAt: matchday.scheduledAt,
               location: matchday.location,
-              maxPlayers: matchday.maxPlayers,
+              teamSize: matchday.teamSize,
+              numberOfTeams: matchday.numberOfTeams,
               rules: matchday.rules,
-              isPublic: matchday.isPublic,
             }}
             onSuccess={handleEditSuccess}
             onCancel={() => setIsEditing(false)}
@@ -275,8 +274,12 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Max Players</label>
-                  <p className="text-sm">{matchday.maxPlayers}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Team Size</label>
+                  <p className="text-sm">{matchday.teamSize} players per team</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Number of Teams</label>
+                  <p className="text-sm">{matchday.numberOfTeams} teams</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
@@ -285,12 +288,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   </span>
                 </div>
               </div>
-              {matchday.description && (
-                <div className="mt-4">
-                  <label className="text-sm font-medium text-muted-foreground">Description</label>
-                  <p className="text-sm mt-1">{matchday.description}</p>
-                </div>
-              )}
             </CollapsibleSection>
 
             {/* Rules Snapshot */}
@@ -397,7 +394,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               ← Back
             </Button>
           </div>
-          <h1 className="text-2xl font-semibold">{matchday.name}</h1>
+          <h1 className="text-2xl font-semibold">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h1>
           <p className="text-muted-foreground">
             {formatDate(matchday.scheduledAt)}
           </p>

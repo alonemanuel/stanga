@@ -4,6 +4,7 @@ import * as React from "react";
 import { useOverallStats } from "@/lib/hooks/use-stats";
 import { useMatchdays } from "@/lib/hooks/use-matchdays";
 import { Button } from "@/components/ui/button";
+import { getMatchdayDisplayName } from "@/lib/matchday-display";
 
 type TabType = 'overall' | 'matchday' | 'players' | 'teams';
 
@@ -147,7 +148,7 @@ export default function StatsPage() {
                       : 'hover:bg-muted'
                   }`}
                 >
-                  <div className="font-medium">{matchday.name}</div>
+                  <div className="font-medium">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</div>
                   <div className="text-sm opacity-75">
                     {new Date(matchday.scheduledAt).toLocaleDateString()}
                   </div>
@@ -165,7 +166,7 @@ export default function StatsPage() {
               Matchday-specific stats coming soon...
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Selected: {matchdaysData?.data.find(m => m.id === selectedMatchdayId)?.name}
+              Selected: {matchdaysData?.data.find(m => m.id === selectedMatchdayId) ? getMatchdayDisplayName(matchdaysData.data.find(m => m.id === selectedMatchdayId)!.scheduledAt, matchdaysData.data.find(m => m.id === selectedMatchdayId)!.location) : ''}
             </p>
           </div>
         )}
