@@ -234,25 +234,31 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid gap-6 lg:grid-cols-4">
-          {/* Teams */}
-          {teams.map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              maxPlayers={maxPlayersPerTeam}
-              canEdit={!!user}
-              onUnassignPlayer={handleUnassignPlayer}
-              onAssignPlayer={handleAssignPlayer}
-              unassignedPlayers={unassignedPlayers}
-            />
-          ))}
+        <div className="flex gap-6">
+          {/* Teams Grid */}
+          <div className="flex-1">
+            <div className="grid gap-6 lg:grid-cols-3">
+              {teams.map((team) => (
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  maxPlayers={maxPlayersPerTeam}
+                  canEdit={!!user}
+                  onUnassignPlayer={handleUnassignPlayer}
+                  onAssignPlayer={handleAssignPlayer}
+                  unassignedPlayers={unassignedPlayers}
+                />
+              ))}
+            </div>
+          </div>
 
-          {/* Unassigned Players */}
-          <UnassignedPlayersCard
-            players={unassignedPlayers}
-            canEdit={!!user}
-          />
+          {/* Sticky Available Players */}
+          <div className="w-80 sticky top-6 self-start">
+            <UnassignedPlayersCard
+              players={unassignedPlayers}
+              canEdit={!!user}
+            />
+          </div>
         </div>
       </DndContext>
     </div>
