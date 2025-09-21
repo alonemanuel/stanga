@@ -272,9 +272,6 @@ interface TeamCardProps {
       player: {
         id: string;
         name: string;
-        nickname?: string | null;
-        position?: string | null;
-        skillLevel: number;
       };
     }>;
     playerCount: number;
@@ -286,9 +283,6 @@ interface TeamCardProps {
   unassignedPlayers: Array<{
     id: string;
     name: string;
-    nickname?: string | null;
-    position?: string | null;
-    skillLevel: number;
   }>;
 }
 
@@ -380,9 +374,6 @@ interface PlayerChipProps {
   player: {
     id: string;
     name: string;
-    nickname?: string | null;
-    position?: string | null;
-    skillLevel: number;
   };
   assignmentId?: string;
   teamId?: string;
@@ -391,7 +382,7 @@ interface PlayerChipProps {
 }
 
 function PlayerChip({ player, assignmentId, teamId, canEdit, onUnassign }: PlayerChipProps) {
-  const displayName = player.nickname || player.name;
+  const displayName = player.name;
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `player-${player.id}-${assignmentId || 'unassigned'}`,
@@ -424,16 +415,10 @@ function PlayerChip({ player, assignmentId, teamId, canEdit, onUnassign }: Playe
         </div>
         <div>
           <p className="text-sm font-medium">{displayName}</p>
-          {player.position && (
-            <p className="text-xs text-muted-foreground">{player.position}</p>
-          )}
         </div>
       </div>
       
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs">
-          {player.skillLevel}
-        </Badge>
         {canEdit && onUnassign && (
           <Button
             variant="ghost"
@@ -454,9 +439,6 @@ interface UnassignedPlayersCardProps {
   players: Array<{
     id: string;
     name: string;
-    nickname?: string | null;
-    position?: string | null;
-    skillLevel: number;
   }>;
   canEdit: boolean;
 }

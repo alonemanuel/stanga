@@ -10,11 +10,7 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 interface Player {
   id: string;
   name: string;
-  nickname?: string | null;
-  position?: string | null;
-  skillLevel: number;
   isActive: boolean;
-  notes?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
@@ -26,7 +22,6 @@ export default function PlayersPage() {
   const [editingPlayer, setEditingPlayer] = React.useState<Player | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showDeleted, setShowDeleted] = React.useState(false);
-  const [positionFilter, setPositionFilter] = React.useState("");
   
   const supabase = createClient();
   
@@ -50,9 +45,6 @@ export default function PlayersPage() {
   // Fetch players with filters
   const { data: playersData, isLoading, error } = usePlayers({
     query: searchQuery,
-    position: (positionFilter && ['goalkeeper', 'defender', 'midfielder', 'forward'].includes(positionFilter)) 
-      ? positionFilter as 'goalkeeper' | 'defender' | 'midfielder' | 'forward'
-      : undefined,
     isActive: !showDeleted,
     page: 1,
     limit: 50,
@@ -86,22 +78,6 @@ export default function PlayersPage() {
     await restoreMutation.mutateAsync(id);
   };
   
-  const getPositionBadgeColor = (position: string | null) => {
-    switch (position) {
-      case 'goalkeeper': return 'bg-yellow-100 text-yellow-800';
-      case 'defender': return 'bg-blue-100 text-blue-800';
-      case 'midfielder': return 'bg-green-100 text-green-800';
-      case 'forward': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-  
-  const getSkillLevelColor = (level: number) => {
-    if (level >= 8) return 'text-green-600 font-semibold';
-    if (level >= 6) return 'text-blue-600';
-    if (level >= 4) return 'text-yellow-600';
-    return 'text-gray-600';
-  };
 
   if (showForm) {
     return (
@@ -155,18 +131,6 @@ export default function PlayersPage() {
           />
         </div>
         
-        <select
-          value={positionFilter}
-          onChange={(e) => setPositionFilter(e.target.value)}
-          className="rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">All positions</option>
-          <option value="goalkeeper">Goalkeeper</option>
-          <option value="defender">Defender</option>
-          <option value="midfielder">Midfielder</option>
-          <option value="forward">Forward</option>
-        </select>
-        
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -210,36 +174,9 @@ export default function PlayersPage() {
                 player.deletedAt ? 'bg-muted/50 opacity-75' : 'bg-card'
               }`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold">{player.name}</h3>
-                  {player.nickname && (
-                    <p className="text-sm text-muted-foreground">
-                      "{player.nickname}"
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className={`text-lg font-bold ${getSkillLevelColor(player.skillLevel)}`}>
-                    {player.skillLevel}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/10</span>
-                </div>
+              <div className="mb-3">
+                <h3 className="font-semibold">{player.name}</h3>
               </div>
-              
-              {player.position && (
-                <div className="mb-3">
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPositionBadgeColor(player.position)}`}>
-                    {player.position.charAt(0).toUpperCase() + player.position.slice(1)}
-                  </span>
-                </div>
-              )}
-              
-              {player.notes && (
-                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {player.notes}
-                </p>
-              )}
               
               {user && (
                 <div className="flex gap-2">

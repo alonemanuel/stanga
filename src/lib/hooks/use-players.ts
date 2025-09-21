@@ -8,11 +8,7 @@ import type { PlayerCreate, PlayerUpdate, PlayerQuery } from '@/lib/validations/
 interface Player {
   id: string;
   name: string;
-  nickname?: string | null;
-  position?: string | null;
-  skillLevel: number;
   isActive: boolean;
-  notes?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;

@@ -49,7 +49,6 @@ export async function GET(request: NextRequest) {
       .select({
         id: players.id,
         name: players.name,
-        nickname: players.nickname,
       })
       .from(players)
       .where(and(
@@ -98,7 +97,6 @@ export async function GET(request: NextRequest) {
     const playersForStats = allPlayers.map(player => ({
       id: player.id,
       name: player.name,
-      nickname: player.nickname,
     }));
 
     // Convert teams to the format expected by stats functions

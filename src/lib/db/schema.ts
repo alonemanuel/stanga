@@ -36,15 +36,10 @@ export const users = pgTable('users', {
 export const players = pgTable('players', {
   ...auditFields,
   name: text('name').notNull(),
-  nickname: text('nickname'),
-  position: text('position'), // 'goalkeeper', 'defender', 'midfielder', 'forward'
-  skillLevel: integer('skill_level').default(5), // 1-10 scale
   isActive: boolean('is_active').default(true).notNull(),
-  notes: text('notes'),
 }, (table) => ({
   nameIdx: index('players_name_idx').on(table.name),
   activeIdx: index('players_active_idx').on(table.isActive),
-  skillIdx: index('players_skill_idx').on(table.skillLevel),
 }));
 
 // Matchdays table

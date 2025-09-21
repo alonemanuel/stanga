@@ -111,7 +111,6 @@ export async function GET(
       .select({
         id: players.id,
         name: players.name,
-        nickname: players.nickname,
       })
       .from(players)
       .where(and(
@@ -150,7 +149,6 @@ export async function GET(
     const playersForStats = participatingPlayers.map(player => ({
       id: player.id,
       name: player.name,
-      nickname: player.nickname,
     }));
 
     const teamsForStats = matchdayTeams.map(team => ({

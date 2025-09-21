@@ -176,9 +176,6 @@ export async function GET(
             player: {
               id: players.id,
               name: players.name,
-              nickname: players.nickname,
-              position: players.position,
-              skillLevel: players.skillLevel,
               isActive: players.isActive,
             },
           })

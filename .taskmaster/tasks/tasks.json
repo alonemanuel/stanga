@@ -608,7 +608,7 @@
         "description": "Update the application to remove the dashboard tab and make the matchdays list the default home page.",
         "details": "To simplify navigation, remove the dashboard tab from the application's navigation components. Update the routing configuration to set the matchdays list as the default landing page for users. This involves modifying the main navigation component to exclude the dashboard tab and adjusting the routing logic to redirect users to the matchdays list upon login or when accessing the root URL. Ensure that any references to the dashboard functionality in the codebase are removed or updated to reflect this change. Additionally, review and update any documentation or user guides to reflect the new navigation structure.",
         "testStrategy": "Verify that the dashboard tab is no longer present in the navigation components. Test the application to ensure that users are redirected to the matchdays list when accessing the root URL or upon login. Check that all navigation links function correctly and lead to the intended pages. Conduct user acceptance testing to ensure the new navigation flow is intuitive and meets user expectations. Use automated tests to confirm that the routing logic correctly defaults to the matchdays list.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           10
@@ -622,7 +622,7 @@
         "description": "Refactor the player model to only include the name field, removing nickname, skill level, position, and notes. Update the database schema, forms, API endpoints, and UI components accordingly.",
         "details": "To simplify the player model, first update the database schema by removing the nickname, skill level, position, and notes fields from the players table. Ensure that any database migrations are created and applied to reflect these changes. Next, update the server-side code to modify the Zod schemas for player creation and update to only require the name field. Adjust the API endpoints to handle only the name field in requests and responses. On the client side, update the forms used for adding and editing players to only include the name input. Modify any UI components that display player information to reflect the simplified model. Ensure that any business logic or validation rules are updated to accommodate the changes. Finally, review and update any documentation related to the player model.",
         "testStrategy": "Verify that the database schema has been updated correctly by checking the players table structure. Test the API endpoints to ensure they only accept and return the name field for player entities. Use unit tests to validate the updated Zod schemas for player creation and update. Perform integration tests to ensure the forms for adding and editing players function correctly with the simplified model. Check that all UI components display the player name correctly and that no references to removed fields exist in the codebase. Conduct a regression test to ensure that existing functionality related to players is not broken by these changes.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           4
         ],
@@ -642,11 +642,38 @@
         ],
         "priority": "low",
         "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Comprehensive Authentication Protection",
+        "description": "Ensure that only authenticated users can access any part of the application by implementing comprehensive authentication protection.",
+        "details": "To implement comprehensive authentication protection, integrate middleware that checks for user authentication status across all routes. Utilize NextAuth.js to manage authentication sessions, ensuring that all server-side and client-side routes are protected. Implement a higher-order component (HOC) or a custom hook to wrap protected components, redirecting unauthenticated users to the login page. Ensure that API routes are secured by checking the session in the request context. Consider using middleware to enforce authentication checks globally. Update the application to handle session expiration gracefully, prompting users to re-authenticate. Ensure that sensitive data is only accessible to authenticated users by implementing role-based access control (RBAC) where necessary. Use secure cookies and HTTPS to protect session data. Regularly review and update authentication strategies to align with the latest security best practices.",
+        "testStrategy": "Verify that all routes and components redirect unauthenticated users to the login page. Test API endpoints to ensure they return unauthorized errors for unauthenticated requests. Use automated tests to simulate user sessions and verify that authenticated users can access protected resources. Manually test session expiration handling to ensure users are prompted to log in again. Conduct security audits to ensure no unauthorized access is possible. Use tools like OWASP ZAP to scan for vulnerabilities in the authentication flow.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          9
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Replace Text Buttons with Icons for Edit and Delete Actions",
+        "description": "Replace the text buttons labeled 'Edit' and 'Delete' with pencil and trash icons respectively, ensuring they are inline with player names and maintain accessibility.",
+        "details": "To implement this task, locate the components where 'Edit' and 'Delete' buttons are rendered. Replace these text buttons with appropriate icon components, such as a pencil icon for 'Edit' and a trash icon for 'Delete'. Ensure these icons are styled to be inline with player names to save space and improve the UI layout. Use a library like FontAwesome or Material Icons for the icons. Maintain accessibility by adding aria-labels to each icon, such as 'Edit player' and 'Delete player', and include tooltips that provide the same information. Ensure the icons are keyboard accessible, allowing users to navigate to them using the Tab key and activate them with the Enter or Space key.",
+        "testStrategy": "Verify that the text buttons are replaced with icons and are correctly aligned inline with player names. Check that the icons are visually clear and recognizable. Use browser developer tools to ensure that aria-labels are present and correct for each icon. Test the tooltips by hovering over the icons to ensure they display the correct information. Conduct keyboard navigation tests to confirm that the icons are accessible and can be activated using the keyboard. Perform cross-browser testing to ensure consistent appearance and functionality across different browsers.",
+        "status": "pending",
+        "dependencies": [
+          15
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T10:46:18.932Z",
+      "updated": "2025-09-21T10:54:23.211Z",
       "description": "Tasks for master context"
     }
   }

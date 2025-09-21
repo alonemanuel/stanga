@@ -5,7 +5,7 @@ import { PlayerCreateSchema, PlayerQuerySchema } from '@/lib/validations/player'
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { createId } from '@paralleldrive/cuid2';
-import { and, eq, ilike, isNull, or, desc } from 'drizzle-orm';
+import { and, eq, ilike, isNull, desc } from 'drizzle-orm';
 
 // GET /api/players - List players (public read access)
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     // Validate query parameters
-    const { query, position, skillLevel, isActive, page, limit } = PlayerQuerySchema.parse(queryParams);
+    const { query, isActive, page, limit } = PlayerQuerySchema.parse(queryParams);
     
     // Build where conditions
     const conditions = [];
@@ -28,24 +28,9 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(players.isActive, false));
     }
     
-    // Search by name or nickname
+    // Search by name
     if (query) {
-      conditions.push(
-        or(
-          ilike(players.name, `%${query}%`),
-          ilike(players.nickname, `%${query}%`)
-        )
-      );
-    }
-    
-    // Filter by position
-    if (position) {
-      conditions.push(eq(players.position, position));
-    }
-    
-    // Filter by skill level
-    if (skillLevel) {
-      conditions.push(eq(players.skillLevel, skillLevel));
+      conditions.push(ilike(players.name, `%${query}%`));
     }
     
     // Calculate offset
@@ -56,11 +41,7 @@ export async function GET(request: NextRequest) {
       .select({
         id: players.id,
         name: players.name,
-        nickname: players.nickname,
-        position: players.position,
-        skillLevel: players.skillLevel,
         isActive: players.isActive,
-        notes: players.notes,
         createdAt: players.createdAt,
         updatedAt: players.updatedAt,
         deletedAt: players.deletedAt,

@@ -45,7 +45,6 @@ export interface GameEvent {
   player?: {
     id: string;
     name: string;
-    nickname: string | null;
   };
 }
 
@@ -70,7 +69,6 @@ export interface PenaltyKick {
   player?: {
     id: string;
     name: string;
-    nickname: string | null;
   };
 }
 

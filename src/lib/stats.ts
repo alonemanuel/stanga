@@ -36,7 +36,6 @@ export interface GameEvent {
 export interface Player {
   id: string;
   name: string;
-  nickname?: string | null;
 }
 
 export interface Team {
@@ -124,7 +123,7 @@ export function computePlayerStats(
   players.forEach(player => {
     statsMap.set(player.id, {
       playerId: player.id,
-      playerName: player.nickname || player.name,
+      playerName: player.name,
       gamesPlayed: 0,
       goals: 0,
       assists: 0,

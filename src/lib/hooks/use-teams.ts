@@ -36,9 +36,6 @@ interface TeamAssignment {
   player: {
     id: string;
     name: string;
-    nickname?: string | null;
-    position?: string | null;
-    skillLevel: number;
     isActive: boolean;
   };
 }
@@ -252,7 +249,7 @@ export function useAssignPlayer() {
               player: playerInfo || {
                 id: data.playerId,
                 name: 'Loading...',
-                skillLevel: 5,
+                isActive: true,
               }
             };
             

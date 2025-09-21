@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, Users, BarChart3 } from "lucide-react";
+import { Home, Users, BarChart3 } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -11,8 +11,7 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/matchdays", label: "Matchdays", icon: CalendarDays },
+  { href: "/", label: "Home", icon: Home },
   { href: "/players", label: "Players", icon: Users },
   { href: "/stats", label: "Stats", icon: BarChart3 },
 ];
@@ -24,9 +23,10 @@ export function BottomNav() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <ul className="mx-auto grid max-w-screen-sm grid-cols-4">
+      <ul className="mx-auto grid max-w-screen-sm grid-cols-3">
         {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          // Home tab is active for both "/" and "/matchdays" since they show the same content
+          const active = href === "/" ? (pathname === "/" || pathname === "/matchdays") : pathname === href;
           return (
             <li key={href} className="flex">
               <Link
