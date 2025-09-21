@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useGames, useGame, useStartGame, useEndGame } from "@/lib/hooks/use-games";
+import { useGames, useGame, useStartGame, useEndGame, usePenalties } from "@/lib/hooks/use-games";
 import { useMatchdayTeams } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { useGameGoals, useAddGoal, useEditGoal, useDeleteGoal } from "@/lib/hooks/use-goal-management";
@@ -78,6 +78,7 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const { data: playersData } = usePlayers();
   const { data: teamsData } = useMatchdayTeams(matchdayId);
   const { data: goalsData, isLoading: goalsLoading } = useGameGoals(game.id);
+  const { data: penaltyData } = usePenalties(game.id);
   const addGoalMutation = useAddGoal();
   const editGoalMutation = useEditGoal();
   const deleteGoalMutation = useDeleteGoal();
@@ -173,6 +174,9 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   }
 
   const isLoading = goalsLoading || addGoalMutation.isPending || editGoalMutation.isPending || deleteGoalMutation.isPending;
+  
+  // Check if the game is tied (same number of goals for both teams)
+  const isGameTied = (goalsData?.homeTeamGoals.length || 0) === (goalsData?.awayTeamGoals.length || 0);
 
   return (
     <div className="space-y-6">
@@ -196,6 +200,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
             >
               {goalsData?.homeTeamGoals.length || 0}
             </div>
+            {penaltyData && (
+              <div className="text-xs text-muted-foreground mb-1">
+                ({penaltyData.homeTeamScore})
+              </div>
+            )}
             <p className="text-sm font-medium">{game.homeTeam?.name}</p>
           </div>
           
@@ -211,6 +220,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
             >
               {goalsData?.awayTeamGoals.length || 0}
             </div>
+            {penaltyData && (
+              <div className="text-xs text-muted-foreground mb-1">
+                ({penaltyData.awayTeamScore})
+              </div>
+            )}
             <p className="text-sm font-medium">{game.awayTeam?.name}</p>
           </div>
         </div>
@@ -246,6 +260,15 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
       {/* Game Controls */}
       <div className="bg-card border rounded-lg p-6">
         <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowPenalties(true)}
+            disabled={endGameMutation.isPending || !isGameTied}
+            title={!isGameTied ? "Only available when the game is tied" : "Start penalty shootout"}
+            className={!isGameTied ? "cursor-not-allowed opacity-50" : ""}
+          >
+            Go to Penalties
+          </Button>
           <Button
             variant="outline"
             onClick={() => handleEndGame('regulation')}

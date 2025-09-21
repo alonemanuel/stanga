@@ -227,7 +227,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         teamId,
         eventType: 'assist',
         minute: gameMinute,
-        description: `Assist by ${assistPlayer.name} for ${scorer[0].name}`,
+        description: `Assist by ${assistPlayer.name} for ${scorerName}`,
         metadata: { goalEventId: goalEvent.id } as any,
         createdBy: user.id,
         updatedBy: user.id,
