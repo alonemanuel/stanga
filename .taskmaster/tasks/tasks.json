@@ -630,9 +630,22 @@
         "description": "Remove the refresh button from the home page UI, which is currently located in the top-right corner next to the 'Create Matchday' button.",
         "details": "To remove the refresh button from the home page, locate the component or template file where the home page UI is defined. Identify the section of the code where the refresh button is rendered. This may involve searching for button elements or specific identifiers related to the refresh functionality. Once located, remove the HTML or JSX code responsible for rendering the refresh button. Ensure that any associated event handlers or state management logic related to the refresh button are also removed to prevent any potential errors or warnings. After removal, review the layout to ensure that the absence of the button does not affect the alignment or spacing of other UI elements. Consider updating any documentation or comments in the codebase that reference the refresh button to reflect its removal.",
         "testStrategy": "Verify that the refresh button is no longer visible on the home page by manually inspecting the UI. Check the browser console for any errors or warnings that might indicate leftover event handlers or state logic related to the refresh button. Ensure that the layout of the home page remains consistent and that other elements, such as the 'Create Matchday' button, are properly aligned. Conduct a code review to confirm that all references to the refresh button have been removed from the codebase.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           14
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Make Game Rules Section Collapsible in Matchday Details Page",
+        "description": "Implement a collapsible game rules section in the matchday details page to reduce visual clutter and improve user experience.",
+        "details": "To implement the collapsible game rules section, first identify the component responsible for rendering the matchday details page. Modify this component to include a collapsible panel for the game rules section. Use a UI library like Material-UI or Bootstrap to implement the collapsible functionality, ensuring that the section is collapsed by default. Add a toggle button or icon that allows users to expand or collapse the section. Ensure that the toggle state is managed using React state or context, and that the component re-renders appropriately when the state changes. Consider accessibility by ensuring that the toggle button is keyboard navigable and has appropriate aria attributes. Update any styles to ensure the UI remains consistent and visually appealing when the section is expanded or collapsed.",
+        "testStrategy": "Verify that the game rules section is collapsed by default when the matchday details page loads. Test the expand/collapse functionality by clicking the toggle button and ensure the section expands and collapses smoothly. Use browser developer tools to check that the aria attributes are correctly set for accessibility. Perform cross-browser testing to ensure consistent behavior across different browsers. Conduct user testing to ensure that the feature improves the user experience and does not introduce any usability issues.",
+        "status": "pending",
+        "dependencies": [
+          5
         ],
         "priority": "medium",
         "subtasks": []
@@ -640,7 +653,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T11:21:30.246Z",
+      "updated": "2025-09-21T11:35:58.672Z",
       "description": "Tasks for master context"
     }
   }
