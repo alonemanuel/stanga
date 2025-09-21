@@ -723,11 +723,14 @@ function PenaltyMode({ game, matchdayId, onBackToRegular, onGameEnd }: PenaltyMo
     .map((assignment: any) => assignment.player);
 
   // Initialize penalty shootout if it doesn't exist
+  const hasTriedToInitialize = React.useRef(false);
+  
   React.useEffect(() => {
-    if (!penaltyData && game.homeScore === game.awayScore) {
+    if (!penaltyData && game.homeScore === game.awayScore && !hasTriedToInitialize.current) {
+      hasTriedToInitialize.current = true;
       startPenaltiesMutation.mutate(game.id);
     }
-  }, [penaltyData, game.homeScore, game.awayScore, game.id, startPenaltiesMutation]);
+  }, [penaltyData, game.homeScore, game.awayScore, game.id]);
 
   const handleAddPenaltyGoal = async (teamId: string, playerId: string) => {
     try {
