@@ -881,11 +881,252 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Remove Team Size from Game Rules in Match Creation and View",
+        "description": "Eliminate the team size field from the game rules section in both match creation and viewing interfaces, ensuring it is only present in matchday settings.",
+        "details": "To streamline the game rules interface, first identify the UI components and backend logic where the team size field is currently included in the game rules section. Remove this field from the UI codebase, ensuring that any associated state management and event handlers are also deleted. Update the backend data models and API endpoints to no longer expect or process the team size field in the game rules context. Ensure that the team size is only configurable within the matchday settings. This may involve updating the matchday settings UI to ensure the team size field is clearly visible and functional. Additionally, review any documentation or help text to ensure it accurately reflects the new configuration location for team size.",
+        "testStrategy": "Verify that the game rules section in both the match creation and viewing interfaces no longer displays the team size field. Test the match creation and viewing processes to ensure they function correctly without this field. Check the matchday settings to confirm that the team size field is present and functional. Ensure that API requests and responses do not include the team size field in the game rules context. Review the application documentation to ensure it accurately reflects the new configuration location for team size.",
+        "status": "pending",
+        "dependencies": [
+          27
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Remove Penalties on Tie and Penalty Win Weight from Matchday View",
+        "description": "Update the matchday view interface to exclude the 'penalties on tie' and 'penalty win weight' fields, aligning with the updated game rules.",
+        "details": "To remove the 'penalties on tie' and 'penalty win weight' fields from the matchday view, first identify the UI components where these fields are currently displayed. This may involve searching through the matchday view templates or components for any references to these fields. Once located, remove the HTML or JSX code responsible for rendering these fields. Ensure that any associated state management logic, event handlers, or data fetching related to these fields are also removed. Update any relevant stylesheets to ensure the layout remains consistent after the removal of these elements. Additionally, review the backend API endpoints and data models to confirm that they no longer send or expect data related to these fields in the matchday view context. This task is dependent on the completion of Task 27, which removes these fields from the game rules configuration.",
+        "testStrategy": "Verify that the matchday view no longer displays the 'penalties on tie' and 'penalty win weight' fields by manually inspecting the UI. Ensure that the layout remains consistent and that there are no visual gaps or misalignments. Check the browser console for any errors or warnings related to missing data or event handlers. Test the matchday view functionality to ensure it operates correctly without these fields. Confirm that the backend API responses do not include data related to these fields in the matchday view context.",
+        "status": "pending",
+        "dependencies": [
+          27
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 32,
+        "title": "Implement Real-Time UI Updates for Entity Operations",
+        "description": "Enable real-time UI updates for creation and deletion operations across various entities such as teams, players, and games, ensuring immediate feedback without page refreshes.",
+        "details": "To implement real-time UI updates, integrate WebSockets or a similar technology to listen for changes in the backend and update the UI accordingly. This involves setting up a WebSocket server to broadcast changes whenever an entity is created or deleted. On the client side, establish a WebSocket connection and listen for these broadcast messages. Update the relevant UI components dynamically based on the received messages. Ensure that the WebSocket connection is managed efficiently to handle reconnections and errors. Consider using libraries like Socket.IO for ease of implementation. Additionally, ensure that the UI updates are optimized to prevent unnecessary re-renders and maintain performance.",
+        "testStrategy": "Verify that the UI reflects changes immediately after an entity is created or deleted without requiring a page refresh. Test this functionality across different entities such as teams, players, and games. Simulate network interruptions to ensure the WebSocket connection handles reconnections gracefully. Use automated tests to simulate entity creation and deletion and verify that the UI updates correctly. Manually test the UI to ensure that updates are smooth and do not cause performance issues.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          7,
+          17
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 33,
+        "title": "Remove Start Matchday Button and Started State Logic",
+        "description": "Eliminate the start matchday button and the concept of a 'started' state, allowing users to edit and log activities in matchdays at any time.",
+        "details": "To remove the start matchday button and the associated 'started' state logic, begin by identifying the UI components and backend logic where the start button is implemented. This includes the button's rendering in the matchday interface and any state management logic that tracks whether a matchday has started. Remove the button from the UI codebase and ensure that any state variables or flags related to the 'started' state are also eliminated. Update the backend to no longer track or enforce a 'started' state, ensuring that matchday activities can be edited or logged at any time. This may involve modifying API endpoints and data models to remove any constraints related to the 'started' state. Ensure that the matchday interface remains intuitive and that users can seamlessly interact with matchdays without needing to start them first.",
+        "testStrategy": "Verify that the start matchday button is no longer visible in the matchday interface by manually inspecting the UI. Test the ability to edit and log activities in matchdays without any restrictions related to a 'started' state. Check the backend logs and API responses to confirm that no state tracking or constraints related to the 'started' state are present. Ensure that the matchday interface remains functional and user-friendly, allowing for seamless interaction with matchdays at any time.",
+        "status": "pending",
+        "dependencies": [
+          5
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 34,
+        "title": "Implement Sticky/Floating Available Players List for Team Creation",
+        "description": "Make the available players list sticky or floating during team creation to facilitate drag and drop from any scroll position.",
+        "details": "To implement a sticky or floating available players list during team creation, modify the UI to ensure that the list remains visible regardless of the user's scroll position. This can be achieved by using CSS properties such as 'position: sticky' or 'position: fixed' to keep the list anchored in a visible area of the screen. Consider using a floating sidebar or a draggable panel that users can reposition as needed. Ensure that the drag and drop functionality is seamless and intuitive, allowing users to easily drag players from the list into the team creation area. Update any relevant JavaScript logic to handle the positioning and interaction of the floating list. Ensure compatibility across different browsers and devices, and test for responsiveness and accessibility.",
+        "testStrategy": "Verify that the available players list remains visible and accessible during team creation, regardless of scroll position. Test the drag and drop functionality to ensure players can be moved from the list to the team area without issues. Check the UI on various screen sizes and devices to ensure the list is responsive and does not obstruct other elements. Use accessibility tools to confirm that the floating list is navigable via keyboard and screen readers. Conduct cross-browser testing to ensure consistent behavior.",
+        "status": "pending",
+        "dependencies": [
+          11,
+          4
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Update Games Section to Use Neutral Team Labels",
+        "description": "Change the games section interface from 'Home Team vs Away Team' to 'TEAM A vs TEAM B', removing the home/away concept for casual games.",
+        "details": "To update the games section, first locate the UI components where the team labels are defined. Replace any instances of 'Home Team' and 'Away Team' with 'TEAM A' and 'TEAM B'. Ensure that any logic or data models that differentiate between home and away teams are updated to reflect the neutral team concept. This may involve modifying the backend data structures and API endpoints to no longer expect or process home/away team distinctions. Update any related documentation to reflect these changes. Consider using a feature toggle if this change needs to be rolled out gradually.",
+        "testStrategy": "Verify that the games section displays 'TEAM A vs TEAM B' instead of 'Home Team vs Away Team'. Check that all references to home and away teams in the UI and backend are removed or updated. Test the game creation and viewing processes to ensure they function correctly with the new team labels. Conduct user testing to ensure that the change is intuitive and does not affect the user experience negatively.",
+        "status": "pending",
+        "dependencies": [
+          21,
+          30
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 36,
+        "title": "Add Stopwatch Controls for Game Timer",
+        "description": "Implement stop, restart, and resume controls for the game stopwatch, ensuring proper state management.",
+        "details": "To implement the stopwatch controls, first identify the component responsible for the game timer. Introduce three new controls: stop, restart, and resume. Use React state or context to manage the stopwatch's state, ensuring that stopping the stopwatch pauses the timer, restarting sets it back to zero, and resuming continues from the paused time. Consider edge cases such as multiple rapid clicks and ensure debouncing or throttling is applied to prevent state inconsistencies. Integrate these controls into the existing game lifecycle, ensuring they interact correctly with other game events such as starting and ending a game. Ensure the UI reflects the current state of the stopwatch clearly, with appropriate visual feedback for each control action.",
+        "testStrategy": "Verify that the stopwatch can be stopped, restarted, and resumed without errors. Test the stopwatch in various game states, including during active play and when paused. Simulate user interactions to ensure that rapid clicks do not cause state inconsistencies. Use unit tests to verify state transitions and integration tests to ensure the stopwatch interacts correctly with the overall game lifecycle. Manually test the UI to ensure that the controls provide clear visual feedback and that the stopwatch displays the correct time in all states.",
+        "status": "pending",
+        "dependencies": [
+          7
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 37,
+        "title": "Redesign Goal Logging System with Individual Goal Lists and Player Selection",
+        "description": "Revamp the goal logging system to use individual goal lists under each team's score, allowing users to add, edit, and delete goals with optional player selection.",
+        "details": "To redesign the goal logging system, first replace the current goal logging mechanism with a list-based system under each team's score. Implement a UI component that displays a list of goals for each team, allowing users to add new goals by selecting from a list of team players. This requires integrating with the existing players module (Task 4) to fetch and display player names. Provide functionality to edit and delete goals, ensuring that the team's score automatically updates to reflect the total number of goals. Remove the 'undo last goal' feature as it becomes redundant with the new system. Update the backend to support CRUD operations for goals, ensuring that changes are persisted in the database. Consider using a modal or inline editing for goal management to enhance user experience.",
+        "testStrategy": "Verify that the goal logging system displays individual goal lists under each team's score. Test adding a goal by selecting a player from the team, and ensure the score updates correctly. Edit and delete goals, checking that the score reflects these changes accurately. Confirm that the 'undo last goal' feature is removed and no longer accessible. Use integration tests to validate the CRUD operations for goals, ensuring data consistency in the database. Conduct UI tests to ensure the interface is intuitive and responsive.",
+        "status": "pending",
+        "dependencies": [
+          4,
+          15
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Goal List UI Components",
+            "description": "Develop UI components to display a list of goals under each team's score.",
+            "dependencies": [],
+            "details": "Design and implement a UI component that shows a list of goals for each team. Ensure the component is responsive and integrates seamlessly with the existing UI. Use a list or table format to display goals, and ensure it can dynamically update as goals are added or removed.",
+            "status": "pending",
+            "testStrategy": "Verify that the UI component displays correctly under each team's score and updates dynamically as goals are added or removed."
+          },
+          {
+            "id": 2,
+            "title": "Implement Add Goal Functionality with Player Selection",
+            "description": "Enable users to add new goals by selecting a player from a list of team players.",
+            "dependencies": [
+              "37.1"
+            ],
+            "details": "Integrate with the existing players module to fetch and display a list of players for each team. Implement a form or modal that allows users to select a player and add a goal. Ensure the player's name is associated with the goal in the UI.",
+            "status": "pending",
+            "testStrategy": "Test adding a goal by selecting a player and verify that the goal appears in the list with the correct player name."
+          },
+          {
+            "id": 3,
+            "title": "Build Goal Editing Capabilities",
+            "description": "Allow users to edit existing goals, including changing the associated player.",
+            "dependencies": [
+              "37.2"
+            ],
+            "details": "Provide an inline editing option or a modal to edit goals. Allow users to change the player associated with a goal or modify other goal details. Ensure changes are reflected in the UI and persisted in the backend.",
+            "status": "pending",
+            "testStrategy": "Edit a goal and verify that changes are correctly displayed in the UI and persisted in the database."
+          },
+          {
+            "id": 4,
+            "title": "Add Goal Deletion Functionality",
+            "description": "Implement the ability to delete goals from the list.",
+            "dependencies": [
+              "37.3"
+            ],
+            "details": "Add a delete option to each goal entry in the list. Ensure that deleting a goal updates the UI and removes the goal from the backend. Consider using a confirmation dialog to prevent accidental deletions.",
+            "status": "pending",
+            "testStrategy": "Delete a goal and verify that it is removed from the UI and the backend. Ensure the team's score updates accordingly."
+          },
+          {
+            "id": 5,
+            "title": "Implement Automatic Score Calculation",
+            "description": "Ensure that the team's score automatically updates based on the number of goals.",
+            "dependencies": [
+              "37.4"
+            ],
+            "details": "Calculate the team's score by counting the number of goals in the list. Update the score display in real-time as goals are added, edited, or deleted.",
+            "status": "pending",
+            "testStrategy": "Add, edit, and delete goals, verifying that the team's score updates correctly each time."
+          },
+          {
+            "id": 6,
+            "title": "Remove Old Goal Logging and Undo Functionality",
+            "description": "Eliminate the previous goal logging mechanism and the 'undo last goal' feature.",
+            "dependencies": [
+              "37.5"
+            ],
+            "details": "Identify and remove the old goal logging code and the 'undo last goal' feature from the codebase. Ensure that no remnants of the old system remain and that the new system functions independently.",
+            "status": "pending",
+            "testStrategy": "Review the codebase to ensure all old goal logging and undo features are removed. Test the new system to confirm it operates without reliance on the old features."
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Add 'Go to Penalties' Functionality for Tied Games",
+        "description": "Implement a 'Go to Penalties' button next to 'End Game' that is enabled only when the game is tied, with a tooltip explanation when disabled.",
+        "details": "To implement the 'Go to Penalties' functionality, first identify the UI component where the 'End Game' button is located. Add a new button labeled 'Go to Penalties' next to it. This button should be conditionally enabled only when the game's score is tied. Use state management to track the game's score and update the button's enabled state accordingly. When the button is disabled, display a tooltip explaining that it is only available when the game is tied. Upon activation, switch the interface to a penalty logging mode. This involves updating the UI to display penalty scores in brackets next to the regular score. Ensure that the penalty logging mode integrates with the existing goal logging system (Task 37) to allow for seamless transition and score updates. Consider edge cases such as rapid score changes and ensure the button's state updates correctly in real-time.",
+        "testStrategy": "Verify that the 'Go to Penalties' button appears next to the 'End Game' button and is only enabled when the game is tied. Test the tooltip to ensure it appears with the correct message when the button is disabled. Activate the button in a tied game scenario and confirm that the UI switches to penalty logging mode, displaying penalty scores in brackets. Test the integration with the goal logging system to ensure penalty scores update correctly. Simulate various game states to ensure the button's state updates in real-time without errors.",
+        "status": "pending",
+        "dependencies": [
+          37
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create 'Go to Penalties' Button",
+            "description": "Add a new button labeled 'Go to Penalties' next to the 'End Game' button in the UI.",
+            "dependencies": [],
+            "details": "Identify the UI component where the 'End Game' button is located. Add a new button element labeled 'Go to Penalties' next to it. Ensure the button is styled consistently with the existing UI elements.",
+            "status": "pending",
+            "testStrategy": "Verify that the 'Go to Penalties' button appears next to the 'End Game' button in the UI."
+          },
+          {
+            "id": 2,
+            "title": "Implement Conditional Enabling of 'Go to Penalties' Button",
+            "description": "Enable the 'Go to Penalties' button only when the game's score is tied.",
+            "dependencies": [
+              "38.1"
+            ],
+            "details": "Use state management to track the game's score. Implement logic to check if the scores are tied and update the button's enabled state accordingly. Ensure the button is disabled when the scores are not tied.",
+            "status": "pending",
+            "testStrategy": "Test various game scenarios to ensure the button is only enabled when the scores are tied."
+          },
+          {
+            "id": 3,
+            "title": "Add Tooltip for Disabled State",
+            "description": "Display a tooltip explaining that the 'Go to Penalties' button is only available when the game is tied.",
+            "dependencies": [
+              "38.2"
+            ],
+            "details": "Implement a tooltip that appears when the 'Go to Penalties' button is disabled. The tooltip should provide a clear message indicating that the button is only enabled when the game is tied.",
+            "status": "pending",
+            "testStrategy": "Verify that the tooltip appears with the correct message when the button is disabled."
+          },
+          {
+            "id": 4,
+            "title": "Switch to Penalty Logging Mode",
+            "description": "Switch the interface to a penalty logging mode upon activation of the 'Go to Penalties' button.",
+            "dependencies": [
+              "38.2"
+            ],
+            "details": "Implement functionality to switch the UI to a penalty logging mode when the 'Go to Penalties' button is clicked. Update the UI to display penalty scores in brackets next to the regular score. Ensure integration with the existing goal logging system.",
+            "status": "pending",
+            "testStrategy": "Activate the button in a tied game scenario and confirm that the UI switches to penalty logging mode."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Penalty Results with Game Outcome",
+            "description": "Ensure penalty results are integrated with the game's outcome and displayed correctly.",
+            "dependencies": [
+              "38.4"
+            ],
+            "details": "Update the game logic to include penalty results in determining the final game outcome. Ensure that penalty scores are displayed correctly and integrated with the existing score display.",
+            "status": "pending",
+            "testStrategy": "Test the entire game flow, including penalties, to ensure the final outcome reflects penalty results accurately."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T14:02:50.391Z",
+      "updated": "2025-09-21T14:52:41.915Z",
       "description": "Tasks for master context"
     }
   }
