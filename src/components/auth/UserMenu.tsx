@@ -2,38 +2,14 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/auth/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, User, Settings, LogOut } from "lucide-react";
-import type { User as SupabaseUser, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export function UserMenu() {
-  const [user, setUser] = React.useState<SupabaseUser | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const { user, loading, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const supabase = createClient();
-
-  React.useEffect(() => {
-    // Get initial session
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    getUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
 
   // Handle click outside to close dropdown
   React.useEffect(() => {
@@ -61,8 +37,9 @@ export function UserMenu() {
   }, [isDropdownOpen]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    console.log('UserMenu: Sign out clicked');
     setIsDropdownOpen(false);
+    await signOut();
   };
 
   const toggleDropdown = () => {

@@ -64,12 +64,15 @@ export function AuthGuard({
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
+        console.log('Auth state change:', event, session?.user?.email || 'no user');
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Handle sign out
-        if (event === 'SIGNED_OUT') {
+        // Handle sign out - redirect immediately
+        if (event === 'SIGNED_OUT' || !session) {
+          console.log('User signed out, redirecting...');
           router.push(redirectTo);
+          router.refresh(); // Force a hard refresh
         }
       }
     );
@@ -86,10 +89,15 @@ export function AuthGuard({
 
   const signOut = React.useCallback(async () => {
     try {
+      console.log('Signing out...');
+      setLoading(true);
+      setUser(null); // Clear user immediately
       await sessionManager.signOut();
       router.push(redirectTo);
+      router.refresh(); // Force a hard refresh
     } catch (error) {
       console.error('Error signing out:', error);
+      setLoading(false);
     }
   }, [sessionManager, router, redirectTo]);
 
