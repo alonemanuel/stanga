@@ -47,7 +47,7 @@ export default function HomePage() {
   }, [supabase.auth]);
   
   // Fetch matchdays with filters
-  const { data: matchdaysData, isLoading, error, refetch } = useMatchdays({
+  const { data: matchdaysData, isLoading, error } = useMatchdays({
     status: statusFilter,
     isPublic: true,
     page: 1,
@@ -125,9 +125,6 @@ export default function HomePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refetch()}>
-            Refresh
-          </Button>
           {user && (
             <Button onClick={() => setShowForm(true)}>
               Create Matchday
