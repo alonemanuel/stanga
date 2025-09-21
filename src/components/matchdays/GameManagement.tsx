@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { useGames, useGame, useStartGame, useLogGoal, useUndoGoal, useEndGame } from "@/lib/hooks/use-games";
+import { useGames, useGame, useStartGame, useEndGame } from "@/lib/hooks/use-games";
 import { useMatchdayTeams } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
+import { useGameGoals, useAddGoal, useEditGoal, useDeleteGoal } from "@/lib/hooks/use-goal-management";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PenaltyShootout } from "./PenaltyShootout";
+import { GoalList } from "./GoalList";
 import type { Game } from "@/lib/hooks/use-games";
 
 interface GameManagementProps {
@@ -73,17 +75,20 @@ interface ActiveGameProps {
 
 function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const { data: playersData } = usePlayers();
-  const logGoalMutation = useLogGoal();
-  const undoGoalMutation = useUndoGoal();
+  const { data: goalsData, isLoading: goalsLoading } = useGameGoals(game.id);
+  const addGoalMutation = useAddGoal();
+  const editGoalMutation = useEditGoal();
+  const deleteGoalMutation = useDeleteGoal();
   const endGameMutation = useEndGame();
   
-  const [selectedScorer, setSelectedScorer] = React.useState<string>('');
-  const [selectedAssist, setSelectedAssist] = React.useState<string>('');
-  const [selectedTeam, setSelectedTeam] = React.useState<string>('');
   const [showPenalties, setShowPenalties] = React.useState(false);
   
   const players = playersData?.data || [];
   const activePlayers = players.filter(p => p.isActive);
+  
+  // Get team players for goal assignment
+  const homeTeamPlayers = activePlayers; // TODO: Filter to actual team players when team assignments are available
+  const awayTeamPlayers = activePlayers; // TODO: Filter to actual team players when team assignments are available
   
   // Check if game should show penalties (tied and ended)
   React.useEffect(() => {
@@ -92,31 +97,34 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     }
   }, [game.status, game.homeScore, game.awayScore]);
   
-  const handleGoal = async () => {
-    if (!selectedScorer || !selectedTeam) {
-      return;
-    }
-    
+  const handleAddGoal = async (teamId: string, playerId: string, assistId?: string) => {
     try {
-      await logGoalMutation.mutateAsync({
+      await addGoalMutation.mutateAsync({
         gameId: game.id,
-        scorerId: selectedScorer,
-        teamId: selectedTeam,
-        assistId: selectedAssist || undefined,
+        teamId,
+        playerId,
+        assistId,
       });
-      
-      // Reset form
-      setSelectedScorer('');
-      setSelectedAssist('');
-      setSelectedTeam('');
     } catch (error) {
       // Error handled by mutation
     }
   };
   
-  const handleUndo = async () => {
+  const handleEditGoal = async (goalId: string, playerId: string, assistId?: string) => {
     try {
-      await undoGoalMutation.mutateAsync(game.id);
+      await editGoalMutation.mutateAsync({
+        goalId,
+        playerId,
+        assistId,
+      });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+  
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      await deleteGoalMutation.mutateAsync(goalId);
     } catch (error) {
       // Error handled by mutation
     }
@@ -150,6 +158,8 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     );
   }
 
+  const isLoading = goalsLoading || addGoalMutation.isPending || editGoalMutation.isPending || deleteGoalMutation.isPending;
+
   return (
     <div className="space-y-6">
       {/* Game Header */}
@@ -170,7 +180,7 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
               className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
               style={{ backgroundColor: game.homeTeam?.colorHex }}
             >
-              {game.homeScore}
+              {goalsData?.homeTeamGoals.length || 0}
             </div>
             <p className="text-sm font-medium">{game.homeTeam?.name}</p>
           </div>
@@ -185,100 +195,50 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
               className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
               style={{ backgroundColor: game.awayTeam?.colorHex }}
             >
-              {game.awayScore}
+              {goalsData?.awayTeamGoals.length || 0}
             </div>
             <p className="text-sm font-medium">{game.awayTeam?.name}</p>
           </div>
         </div>
       </div>
       
-      {/* Goal Logging */}
+      {/* Goal Lists */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Home Team Goals */}
+        <GoalList
+          teamId={game.homeTeamId}
+          teamName={game.homeTeam?.name || 'Home Team'}
+          goals={goalsData?.homeTeamGoals || []}
+          players={homeTeamPlayers}
+          onAddGoal={(playerId, assistId) => handleAddGoal(game.homeTeamId, playerId, assistId)}
+          onEditGoal={handleEditGoal}
+          onDeleteGoal={handleDeleteGoal}
+          isLoading={isLoading}
+        />
+        
+        {/* Away Team Goals */}
+        <GoalList
+          teamId={game.awayTeamId}
+          teamName={game.awayTeam?.name || 'Away Team'}
+          goals={goalsData?.awayTeamGoals || []}
+          players={awayTeamPlayers}
+          onAddGoal={(playerId, assistId) => handleAddGoal(game.awayTeamId, playerId, assistId)}
+          onEditGoal={handleEditGoal}
+          onDeleteGoal={handleDeleteGoal}
+          isLoading={isLoading}
+        />
+      </div>
+      
+      {/* Game Controls */}
       <div className="bg-card border rounded-lg p-6">
-        <h4 className="text-md font-semibold mb-4">Log Goal</h4>
-        
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Team Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Team</label>
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select team</option>
-              <option value={game.homeTeamId}>{game.homeTeam?.name}</option>
-              <option value={game.awayTeamId}>{game.awayTeam?.name}</option>
-            </select>
-          </div>
-          
-          {/* Scorer Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Scorer</label>
-            <select
-              value={selectedScorer}
-              onChange={(e) => setSelectedScorer(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select scorer</option>
-              {activePlayers.map(player => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Assist Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Assist (Optional)</label>
-            <select
-              value={selectedAssist}
-              onChange={(e) => setSelectedAssist(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">No assist</option>
-              {activePlayers
-                .filter(p => p.id !== selectedScorer)
-                .map(player => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-          
-          {/* Actions */}
-          <div className="flex items-end space-x-2">
-            <Button
-              onClick={handleGoal}
-              disabled={!selectedScorer || !selectedTeam || logGoalMutation.isPending}
-              loading={logGoalMutation.isPending}
-              className="flex-1"
-            >
-              Goal!
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-end space-x-2">
           <Button
             variant="outline"
-            onClick={handleUndo}
-            disabled={undoGoalMutation.isPending}
-            loading={undoGoalMutation.isPending}
+            onClick={() => handleEndGame('regulation')}
+            disabled={endGameMutation.isPending}
           >
-            Undo Last Goal
+            End Game
           </Button>
-          
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => handleEndGame('regulation')}
-              disabled={endGameMutation.isPending}
-            >
-              End Game
-            </Button>
-          </div>
         </div>
       </div>
     </div>
