@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
+import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { GameManagement } from "@/components/matchdays/GameManagement";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { Pencil, Trash2 } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface MatchdayDetailPageProps {
@@ -97,6 +98,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const updateMutation = useUpdateMatchday();
+  const deleteMutation = useDeleteMatchday();
   
   // Get current user
   React.useEffect(() => {
@@ -129,6 +131,24 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
       });
     } catch (error) {
       // Error handling is done in the mutation hook
+    }
+  };
+
+  const handleDeleteMatchday = async () => {
+    if (!matchdayData) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${matchdayData.data.name}"? This action cannot be undone.`
+    );
+    
+    if (confirmed) {
+      try {
+        await deleteMutation.mutateAsync(matchdayId);
+        // Redirect to matchdays list after successful deletion
+        window.location.href = '/matchdays';
+      } catch (error) {
+        // Error handling is done in the mutation hook
+      }
     }
   };
   
@@ -384,8 +404,25 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         </div>
         {user && matchday.status === 'upcoming' && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(true)}>
-              Edit Matchday
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setIsEditing(true)}
+              aria-label="Edit matchday"
+              title="Edit matchday"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleDeleteMatchday}
+              loading={deleteMutation.isPending}
+              aria-label="Delete matchday"
+              title="Delete matchday"
+              className="text-red-600 hover:text-red-700 hover:border-red-300"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
             <Button onClick={handleStartMatchday} loading={updateMutation.isPending}>
               Start Matchday
