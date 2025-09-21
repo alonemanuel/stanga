@@ -91,8 +91,8 @@ export function pointsFor(game: Game, teamId: string, rules: Rules): number {
 
   if (isWinner) {
     if (game.endReason === 'penalties') {
-      // Penalty win: draw points + weighted bonus
-      return rules.points.draw + (rules.points.penalty_bonus_win * rules.penalty_win_weight);
+      // Penalty win: draw points + penalty bonus
+      return rules.points.draw + rules.points.penalty_bonus_win;
     }
     // Regulation or extra time win
     return rules.points.regulation_win;
