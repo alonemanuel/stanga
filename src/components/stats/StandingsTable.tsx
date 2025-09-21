@@ -22,9 +22,10 @@ interface StandingsTableProps {
   standings: TeamStanding[];
   isLoading?: boolean;
   error?: string | null;
+  isRefetching?: boolean;
 }
 
-export function StandingsTable({ standings, isLoading, error }: StandingsTableProps) {
+export function StandingsTable({ standings, isLoading, error, isRefetching }: StandingsTableProps) {
   if (isLoading) {
     return (
       <div className="bg-card border rounded-lg p-6">
@@ -68,7 +69,15 @@ export function StandingsTable({ standings, isLoading, error }: StandingsTablePr
 
   return (
     <div className="bg-card border rounded-lg p-6">
-      <h3 className="text-lg font-semibold mb-4">🏆 Team Standings</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">🏆 Team Standings</h3>
+        {isRefetching && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+            Updating...
+          </div>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

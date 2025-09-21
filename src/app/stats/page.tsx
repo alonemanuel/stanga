@@ -13,8 +13,11 @@ type TabType = 'overall' | 'matchday' | 'players' | 'teams';
 export default function StatsPage() {
   const [activeTab, setActiveTab] = React.useState<TabType>('overall');
   const [selectedMatchdayId, setSelectedMatchdayId] = React.useState<string>('');
+  const [realTimeEnabled, setRealTimeEnabled] = React.useState<boolean>(false);
   
-  const { data: overallStats, isLoading: overallLoading, error: overallError } = useOverallStats();
+  const { data: overallStats, isLoading: overallLoading, error: overallError, isRefetching: overallRefetching } = useOverallStats({
+    enableRealTime: realTimeEnabled && activeTab === 'teams'
+  });
   const { data: matchdaysData } = useMatchdays({ 
     status: 'completed', 
     isPublic: true,
@@ -302,6 +305,30 @@ export default function StatsPage() {
 
     return (
       <div className="space-y-6">
+        {/* Real-time Toggle */}
+        <div className="flex items-center justify-between bg-card border rounded-lg p-4">
+          <div>
+            <h3 className="text-sm font-medium">Real-time Updates</h3>
+            <p className="text-xs text-muted-foreground">
+              Automatically refresh data every 30 seconds
+            </p>
+          </div>
+          <Button
+            variant={realTimeEnabled ? "default" : "outline"}
+            size="sm"
+            onClick={() => setRealTimeEnabled(!realTimeEnabled)}
+          >
+            {realTimeEnabled ? (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+                Live
+              </>
+            ) : (
+              'Enable Live Updates'
+            )}
+          </Button>
+        </div>
+
         {/* Standings and Top Scorers Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Standings Table */}
@@ -309,6 +336,7 @@ export default function StatsPage() {
             standings={overallStandings}
             isLoading={overallLoading}
             error={overallError ? String(overallError) : null}
+            isRefetching={overallRefetching}
           />
           
           {/* Top Scorers Table */}
@@ -317,6 +345,7 @@ export default function StatsPage() {
             isLoading={overallLoading}
             error={overallError ? String(overallError) : null}
             limit={10}
+            isRefetching={overallRefetching}
           />
         </div>
       </div>

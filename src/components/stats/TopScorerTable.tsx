@@ -16,9 +16,10 @@ interface TopScorerTableProps {
   isLoading?: boolean;
   error?: string | null;
   limit?: number;
+  isRefetching?: boolean;
 }
 
-export function TopScorerTable({ topScorers, isLoading, error, limit = 10 }: TopScorerTableProps) {
+export function TopScorerTable({ topScorers, isLoading, error, limit = 10, isRefetching }: TopScorerTableProps) {
   if (isLoading) {
     return (
       <div className="bg-card border rounded-lg p-6">
@@ -58,7 +59,15 @@ export function TopScorerTable({ topScorers, isLoading, error, limit = 10 }: Top
 
   return (
     <div className="bg-card border rounded-lg p-6">
-      <h3 className="text-lg font-semibold mb-4">⚽ Top Scorers</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">⚽ Top Scorers</h3>
+        {isRefetching && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+            Updating...
+          </div>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
