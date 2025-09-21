@@ -422,6 +422,25 @@ interface ChronologicalGoalsListProps {
   awayTeamName: string;
   homeTeamColor: string;
   awayTeamColor: string;
+  penaltyData?: {
+    id: string;
+    status: string;
+    homeTeamScore: number;
+    awayTeamScore: number;
+    kicks?: Array<{
+      id: string;
+      playerId: string;
+      teamId: string;
+      result: 'goal' | 'miss' | 'save';
+      kickOrder: number;
+      player?: {
+        id: string;
+        name: string;
+      };
+    }>;
+  } | null;
+  homeTeamId?: string;
+  awayTeamId?: string;
 }
 
 function ChronologicalGoalsList({ 
@@ -430,7 +449,10 @@ function ChronologicalGoalsList({
   homeTeamName, 
   awayTeamName, 
   homeTeamColor, 
-  awayTeamColor 
+  awayTeamColor,
+  penaltyData,
+  homeTeamId,
+  awayTeamId
 }: ChronologicalGoalsListProps) {
   // Combine all goals and add team information
   const allGoals = [
@@ -451,7 +473,29 @@ function ChronologicalGoalsList({
   // Sort by minute (chronological order)
   const sortedGoals = allGoals.sort((a, b) => a.minute - b.minute);
 
-  if (sortedGoals.length === 0) {
+  // Process penalty data if available
+  const penaltyGoals = penaltyData?.kicks
+    ?.filter(kick => kick.result === 'goal')
+    ?.map(kick => {
+      // Determine team info based on teamId using the passed homeTeamId/awayTeamId
+      const isHomeTeam = kick.teamId === homeTeamId;
+      return {
+        id: kick.id,
+        playerId: kick.playerId,
+        playerName: kick.player?.name || 'Unknown Player',
+        teamName: isHomeTeam ? homeTeamName : awayTeamName,
+        teamColor: isHomeTeam ? homeTeamColor : awayTeamColor,
+        kickOrder: kick.kickOrder,
+        isPenalty: true
+      };
+    })
+    ?.sort((a, b) => a.kickOrder - b.kickOrder) || [];
+
+  // Check if we have any goals to show
+  const hasRegularGoals = sortedGoals.length > 0;
+  const hasPenaltyGoals = penaltyGoals.length > 0;
+
+  if (!hasRegularGoals && !hasPenaltyGoals) {
     return (
       <div className="text-center text-sm text-gray-500 py-2">
         No goals were scored in this game
@@ -460,54 +504,103 @@ function ChronologicalGoalsList({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-sm font-medium text-gray-700">
-        Goals in chronological order ({sortedGoals.length})
-      </div>
-      
-      <div className="space-y-2">
-        {sortedGoals.map((goal, index) => (
-          <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
-            {/* Team color indicator */}
-            <div 
-              className="w-4 h-4 rounded-full flex-shrink-0"
-              style={{ backgroundColor: goal.teamColor }}
-            />
-            
-            {/* Goal details */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
-                  #{index + 1}
-                </span>
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3 text-gray-500" />
-                  <span className="font-medium truncate">
-                    {goal.playerName || 'Unknown Player'}
-                  </span>
-                </div>
-                {goal.assistName && (
-                  <>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-xs text-gray-600 truncate">
-                      Assist: {goal.assistName}
-                    </span>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                <span className="font-medium">{goal.teamName}</span>
-                <span className="text-gray-400">•</span>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{goal.minute}' minute</span>
-                </div>
-              </div>
-            </div>
+    <div className="space-y-4">
+      {/* Regular Goals Section */}
+      {hasRegularGoals && (
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-700">
+            Goals in chronological order ({sortedGoals.length})
           </div>
-        ))}
-      </div>
+          
+          <div className="space-y-2">
+            {sortedGoals.map((goal, index) => (
+              <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+                {/* Team color indicator */}
+                <div 
+                  className="w-4 h-4 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: goal.teamColor }}
+                />
+                
+                {/* Goal details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
+                      #{index + 1}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-gray-500" />
+                      <span className="font-medium truncate">
+                        {goal.playerName || 'Unknown Player'}
+                      </span>
+                    </div>
+                    {goal.assistName && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-xs text-gray-600 truncate">
+                          Assist: {goal.assistName}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                    <span className="font-medium">{goal.teamName}</span>
+                    <span className="text-gray-400">•</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{goal.minute}' minute</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Penalties Section */}
+      {hasPenaltyGoals && (
+        <div className="space-y-3">
+          {/* Divider with "Penalties" title */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-300"></div>
+            <div className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+              Penalties
+            </div>
+            <div className="flex-1 h-px bg-gray-300"></div>
+          </div>
+          
+          <div className="space-y-2">
+            {penaltyGoals.map((penalty, index) => (
+              <div key={penalty.id} className="flex items-center gap-3 p-2 bg-orange-50 rounded-md">
+                {/* Team color indicator */}
+                <div 
+                  className="w-4 h-4 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: penalty.teamColor }}
+                />
+                
+                {/* Penalty details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-mono text-xs bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded border">
+                      P{penalty.kickOrder}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-gray-500" />
+                      <span className="font-medium truncate">
+                        {penalty.playerName}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {penalty.teamName} • Penalty kick
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -629,6 +722,9 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
                 awayTeamName={game.awayTeam?.name || 'Away Team'}
                 homeTeamColor={game.homeTeam?.colorHex || '#3b82f6'}
                 awayTeamColor={game.awayTeam?.colorHex || '#ef4444'}
+                penaltyData={penaltyData}
+                homeTeamId={game.homeTeamId}
+                awayTeamId={game.awayTeamId}
               />
             </div>
           ) : (
