@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlayerForm } from "@/components/players/PlayerForm";
 import { usePlayers, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
 import { createClient } from "@/lib/supabase/client";
+import { Pencil, Trash2, RotateCcw } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Player {
@@ -186,16 +187,21 @@ export default function PlayersPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditPlayer(player)}
+                        aria-label={`Edit ${player.name}`}
+                        title={`Edit ${player.name}`}
+                        className="h-8 w-8 p-0"
                       >
-                        Edit
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleDeletePlayer(player.id)}
-                        className="text-red-600 hover:text-red-700"
+                        aria-label={`Delete ${player.name}`}
+                        title={`Delete ${player.name}`}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </>
                   ) : (
@@ -203,9 +209,11 @@ export default function PlayersPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleRestorePlayer(player.id)}
-                      className="text-green-600 hover:text-green-700"
+                      aria-label={`Restore ${player.name}`}
+                      title={`Restore ${player.name}`}
+                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
                     >
-                      Restore
+                      <RotateCcw className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
