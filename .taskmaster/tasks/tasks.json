@@ -859,7 +859,7 @@
         "description": "Modify the matchday creation process to make the location field optional, removing the current validation requirement for at least 2 characters.",
         "details": "To implement this task, update the matchday creation form and backend validation logic to make the location field optional. This involves modifying the Zod schema for matchday creation to allow an empty string or null value for the location field. Remove any frontend validation that enforces a minimum character count for this field. Ensure that the backend API can handle matchday creation requests without a location specified, and update any related database schemas or models to accept null or empty values for the location field. Additionally, review any UI components that display the location to ensure they handle cases where the location is not provided gracefully, such as displaying 'Location not specified' or leaving the field blank.",
         "testStrategy": "Verify that the matchday creation form allows submission without a location specified and that no validation errors occur. Test the backend API to ensure it accepts matchday creation requests with an empty or null location field. Check the database to confirm that matchdays can be created without a location and that the field is stored correctly as null or empty. Review the UI to ensure it displays matchdays without a location appropriately, without errors or placeholders that suggest a location is required.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           22,
@@ -885,7 +885,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:39:14.656Z",
+      "updated": "2025-09-21T13:49:22.652Z",
       "description": "Tasks for master context"
     }
   }

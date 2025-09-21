@@ -44,7 +44,7 @@ export const MatchdayCreateSchema = z.object({
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, 'Invalid date format'),
-  location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable().transform(val => val === '' ? null : val),
+  location: z.string().max(200, 'Location must be less than 200 characters').optional().nullable().transform(val => val === '' ? null : val),
   teamSize: z.coerce.number().int().min(3).max(15).default(9),
   numberOfTeams: z.coerce.number().int().min(2).max(20).default(2),
   rules: RulesSnapshotSchema.default(DEFAULT_RULES),
@@ -56,7 +56,7 @@ export const MatchdayUpdateSchema = z.object({
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, 'Invalid date format').optional(),
-  location: z.string().min(2, 'Location must be at least 2 characters').max(200, 'Location must be less than 200 characters').optional().nullable(),
+  location: z.string().max(200, 'Location must be less than 200 characters').optional().nullable(),
   teamSize: z.coerce.number().int().min(3).max(15).optional(),
   numberOfTeams: z.coerce.number().int().min(2).max(20).optional(),
   status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional(),
