@@ -350,15 +350,15 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
       <h4 className="text-md font-semibold mb-4">Start New Game</h4>
       
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Home Team */}
+        {/* Team A */}
         <div>
-          <label className="block text-sm font-medium mb-2">Home Team</label>
+          <label className="block text-sm font-medium mb-2">TEAM A</label>
           <select
             value={selectedHomeTeam}
             onChange={(e) => setSelectedHomeTeam(e.target.value)}
             className="w-full p-2 border rounded-md"
           >
-            <option value="">Select home team</option>
+            <option value="">Select team A</option>
             {availableTeams.map((team: any) => (
               <option key={team.id} value={team.id}>
                 {team.name}
@@ -367,15 +367,15 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
           </select>
         </div>
         
-        {/* Away Team */}
+        {/* Team B */}
         <div>
-          <label className="block text-sm font-medium mb-2">Away Team</label>
+          <label className="block text-sm font-medium mb-2">TEAM B</label>
           <select
             value={selectedAwayTeam}
             onChange={(e) => setSelectedAwayTeam(e.target.value)}
             className="w-full p-2 border rounded-md"
           >
-            <option value="">Select away team</option>
+            <option value="">Select team B</option>
             {availableTeams
               .filter((t: any) => t.id !== selectedHomeTeam)
               .map((team: any) => (
