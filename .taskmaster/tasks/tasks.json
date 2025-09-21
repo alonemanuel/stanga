@@ -366,93 +366,6 @@
         ]
       },
       {
-        "id": 9,
-        "title": "Activity Log: Append-only Audit Trail with Diffs",
-        "description": "Implement append-only activity logging for create/update/delete operations across entities, storing actor, timestamp, and JSON diffs, with a UI tab to review.",
-        "details": "Implementation steps:\n- DB: ActivityLog(actor_user_id, entity_type, entity_id, action, diff_json, created_at) with index on created_at desc\n- Logging utility: logActivity(userId, entityType, entityId, action, diffJson)\n- Diff utility: minimal structured diff { before?: Partial<T>; after?: Partial<T>; changed?: string[] } to avoid large payloads; alternatively rfc6902-like ops if needed\n- Integrate into all mutating server actions (Players, Matchdays, Teams, Games)\n- UI: app/matchdays/[id]/activity and global Activity page; list reverse-chronological; show actor avatar, action, entity link, relative time\nPseudo-code:\n- diff\n  function diff(oldVal, newVal){ const changed=[]; const before:any={}, after:any={}; for(const k of Object.keys({ ...oldVal, ...newVal })){ if(JSON.stringify(oldVal?.[k])!==JSON.stringify(newVal?.[k])){ changed.push(k); if(oldVal?.[k]!==undefined) before[k]=oldVal[k]; if(newVal?.[k]!==undefined) after[k]=newVal[k]; } } return { before, after, changed } }\n- log\n  async function logActivity(actor, entityType, entityId, action, diff){ await db.insert(activityLog).values({ actorUserId: actor, entityType, entityId, action, diffJson: diff }) }\n- usage in update action\n  const prev = await db.query.players.findFirst({ where: eq(players.id, id) })\n  await db.transaction(async (tx)=>{ await tx.update(players).set(update).where(eq(players.id, id)); await logActivity(user.id,'Player',id,'update',diff(prev, update)) })\n",
-        "testStrategy": "Unit: diff(old,new) covers add/remove/change; ensure stable key ordering not required. Integration: mutating endpoints create log rows with correct actor and action. UI RTL: Activity tab shows entries in reverse chronological order and renders diff summaries. Security: ensure logs are append-only (no update/delete endpoints). Load: paginate activity list.",
-        "priority": "medium",
-        "dependencies": [],
-        "status": "in-progress",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Database Schema and Index Setup for Activity Log",
-            "description": "Create the database schema for the ActivityLog table and set up necessary indexes.",
-            "dependencies": [],
-            "details": "Define a new table named ActivityLog with columns: actor_user_id, entity_type, entity_id, action, diff_json, and created_at. Ensure that the created_at column has an index to facilitate reverse chronological queries. Use the database migration tool to apply these changes to the database.",
-            "status": "pending",
-            "testStrategy": "Verify that the table is created with the correct columns and that the index on created_at is functioning by running queries and checking performance."
-          },
-          {
-            "id": 2,
-            "title": "Implement Logging and Diff Utilities",
-            "description": "Develop utilities for logging activities and generating JSON diffs for entity changes.",
-            "dependencies": [
-              "9.1"
-            ],
-            "details": "Create a logging utility function, logActivity, that inserts a new record into the ActivityLog table with the provided parameters. Develop a diff utility function that generates a minimal structured diff between old and new entity states, capturing only the changed fields. Consider using a format similar to rfc6902 if needed for more complex diffs.",
-            "status": "pending",
-            "testStrategy": "Unit test the diff utility to ensure it correctly identifies changes between two states. Test the logActivity function by simulating entity changes and verifying that the correct log entries are created in the database."
-          },
-          {
-            "id": 3,
-            "title": "Integrate Activity Logging and Develop UI for Review",
-            "description": "Integrate the logging utility into server actions and create a UI component to display the activity log.",
-            "dependencies": [
-              "9.2"
-            ],
-            "details": "Modify server actions for create, update, and delete operations across entities (Players, Matchdays, Teams, Games) to call the logActivity function with appropriate parameters. Develop a UI component within the app/matchdays/[id]/activity path and a global Activity page to display log entries in reverse chronological order. Include features such as actor avatar, action description, entity link, and relative time display.",
-            "status": "pending",
-            "testStrategy": "Integration test to ensure that log entries are created for each mutating action. Use UI testing to verify that the activity log displays correctly, with accurate information and in the correct order. Ensure security measures are in place to prevent unauthorized log modifications."
-          }
-        ]
-      },
-      {
-        "id": 10,
-        "title": "Public Read, Access Controls, Accessibility Polish, and CI/CD Deploy",
-        "description": "Enable anonymous public read with SSR/ISR caching, enforce auth for writes, perform WCAG AA polish, and set up CI/CD to Vercel with environment config and scheduled DB backups.",
-        "details": "Implementation steps:\n- Public read: render public routes (Dashboard, Matchdays, Players, Stats) using Next.js server components with cached data; use revalidateTag('players'|'matchdays'|'games'|'stats') post-mutations\n- Access control: ensure all server actions check requireAuth(); consider route-group conventions e.g., app/(private) for write UIs; middleware to block writes on anonymous\n- Accessibility polish: ensure focus-visible outlines, keyboard navigation across tabs/dialogs, prefers-reduced-motion respected, color-not-only-signifier (icons/labels), 44x44 tap targets; add ARIA live regions for toast/undo; haptics via Vibration API optional\n- Error/empty states: add skeletons and descriptive empty placeholders\n- CI/CD: GitHub Actions workflow\n  - On PR: pnpm install, lint, typecheck, test, build\n  - On main: deploy to Vercel using vercel-cli with VERCEL_TOKEN and ORG/PROJECT IDs\n  - Nightly backup (cron): pg_dump to GitHub artifacts or cloud storage; Neon/Supabase allow dumps via connection string\n- Environment management: Vercel project env vars (DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, GOOGLE_ID/SECRET, EMAIL_FROM, RESEND_API_KEY). .env.example committed\n- Analytics: optional Vercel Analytics enable\nPseudo-code:\n- caching fetch\n  export const revalidate = 60 // per page, or tag-based\n  const data = await fetch('/api/matchdays', { next:{ tags:['matchdays'] } }).then(r=>r.json())\n- after mutation\n  import { revalidateTag } from 'next/cache'\n  revalidateTag('matchdays')\n- .github/workflows/ci.yml (excerpt)\n  steps:\n    - uses: actions/checkout@v4\n    - uses: pnpm/action-setup@v4\n    - run: pnpm i --frozen-lockfile\n    - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build\n    - uses: amondnet/vercel-action@v25\n",
-        "testStrategy": "Integration: unauthenticated user can navigate and read core content; attempting write triggers redirect to sign-in or 401. Caching: mutate then assert revalidateTag causes refetch of updated content. A11y: run vitest-axe across main screens; manual checks for contrast and keyboard traps. CI: workflow runs on PR with all steps passing. Backup job: dry-run to ensure pg_dump completes.",
-        "priority": "medium",
-        "dependencies": [],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement Public Read with SSR/ISR Caching",
-            "description": "Enable anonymous public read access for specific routes using Next.js server components with caching.",
-            "dependencies": [],
-            "details": "Use Next.js server components to render public routes such as Dashboard, Matchdays, Players, and Stats. Implement caching by using the 'revalidate' property for pages and 'revalidateTag' for specific data tags like 'players', 'matchdays', 'games', and 'stats'. Ensure that data fetching is optimized for performance and cache invalidation occurs post-mutations.",
-            "status": "pending",
-            "testStrategy": "Perform integration testing to ensure that unauthenticated users can access and read the content on public routes. Verify that cache invalidation occurs correctly after data mutations by checking if 'revalidateTag' triggers a refetch of updated content."
-          },
-          {
-            "id": 2,
-            "title": "Enforce Access Controls for Write Operations",
-            "description": "Implement access control mechanisms to ensure authentication is required for all write operations.",
-            "dependencies": [
-              "10.1"
-            ],
-            "details": "Ensure all server actions that involve write operations check for authentication using a 'requireAuth' function. Organize the application structure to separate public and private routes, using conventions like 'app/(private)' for write UIs. Implement middleware to block write operations for anonymous users, redirecting them to sign-in or returning a 401 error.",
-            "status": "pending",
-            "testStrategy": "Test that unauthenticated users are unable to perform write operations and are redirected or receive a 401 error. Verify that authenticated users can perform write operations without issues."
-          },
-          {
-            "id": 3,
-            "title": "Set Up CI/CD Pipeline with Environment Configuration and Scheduled Backups",
-            "description": "Configure a CI/CD pipeline using GitHub Actions to deploy to Vercel and set up environment variables and scheduled database backups.",
-            "dependencies": [
-              "10.1",
-              "10.2"
-            ],
-            "details": "Create a GitHub Actions workflow to automate the CI/CD process. On pull requests, run tasks such as 'pnpm install', linting, type checking, testing, and building. On merging to the main branch, deploy the application to Vercel using 'vercel-cli' with necessary environment variables like VERCEL_TOKEN and project IDs. Set up a nightly cron job to back up the database using 'pg_dump', storing the backups in GitHub artifacts or cloud storage. Ensure all necessary environment variables are configured in Vercel and committed in a '.env.example' file.",
-            "status": "pending",
-            "testStrategy": "Verify the CI/CD pipeline by creating pull requests and merging them to the main branch, ensuring deployments occur as expected. Test the database backup process by checking the availability and integrity of backup files in the specified storage location."
-          }
-        ]
-      },
-      {
         "id": 11,
         "title": "Implement Sticky Header with Dark Theme Toggle",
         "description": "Develop a sticky header for the Stanga app that remains visible during scrolling and includes a dark/light theme toggle button.",
@@ -460,8 +373,7 @@
         "testStrategy": "Verify the header remains fixed at the top during scrolling on both desktop and mobile views. Test the theme toggle functionality to ensure it correctly switches themes and persists the user's choice across sessions. Use RTL to simulate user interactions with the toggle and check for accessibility compliance using tools like axe-core. Ensure the header is responsive and touch targets are appropriately sized for mobile devices.",
         "status": "done",
         "dependencies": [
-          1,
-          10
+          1
         ],
         "priority": "medium",
         "subtasks": [
@@ -528,8 +440,7 @@
         "testStrategy": "Manually test various clickable elements across the application to ensure the pointer cursor appears when hovering over them. Use browser developer tools to inspect elements and verify the CSS rules are applied correctly. Conduct cross-browser testing to ensure consistent behavior in different environments. Additionally, perform accessibility testing to confirm that the pointer cursor enhances usability without introducing any new issues.",
         "status": "done",
         "dependencies": [
-          1,
-          10
+          1
         ],
         "priority": "low",
         "subtasks": [
@@ -610,8 +521,7 @@
         "testStrategy": "Verify that the dashboard tab is no longer present in the navigation components. Test the application to ensure that users are redirected to the matchdays list when accessing the root URL or upon login. Check that all navigation links function correctly and lead to the intended pages. Conduct user acceptance testing to ensure the new navigation flow is intuitive and meets user expectations. Use automated tests to confirm that the routing logic correctly defaults to the matchdays list.",
         "status": "done",
         "dependencies": [
-          5,
-          10
+          5
         ],
         "priority": "medium",
         "subtasks": []
@@ -651,19 +561,63 @@
         "testStrategy": "Verify that all routes and components redirect unauthenticated users to the login page. Test API endpoints to ensure they return unauthorized errors for unauthenticated requests. Use automated tests to simulate user sessions and verify that authenticated users can access protected resources. Manually test session expiration handling to ensure users are prompted to log in again. Conduct security audits to ensure no unauthorized access is possible. Use tools like OWASP ZAP to scan for vulnerabilities in the authentication flow.",
         "status": "pending",
         "dependencies": [
-          2,
-          9
+          2
         ],
         "priority": "high",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate Middleware for Authentication",
+            "description": "Integrate middleware to check user authentication status across all routes using NextAuth.js.",
+            "dependencies": [],
+            "details": "Set up middleware that intercepts requests to verify authentication status. Use NextAuth.js to manage sessions and ensure middleware is applied to all server-side routes. Test middleware to ensure unauthenticated requests are redirected to the login page.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Client-Side Protection",
+            "description": "Develop a higher-order component (HOC) or custom hook to protect client-side components.",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "Create a HOC or custom hook that wraps protected components, checking authentication status and redirecting unauthenticated users to the login page. Ensure that all client-side routes are protected and test the implementation to verify correct redirection behavior.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Secure API Routes",
+            "description": "Ensure API routes are secured by checking the session in the request context.",
+            "dependencies": [
+              "17.1"
+            ],
+            "details": "Implement session checks in API route handlers to ensure only authenticated users can access them. Use NextAuth.js session management to verify user sessions. Test API endpoints to confirm they return unauthorized errors for unauthenticated requests.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Manage Session Expiration and Security",
+            "description": "Handle session expiration and implement security measures for session data.",
+            "dependencies": [
+              "17.1",
+              "17.2",
+              "17.3"
+            ],
+            "details": "Update the application to handle session expiration gracefully, prompting users to re-authenticate. Implement role-based access control (RBAC) where necessary. Use secure cookies and HTTPS to protect session data. Regularly review and update authentication strategies to align with the latest security best practices.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
       },
       {
         "id": 18,
         "title": "Replace Text Buttons with Icons for Edit and Delete Actions",
         "description": "Replace the text buttons labeled 'Edit' and 'Delete' with pencil and trash icons respectively, ensuring they are inline with player names and maintain accessibility.",
-        "details": "To implement this task, locate the components where 'Edit' and 'Delete' buttons are rendered. Replace these text buttons with appropriate icon components, such as a pencil icon for 'Edit' and a trash icon for 'Delete'. Ensure these icons are styled to be inline with player names to save space and improve the UI layout. Use a library like FontAwesome or Material Icons for the icons. Maintain accessibility by adding aria-labels to each icon, such as 'Edit player' and 'Delete player', and include tooltips that provide the same information. Ensure the icons are keyboard accessible, allowing users to navigate to them using the Tab key and activate them with the Enter or Space key.",
+        "details": "To implement this task, locate the components where 'Edit' and 'Delete' buttons are rendered. Replace these text buttons with appropriate icon components, such as a pencil icon for 'Edit' and a trash icon for 'Delete'. Ensure these icons are styled to be inline with player names to save space and improve the UI layout. Use a library like FontAwesome or Material Icons for the icons. Maintain accessibility by adding aria-labels to each icon, such as 'Edit player' and 'Delete player', and include tooltips that provide the same information. Ensure the icons are keyboard accessible, allowing users to navigate to them using the Tab key and activate them with the Enter or Space key.\n<info added on 2025-09-21T10:58:52.229Z>\nSuccessfully implemented icon buttons for Edit and Delete actions:\n\n✅ **What was implemented:**\n- Replaced \"Edit\" text button with Pencil icon from lucide-react\n- Replaced \"Delete\" text button with Trash2 icon from lucide-react  \n- Also updated \"Restore\" button with RotateCcw icon for consistency\n- Made buttons smaller (32x32px) to save space as requested\n- Added proper accessibility with aria-label and title attributes\n- Maintained existing hover colors (red for delete, green for restore)\n\n✅ **Accessibility features added:**\n- `aria-label` with player name context (e.g., \"Edit Lionel Messi\")\n- `title` attribute for tooltips on hover\n- Maintained keyboard navigation and focus states\n- Icons are properly sized (16x16px) for clarity\n\n✅ **Technical details:**\n- Used existing lucide-react dependency (no new packages needed)\n- Icons: Pencil, Trash2, RotateCcw imported from lucide-react\n- Button styling: `h-8 w-8 p-0` for compact square buttons\n- Build completed successfully with no linting errors\n\nThe buttons now take up much less space and can be easily placed inline with player names while maintaining full accessibility and functionality.\n</info added on 2025-09-21T10:58:52.229Z>\n<info added on 2025-09-21T11:01:15.000Z>\n✅ **Fixed icon visibility and layout issues:**\n\n**🔧 Icon Size Improvements:**\n- Increased icon size from `h-4 w-4` (16px) to `h-5 w-5` (20px)\n- Icons are now much more visible and easier to interact with\n- Maintained 32x32px button size for consistent touch targets\n\n**📐 Layout Improvements:**\n- Moved buttons to be inline with player name using `flex items-center justify-between`\n- Player name and action buttons now share the same horizontal line\n- Reduced gap between buttons from `gap-2` to `gap-1` for tighter spacing\n- Added `ml-2` margin to separate buttons from name when needed\n- Removed the separate `mb-3` div that was creating unnecessary vertical space\n\n**🎯 Result:**\n- Icons are now clearly visible (25% larger)\n- Buttons appear inline with player names as requested\n- Layout is more compact and space-efficient\n- Maintains all accessibility features and functionality\n- Build completed successfully with no errors\n\nThe layout now properly displays the player name and action buttons on the same line, with larger, more visible icons that are easy to see and interact with.\n</info added on 2025-09-21T11:01:15.000Z>",
         "testStrategy": "Verify that the text buttons are replaced with icons and are correctly aligned inline with player names. Check that the icons are visually clear and recognizable. Use browser developer tools to ensure that aria-labels are present and correct for each icon. Test the tooltips by hovering over the icons to ensure they display the correct information. Conduct keyboard navigation tests to confirm that the icons are accessible and can be activated using the keyboard. Perform cross-browser testing to ensure consistent appearance and functionality across different browsers.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           15
         ],
@@ -673,7 +627,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T10:54:23.211Z",
+      "updated": "2025-09-21T11:01:18.154Z",
       "description": "Tasks for master context"
     }
   }
