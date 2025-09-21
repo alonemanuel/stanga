@@ -17,11 +17,72 @@ interface MatchdayDetailPageProps {
 
 type TabType = 'overview' | 'teams' | 'games' | 'stats' | 'activity';
 
+interface CollapsibleSectionProps {
+  title: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+  contentId: string;
+  children: React.ReactNode;
+}
+
+function CollapsibleSection({ title, isExpanded, onToggle, contentId, children }: CollapsibleSectionProps) {
+  return (
+    <div className="bg-card border rounded-lg overflow-hidden">
+      <div 
+        className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={onToggle}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-controls={contentId}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+      >
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <svg
+          className={`w-5 h-5 transition-transform duration-200 ${
+            isExpanded ? 'rotate-180' : ''
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+      
+      <div
+        id={contentId}
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+        }`}
+        aria-hidden={!isExpanded}
+      >
+        <div className="px-6 pb-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
   const [isEditing, setIsEditing] = React.useState(false);
   const [matchdayId, setMatchdayId] = React.useState<string>('');
+  const [isRulesExpanded, setIsRulesExpanded] = React.useState(false);
+  const [isInfoExpanded, setIsInfoExpanded] = React.useState(false);
   
   const supabase = createClient();
   
@@ -176,8 +237,12 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         return (
           <div className="space-y-6">
             {/* Basic Info */}
-            <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Matchday Information</h3>
+            <CollapsibleSection
+              title="Matchday Information"
+              isExpanded={isInfoExpanded}
+              onToggle={() => setIsInfoExpanded(!isInfoExpanded)}
+              contentId="matchday-info-content"
+            >
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
@@ -206,11 +271,15 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   <p className="text-sm mt-1">{matchday.description}</p>
                 </div>
               )}
-            </div>
+            </CollapsibleSection>
 
             {/* Rules Snapshot */}
-            <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Game Rules</h3>
+            <CollapsibleSection
+              title="Game Rules"
+              isExpanded={isRulesExpanded}
+              onToggle={() => setIsRulesExpanded(!isRulesExpanded)}
+              contentId="game-rules-content"
+            >
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Team Size</label>
@@ -260,7 +329,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   </div>
                 </div>
               </div>
-            </div>
+            </CollapsibleSection>
           </div>
         );
       case 'teams':
