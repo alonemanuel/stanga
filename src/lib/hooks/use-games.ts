@@ -1,0 +1,353 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+// Types
+export interface Game {
+  id: string;
+  matchdayId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
+  startedAt: string | null;
+  endedAt: string | null;
+  duration: number | null;
+  homeScore: number;
+  awayScore: number;
+  winnerTeamId: string | null;
+  endReason: string | null;
+  maxGoals: number | null;
+  queuePosition: number;
+  homeTeam?: {
+    id: string;
+    name: string;
+    colorToken: string;
+    colorHex: string;
+  };
+  awayTeam?: {
+    id: string;
+    name: string;
+    colorToken: string;
+    colorHex: string;
+  };
+  events?: GameEvent[];
+}
+
+export interface GameEvent {
+  id: string;
+  gameId: string;
+  playerId: string | null;
+  teamId: string;
+  eventType: 'goal' | 'assist' | 'penalty_goal' | 'penalty_miss';
+  minute: number | null;
+  description: string | null;
+  metadata: any;
+  isActive: boolean;
+  player?: {
+    id: string;
+    name: string;
+    nickname: string | null;
+  };
+}
+
+export interface PenaltyShootout {
+  id: string;
+  gameId: string;
+  homeTeamScore: number;
+  awayTeamScore: number;
+  winnerTeamId: string | null;
+  status: 'active' | 'completed';
+  kicks?: PenaltyKick[];
+}
+
+export interface PenaltyKick {
+  id: string;
+  shootoutId: string;
+  playerId: string;
+  teamId: string;
+  kickOrder: number;
+  result: 'goal' | 'miss' | 'save';
+  description: string | null;
+  player?: {
+    id: string;
+    name: string;
+    nickname: string | null;
+  };
+}
+
+// API functions
+async function fetchGames(matchdayId: string, status?: string): Promise<Game[]> {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  
+  const response = await fetch(`/api/matchdays/${matchdayId}/games?${params}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch games');
+  }
+  const gamesResult = await response.json();
+  return gamesResult.data;
+}
+
+async function fetchGame(gameId: string): Promise<Game> {
+  const response = await fetch(`/api/games/${gameId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch game');
+  }
+  const gameResult = await response.json();
+  return gameResult.data;
+}
+
+async function startGame(matchdayId: string, homeTeamId: string, awayTeamId: string, force = false): Promise<Game> {
+  const response = await fetch(`/api/matchdays/${matchdayId}/games`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ homeTeamId, awayTeamId, force }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    // Preserve the error details for client-side handling
+    const errorObj = new Error(error.error || 'Failed to start game') as any;
+    errorObj.code = error.code;
+    errorObj.details = error.details;
+    throw errorObj;
+  }
+  
+  const startResult = await response.json();
+  return startResult.data;
+}
+
+async function endGame(gameId: string, endReason: string, winnerTeamId?: string): Promise<Game> {
+  const response = await fetch(`/api/games/${gameId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endReason, winnerTeamId }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to end game');
+  }
+  
+  const endResult = await response.json();
+  return endResult.data;
+}
+
+async function logGoal(gameId: string, scorerId: string, teamId: string, assistId?: string, minute?: number) {
+  const response = await fetch(`/api/games/${gameId}/goal`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scorerId, teamId, assistId, minute }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to log goal');
+  }
+  
+  const goalResult = await response.json();
+  return goalResult.data;
+}
+
+async function undoGoal(gameId: string) {
+  const response = await fetch(`/api/games/${gameId}/goal`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to undo goal');
+  }
+  
+  const undoResult = await response.json();
+  return undoResult.data;
+}
+
+async function startPenalties(gameId: string): Promise<PenaltyShootout> {
+  const response = await fetch(`/api/games/${gameId}/penalties`, {
+    method: 'POST',
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to start penalties');
+  }
+  
+  const penaltyStartResult = await response.json();
+  return penaltyStartResult.data;
+}
+
+async function fetchPenalties(gameId: string): Promise<PenaltyShootout> {
+  const response = await fetch(`/api/games/${gameId}/penalties`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch penalties');
+  }
+  const penaltyResult = await response.json();
+  return penaltyResult.data;
+}
+
+async function logPenaltyKick(gameId: string, playerId: string, teamId: string, result: 'goal' | 'miss' | 'save', description?: string) {
+  const response = await fetch(`/api/games/${gameId}/penalties/kick`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerId, teamId, result, description }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to log penalty kick');
+  }
+  
+  const penaltyKickResult = await response.json();
+  return penaltyKickResult.data;
+}
+
+// Hooks
+export function useGames(matchdayId: string, status?: string) {
+  return useQuery({
+    queryKey: ['games', matchdayId, status],
+    queryFn: () => fetchGames(matchdayId, status),
+    enabled: !!matchdayId,
+  });
+}
+
+export function useGame(gameId: string) {
+  return useQuery({
+    queryKey: ['game', gameId],
+    queryFn: () => fetchGame(gameId),
+    enabled: !!gameId,
+    refetchInterval: (data) => {
+      // Refetch every 5 seconds if game is active
+      return data?.status === 'active' ? 5000 : false;
+    },
+  });
+}
+
+export function useStartGame() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ matchdayId, homeTeamId, awayTeamId, force = false }: { matchdayId: string; homeTeamId: string; awayTeamId: string; force?: boolean }) =>
+      startGame(matchdayId, homeTeamId, awayTeamId, force),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
+      toast.success('Game started successfully!');
+    },
+    onError: (error: Error) => {
+      // Don't show toast for insufficient players error - let the component handle it
+      if ((error as any).code !== 'INSUFFICIENT_PLAYERS') {
+        toast.error(error.message);
+      }
+    },
+  });
+}
+
+export function useEndGame() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ gameId, endReason, winnerTeamId }: { gameId: string; endReason: string; winnerTeamId?: string }) =>
+      endGame(gameId, endReason, winnerTeamId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['game', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
+      toast.success('Game ended successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useLogGoal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ gameId, scorerId, teamId, assistId, minute }: { 
+      gameId: string; 
+      scorerId: string; 
+      teamId: string; 
+      assistId?: string; 
+      minute?: number; 
+    }) => logGoal(gameId, scorerId, teamId, assistId, minute),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['game', data.updatedGame.id] });
+      queryClient.invalidateQueries({ queryKey: ['games', data.updatedGame.matchdayId] });
+      
+      if (data.earlyFinish) {
+        toast.success('Goal scored! Game ended by early finish.');
+      } else {
+        toast.success('Goal scored!');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useUndoGoal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (gameId: string) => undoGoal(gameId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['game', data.updatedGame.id] });
+      queryClient.invalidateQueries({ queryKey: ['games', data.updatedGame.matchdayId] });
+      toast.success('Goal undone successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useStartPenalties() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (gameId: string) => startPenalties(gameId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['game', data.gameId] });
+      queryClient.invalidateQueries({ queryKey: ['penalties', data.gameId] });
+      toast.success('Penalty shootout started!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function usePenalties(gameId: string) {
+  return useQuery({
+    queryKey: ['penalties', gameId],
+    queryFn: () => fetchPenalties(gameId),
+    enabled: !!gameId,
+  });
+}
+
+export function useLogPenaltyKick() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ gameId, playerId, teamId, result, description }: { 
+      gameId: string; 
+      playerId: string; 
+      teamId: string; 
+      result: 'goal' | 'miss' | 'save'; 
+      description?: string; 
+    }) => logPenaltyKick(gameId, playerId, teamId, result, description),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['penalties', data.kick.gameId] });
+      queryClient.invalidateQueries({ queryKey: ['game', data.kick.gameId] });
+      
+      if (data.gameEnded) {
+        toast.success(`Penalty ${data.kick.result}! Game ended.`);
+      } else {
+        toast.success(`Penalty ${data.kick.result}!`);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}

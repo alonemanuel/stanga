@@ -286,15 +286,15 @@
         "dependencies": [
           "6"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Implement Game Lifecycle and Timer",
             "description": "Develop the core game lifecycle management including starting a game, managing the live timer, and handling game end conditions such as early finish and extra time.",
             "dependencies": [],
-            "details": "1. Set up the database schema for Game and GameEvent tables. Ensure the Game table includes fields for started_at, ended_at, and end_reason. 2. Implement the POST /api/matchdays/:id/games/start endpoint to create a new game with home_team_id and away_team_id based on queue suggestions. 3. Develop the client-side timer using useEffect and requestAnimationFrame or setInterval to track game time. Ensure the server records the started_at timestamp and uses it for authoritative decisions. 4. Implement logic to automatically end the game when a team reaches max_goals_to_win or when the base time is reached and the game is tied, triggering extra time or penalties as needed.",
-            "status": "pending",
+            "details": "1. Set up the database schema for Game and GameEvent tables. Ensure the Game table includes fields for started_at, ended_at, and end_reason. 2. Implement the POST /api/matchdays/:id/games/start endpoint to create a new game with home_team_id and away_team_id based on queue suggestions. 3. Develop the client-side timer using useEffect and requestAnimationFrame or setInterval to track game time. Ensure the server records the started_at timestamp and uses it for authoritative decisions. 4. Implement logic to automatically end the game when a team reaches max_goals_to_win or when the base time is reached and the game is tied, triggering extra time or penalties as needed.\n<info added on 2025-09-21T09:14:13.014Z>\nImplement the API routes for game management, focusing on endpoints for starting, updating, and ending games. Ensure these routes handle game lifecycle events such as goal logging, assist tracking, and penalties. Integrate undo functionality for game events and maintain accurate game state in the database.\n</info added on 2025-09-21T09:14:13.014Z>\n<info added on 2025-09-21T09:19:28.040Z>\nGame lifecycle and timer implementation is complete. API routes for game management have been created, including endpoints for starting, listing, and ending games. The client-side timer is implemented in the GameTimer component, updating every second and displaying time in MM:SS format. Game lifecycle management includes start game validation, active game state tracking, and end game conditions. Early finish logic automatically ends the game when a team reaches max goals, updating the game status to 'completed' with 'early_finish' reason. All core game lifecycle functionality is integrated into the UI.\n</info added on 2025-09-21T09:19:28.040Z>",
+            "status": "done",
             "testStrategy": "Unit tests for game start and end conditions, including early finish and extra time triggers. Use fake timers to simulate timer phases."
           },
           {
@@ -304,8 +304,8 @@
             "dependencies": [
               "7.1"
             ],
-            "details": "1. Extend the GameEvent table to include goal events with fields for scorer and optional assist, ensuring the assist is not equal to the scorer. 2. Implement the POST /api/games/:id/goal endpoint to log a goal event, update the running score in memory, and support undo functionality by soft deleting the last event. 3. Develop client-side UI components for logging goals and assists, including a goal/assist picker that filters players by current teams. 4. Implement an undo button in the UI that interacts with the server to undo the last logged event.",
-            "status": "pending",
+            "details": "1. Extend the GameEvent table to include goal events with fields for scorer and optional assist, ensuring the assist is not equal to the scorer. 2. Implement the POST /api/games/:id/goal endpoint to log a goal event, update the running score in memory, and support undo functionality by soft deleting the last event. 3. Develop client-side UI components for logging goals and assists, including a goal/assist picker that filters players by current teams. 4. Implement an undo button in the UI that interacts with the server to undo the last logged event.\n<info added on 2025-09-21T09:19:48.215Z>\n✅ Goal/Assist Logging and Undo Functionality Complete\n\n**Goal Logging API (POST /api/games/:id/goal):**\n- Validates scorer and assist players (assist cannot equal scorer)\n- Validates team belongs to current game\n- Validates players exist and are active\n- Creates goal event with minute tracking\n- Creates separate assist event if provided\n- Updates game score automatically\n- Implements early finish detection (auto-ends at max goals)\n- Comprehensive activity logging\n\n**Undo Functionality (DELETE /api/games/:id/goal):**\n- Finds and soft-deletes last active goal event\n- Also removes associated assist event\n- Updates game score by decrementing\n- Only works on active games\n- Activity logging for undo actions\n\n**UI Integration:**\n- Goal logging form with team, scorer, and assist selection\n- Real-time score updates in game display\n- Undo button for last goal\n- Form validation and error handling\n- Loading states and success/error toasts\n\n**Key Features:**\n- Minute calculation from game start time\n- Metadata storage for goal-assist relationships\n- Soft delete pattern for undo functionality\n- Score validation and bounds checking\n- Early finish game ending logic\n\nAll goal and assist logging functionality is working with full undo support.\n</info added on 2025-09-21T09:19:48.215Z>",
+            "status": "done",
             "testStrategy": "Unit tests for goal validation (assist != scorer) and undo functionality. Integration tests for logging goals, updating scores, and undoing actions."
           },
           {
@@ -316,8 +316,8 @@
               "7.1",
               "7.2"
             ],
-            "details": "1. Implement the queue logic for rotating teams using the winner-stays format. Develop a function to determine the next match based on the previous match's winner, loser, and waiting team. 2. Set up the database schema for PenaltyShootout and PenaltyKick tables. 3. Implement endpoints for managing penalty shootouts: POST /api/games/:id/penalties/start, /kick, and /end. Ensure each kick is logged with order_index and result, and determine the winner when one side becomes uncatchable or after equal kicks plus sudden death. 4. Develop client-side UI components for managing penalty shootouts, including a penalties modal and per-kick logging interface.",
-            "status": "pending",
+            "details": "1. Implement the queue logic for rotating teams using the winner-stays format. Develop a function to determine the next match based on the previous match's winner, loser, and waiting team. 2. Set up the database schema for PenaltyShootout and PenaltyKick tables. 3. Implement endpoints for managing penalty shootouts: POST /api/games/:id/penalties/start, /kick, and /end. Ensure each kick is logged with order_index and result, and determine the winner when one side becomes uncatchable or after equal kicks plus sudden death. 4. Develop client-side UI components for managing penalty shootouts, including a penalties modal and per-kick logging interface.\n<info added on 2025-09-21T09:23:50.294Z>\nWinner-Stays Queue and Penalty Shootout Management have been fully implemented and integrated. The `getNextGameSuggestion()` function in `/lib/game-queue.ts` handles the 3-team rotation logic, ensuring the winner stays and plays against the waiting team while the loser waits. It includes initialization for the first game, fallback logic for edge cases, and returns complete team information with colors. The UI displays queue suggestions with team colors, allows toggling between automatic and manual selection, shows visual queue status, and supports manual overrides.\n\nFor penalty shootouts, API endpoints have been established for starting, retrieving details, and logging penalty kicks. The shootout logic includes a standard 5-kick minimum per team, early termination conditions, sudden death rules, and automatic game ending. The UI in `PenaltyShootout.tsx` features penalty score displays, kick logging forms, kick history with visual indicators, real-time status updates, and automatic transitions upon shootout completion. Key features include complete penalty kick tracking, visual kick history, automatic winner determination, and integration with the game lifecycle.\n</info added on 2025-09-21T09:23:50.294Z>",
+            "status": "done",
             "testStrategy": "Unit tests for queue rotation correctness and penalty shootout logic, including sudden death scenarios. Integration tests for penalty shootout management and winner determination."
           }
         ]
@@ -587,11 +587,52 @@
             "testStrategy": "Use browser testing tools or services to automate cross-browser testing and document any issues for resolution."
           }
         ]
+      },
+      {
+        "id": 13,
+        "title": "Update Profile Access Pattern to Header Menu",
+        "description": "Remove the profile tab from the main navigation and integrate profile access through a dropdown menu in the header.",
+        "details": "To update the profile access pattern, first remove the existing profile tab from the main navigation bar. Then, modify the header component to include a user profile icon or the user's name. Implement a dropdown menu that appears when the user clicks on this icon or name. The dropdown should contain options such as 'View Profile', 'Settings', and 'Sign Out'. Use Tailwind CSS for styling the dropdown to ensure it matches the application's design. Ensure the dropdown is accessible, with keyboard navigation and ARIA roles. Consider using React's useState or useReducer hooks to manage the dropdown's open/close state. Additionally, ensure that the dropdown menu is responsive and works well on both desktop and mobile devices.",
+        "testStrategy": "Verify that the profile tab is no longer present in the main navigation. Test the header menu to ensure the dropdown appears when clicking the profile icon or name. Check that all options in the dropdown are functional and lead to the correct pages. Use browser developer tools to ensure the dropdown is styled correctly and is accessible. Conduct cross-browser testing to ensure consistent behavior. Perform user testing to confirm that the new access pattern is intuitive and improves navigation.",
+        "status": "pending",
+        "dependencies": [
+          11,
+          2
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Remove Dashboard Tab and Set Matchdays as Home Page",
+        "description": "Update the application to remove the dashboard tab and make the matchdays list the default home page.",
+        "details": "To simplify navigation, remove the dashboard tab from the application's navigation components. Update the routing configuration to set the matchdays list as the default landing page for users. This involves modifying the main navigation component to exclude the dashboard tab and adjusting the routing logic to redirect users to the matchdays list upon login or when accessing the root URL. Ensure that any references to the dashboard functionality in the codebase are removed or updated to reflect this change. Additionally, review and update any documentation or user guides to reflect the new navigation structure.",
+        "testStrategy": "Verify that the dashboard tab is no longer present in the navigation components. Test the application to ensure that users are redirected to the matchdays list when accessing the root URL or upon login. Check that all navigation links function correctly and lead to the intended pages. Conduct user acceptance testing to ensure the new navigation flow is intuitive and meets user expectations. Use automated tests to confirm that the routing logic correctly defaults to the matchdays list.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          10
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Simplify Player Model to Only Include Name",
+        "description": "Refactor the player model to only include the name field, removing nickname, skill level, position, and notes. Update the database schema, forms, API endpoints, and UI components accordingly.",
+        "details": "To simplify the player model, first update the database schema by removing the nickname, skill level, position, and notes fields from the players table. Ensure that any database migrations are created and applied to reflect these changes. Next, update the server-side code to modify the Zod schemas for player creation and update to only require the name field. Adjust the API endpoints to handle only the name field in requests and responses. On the client side, update the forms used for adding and editing players to only include the name input. Modify any UI components that display player information to reflect the simplified model. Ensure that any business logic or validation rules are updated to accommodate the changes. Finally, review and update any documentation related to the player model.",
+        "testStrategy": "Verify that the database schema has been updated correctly by checking the players table structure. Test the API endpoints to ensure they only accept and return the name field for player entities. Use unit tests to validate the updated Zod schemas for player creation and update. Perform integration tests to ensure the forms for adding and editing players function correctly with the simplified model. Check that all UI components display the player name correctly and that no references to removed fields exist in the codebase. Conduct a regression test to ensure that existing functionality related to players is not broken by these changes.",
+        "status": "pending",
+        "dependencies": [
+          4
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T07:12:59.238Z",
+      "updated": "2025-09-21T09:25:03.776Z",
       "description": "Tasks for master context"
     }
   }

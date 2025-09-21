@@ -47,7 +47,7 @@ These rules are stored on each matchday so they can be adjusted later (e.g., tea
 ## 5) Data Model (logical)
 
 - User(id, display_name, avatar_url, created_at)
-- Player(id, full_name, nickname, preferred_position, is_active, created_at, created_by, updated_at, updated_by, deleted_at nullable, deleted_by nullable)
+- Player(id, name, is_active, created_at, created_by, updated_at, updated_by, deleted_at nullable, deleted_by nullable)
 - Matchday(id, date, start_time, end_time, location_name, location_coords, rules_json, created_at, created_by, updated_at, updated_by)
 - Team(id, matchday_id, color_token, color_hex, formation_json json nullable, created_at, created_by)
 - TeamAssignment(id, matchday_id, team_id, player_id, position_label nullable, x_pct nullable, y_pct nullable, created_at, created_by, deleted_at nullable, deleted_by nullable)
@@ -64,13 +64,13 @@ Notes:
 ## 6) Feature Scope and UX Flows
 
 ### 6.1 Players
-- Add a player (name required, optional nickname/position)
-- Edit player
+- Add a player (name required only)
+- Edit player name
 - Deactivate/reactivate (keep in pool without deleting)
 - Search/filter by name
 
 Flow:
-1) Players → “Add player” → form → save → shows in list
+1) Players → "Add player" → form (name only) → save → shows in list
 2) Tap player row → edit/delete → confirm
 
 ### 6.2 Matchday
@@ -132,24 +132,28 @@ Matchday standings table:
 
 ## 7) Screens (mobile‑first)
 
-**App Shell**: Sticky header with Stanga brand wordmark and dark/light theme toggle button, positioned at top and visible during scrolling.
+**App Shell**: Sticky header with Stanga brand wordmark, user profile icon/name (opens dropdown menu), and dark/light theme toggle button, positioned at top and visible during scrolling.
+
+**Profile Access**: User profile is accessed through a dropdown menu triggered by clicking the user's name/profile icon in the header. Menu includes: View Profile, Settings, Sign Out.
+
+**Navigation**: The app uses a simplified navigation structure with matchdays as the home page, eliminating the need for a separate dashboard.
 
 1) Auth: "Continue with Google" + email
-2) Dashboard: next matchday; quick actions (Create matchday, Manage players)
+2) Home/Matchdays: list of matchday cards (date/time/location, progress) with quick actions (Create matchday, Manage players)
 3) Players: list, search, add/edit
-4) Matchdays: list of cards (date/time/location, progress)
-5) Matchday detail: tabs — Overview | Teams | Games | Stats | Activity
+4) Matchday detail: tabs — Overview | Teams | Games | Stats | Activity
    - Overview: rules snapshot, start/end time, team/players counts
    - Teams: assign players, enforce sizes, select team colors
    - Games: current game (timer/score), recent results, start new
    - Stats: per‑matchday metrics
    - Activity: audit trail
 6) Player detail: profile + stats
+7) User Profile: accessed via header dropdown menu, shows user stats and settings
 
 ## 8) Validation and Business Rules
 
 - Team size cannot exceed `rules.team_size` (default 6)
-- A game cannot start without two distinct teams and at least `team_size` players per team assigned
+- A game cannot start without two distinct teams; if teams have fewer than `team_size` players assigned, show a confirmation dialog with option to proceed anyway (with "don't show again" preference)
 - Goal events require a scorer linked to a team on the field; assist is optional but cannot equal scorer
 - Early end when goals for a team reach `rules.max_goals_to_win`
 - On tie at base time, add `rules.extra_minutes`; if still tie and `rules.penalties_on_tie`, open penalties flow

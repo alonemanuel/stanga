@@ -1,4 +1,5 @@
 import React from "react";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -9,8 +10,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         Skip to content
       </a>
-      <header className="h-12 flex items-center px-4 border-b">
+      <header className="h-12 flex items-center justify-between px-4 border-b">
         <span className="font-semibold">Stanga</span>
+        <UserMenu />
       </header>
       <main id="main-content" className="flex-1">
         {children}

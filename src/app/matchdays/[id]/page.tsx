@@ -4,6 +4,7 @@ import * as React from "react";
 import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
+import { GameManagement } from "@/components/matchdays/GameManagement";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
@@ -164,7 +165,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const tabs: { id: TabType; label: string; disabled?: boolean }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'teams', label: 'Teams' },
-    { id: 'games', label: 'Games', disabled: true },
+    { id: 'games', label: 'Games' },
     { id: 'stats', label: 'Stats', disabled: true },
     { id: 'activity', label: 'Activity', disabled: true },
   ];
@@ -271,9 +272,10 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         );
       case 'games':
         return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Games management coming soon...</p>
-          </div>
+          <GameManagement 
+            matchdayId={matchdayId}
+            maxPlayersPerTeam={matchday.rules.team_size}
+          />
         );
       case 'stats':
         return (

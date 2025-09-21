@@ -2,13 +2,8 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse } from 'next/server'
 
 export async function middleware(request: any) {
-  // Only run Supabase middleware for API routes that need auth
-  if (request.nextUrl.pathname.startsWith('/api/private')) {
-    return await updateSession(request)
-  }
-  
-  // For all other routes, just pass through
-  return NextResponse.next()
+  // Always run Supabase middleware to refresh sessions
+  return await updateSession(request)
 }
 
 export const config = {
