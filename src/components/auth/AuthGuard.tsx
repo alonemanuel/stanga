@@ -39,6 +39,18 @@ export function AuthGuard({
   const router = useRouter();
   const supabase = createClient();
   const sessionManager = useSessionManager();
+  
+  // Check if current path is a public route that doesn't need auth
+  const [currentPath, setCurrentPath] = React.useState("");
+  
+  React.useEffect(() => {
+    setCurrentPath(window.location.pathname);
+  }, []);
+  
+  const isPublicRoute = React.useMemo(() => {
+    const publicRoutes = ['/sign-in', '/auth/callback', '/auth/auth-code-error'];
+    return publicRoutes.some(route => currentPath.startsWith(route));
+  }, [currentPath]);
 
   React.useEffect(() => {
     // Get initial user
@@ -80,12 +92,12 @@ export function AuthGuard({
     return () => subscription.unsubscribe();
   }, [supabase.auth, router, redirectTo]);
 
-  // Redirect to sign-in if no user and not loading
+  // Redirect to sign-in if no user and not loading (unless on public route)
   React.useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isPublicRoute) {
       router.push(redirectTo);
     }
-  }, [user, loading, router, redirectTo]);
+  }, [user, loading, router, redirectTo, isPublicRoute]);
 
   const signOut = React.useCallback(async () => {
     try {
@@ -115,6 +127,15 @@ export function AuthGuard({
   // Show loading state
   if (loading) {
     return <>{fallback}</>;
+  }
+
+  // If on public route, always render children regardless of auth state
+  if (isPublicRoute) {
+    return (
+      <AuthContext.Provider value={contextValue}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
 
   // Show nothing if no user (will redirect)
