@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  // Add some debugging and ensure proper static generation
+  experimental: {
+    logging: {
+      level: 'verbose',
+    },
+  },
+  // Ensure all pages are properly generated
+  trailingSlash: false,
 };
 
 export default nextConfig;
