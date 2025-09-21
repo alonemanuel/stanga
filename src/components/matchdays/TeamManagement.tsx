@@ -416,7 +416,7 @@ function PlayerChip({ player, assignmentId, teamId, canEdit, onUnassign }: Playe
       {...listeners}
     >
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium">
+        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium sm:flex hidden">
           {displayName.charAt(0).toUpperCase()}
         </div>
         <div>
