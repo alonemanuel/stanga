@@ -22,6 +22,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
   const [isEditing, setIsEditing] = React.useState(false);
   const [matchdayId, setMatchdayId] = React.useState<string>('');
+  const [isRulesExpanded, setIsRulesExpanded] = React.useState(false);
   
   const supabase = createClient();
   
@@ -210,53 +211,92 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
 
             {/* Rules Snapshot */}
             <div className="bg-card border rounded-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Game Rules</h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Team Size</label>
-                  <p className="text-sm">{matchday.rules.team_size} players</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Game Duration</label>
-                  <p className="text-sm">{matchday.rules.game_minutes} minutes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Extra Time</label>
-                  <p className="text-sm">{matchday.rules.extra_minutes} minutes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Max Goals to Win</label>
-                  <p className="text-sm">{matchday.rules.max_goals_to_win} goals</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Penalties on Tie</label>
-                  <p className="text-sm">{matchday.rules.penalties_on_tie ? 'Yes' : 'No'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Penalty Win Weight</label>
-                  <p className="text-sm">{matchday.rules.penalty_win_weight}</p>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Game Rules</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRulesExpanded(!isRulesExpanded)}
+                  aria-expanded={isRulesExpanded}
+                  aria-controls="game-rules-content"
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-sm">
+                    {isRulesExpanded ? 'Hide' : 'Show'} Details
+                  </span>
+                  <svg
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      isRulesExpanded ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </Button>
               </div>
               
-              {/* Points System */}
-              <div className="mt-6">
-                <h4 className="text-md font-medium mb-3">Points System</h4>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Loss</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.loss}</p>
+              <div
+                id="game-rules-content"
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  isRulesExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+                }`}
+                aria-hidden={!isRulesExpanded}
+              >
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Team Size</label>
+                    <p className="text-sm">{matchday.rules.team_size} players</p>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Draw</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.draw}</p>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Game Duration</label>
+                    <p className="text-sm">{matchday.rules.game_minutes} minutes</p>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Penalty Win</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.penalty_bonus_win}</p>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Extra Time</label>
+                    <p className="text-sm">{matchday.rules.extra_minutes} minutes</p>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Regulation Win</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.regulation_win}</p>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Max Goals to Win</label>
+                    <p className="text-sm">{matchday.rules.max_goals_to_win} goals</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Penalties on Tie</label>
+                    <p className="text-sm">{matchday.rules.penalties_on_tie ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Penalty Win Weight</label>
+                    <p className="text-sm">{matchday.rules.penalty_win_weight}</p>
+                  </div>
+                </div>
+                
+                {/* Points System */}
+                <div className="mt-6">
+                  <h4 className="text-md font-medium mb-3">Points System</h4>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <label className="text-xs font-medium text-muted-foreground">Loss</label>
+                      <p className="text-lg font-semibold">{matchday.rules.points.loss}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <label className="text-xs font-medium text-muted-foreground">Draw</label>
+                      <p className="text-lg font-semibold">{matchday.rules.points.draw}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <label className="text-xs font-medium text-muted-foreground">Penalty Win</label>
+                      <p className="text-lg font-semibold">{matchday.rules.points.penalty_bonus_win}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <label className="text-xs font-medium text-muted-foreground">Regulation Win</label>
+                      <p className="text-lg font-semibold">{matchday.rules.points.regulation_win}</p>
+                    </div>
                   </div>
                 </div>
               </div>

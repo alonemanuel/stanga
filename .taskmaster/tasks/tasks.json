@@ -643,7 +643,7 @@
         "description": "Implement a collapsible game rules section in the matchday details page to reduce visual clutter and improve user experience.",
         "details": "To implement the collapsible game rules section, first identify the component responsible for rendering the matchday details page. Modify this component to include a collapsible panel for the game rules section. Use a UI library like Material-UI or Bootstrap to implement the collapsible functionality, ensuring that the section is collapsed by default. Add a toggle button or icon that allows users to expand or collapse the section. Ensure that the toggle state is managed using React state or context, and that the component re-renders appropriately when the state changes. Consider accessibility by ensuring that the toggle button is keyboard navigable and has appropriate aria attributes. Update any styles to ensure the UI remains consistent and visually appealing when the section is expanded or collapsed.",
         "testStrategy": "Verify that the game rules section is collapsed by default when the matchday details page loads. Test the expand/collapse functionality by clicking the toggle button and ensure the section expands and collapses smoothly. Use browser developer tools to check that the aria attributes are correctly set for accessibility. Perform cross-browser testing to ensure consistent behavior across different browsers. Conduct user testing to ensure that the feature improves the user experience and does not introduce any usability issues.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           5
         ],
@@ -653,7 +653,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T11:39:54.583Z",
+      "updated": "2025-09-21T11:53:10.211Z",
       "description": "Tasks for master context"
     }
   }
