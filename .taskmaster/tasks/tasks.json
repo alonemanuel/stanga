@@ -846,7 +846,7 @@
         "description": "Eliminate the 'penalties on tie' checkbox and 'penalty win weight' field from the game rules configuration to simplify the interface.",
         "details": "To simplify the game rules configuration, start by identifying the UI components and backend logic associated with the 'penalties on tie' checkbox and the 'penalty win weight' field. Remove these elements from the game rules UI, ensuring that any related state management and event handlers are also deleted. On the backend, update the data models and API endpoints to no longer expect or process these fields. This may involve modifying database schemas and removing any business logic that handles penalties on tie scenarios. Ensure that all references to these fields in the codebase are removed or updated to reflect their removal. Consider updating any documentation or user guides that mention these fields.",
         "testStrategy": "Verify that the game rules configuration UI no longer displays the 'penalties on tie' checkbox or the 'penalty win weight' field. Test the game rules submission process to ensure it functions correctly without these fields. Check the backend logs and API responses to confirm that no requests related to these fields are processed. Conduct a code review to ensure all references to these fields have been removed. Update and review any documentation to ensure it no longer references the removed fields.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           26
         ],
@@ -885,7 +885,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:59:00.461Z",
+      "updated": "2025-09-21T14:01:45.650Z",
       "description": "Tasks for master context"
     }
   }
