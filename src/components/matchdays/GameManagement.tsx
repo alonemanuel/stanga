@@ -297,35 +297,9 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
   
   const [selectedHomeTeam, setSelectedHomeTeam] = React.useState<string>('');
   const [selectedAwayTeam, setSelectedAwayTeam] = React.useState<string>('');
-  const [queueSuggestion, setQueueSuggestion] = React.useState<any>(null);
-  const [useQueueSuggestion, setUseQueueSuggestion] = React.useState(true);
   
   const teams = teamsData?.data || [];
   const availableTeams = teams.filter((t: any) => t.isActive);
-  
-  // Get queue suggestion
-  React.useEffect(() => {
-    const loadQueueSuggestion = async () => {
-      try {
-        const response = await fetch(`/api/matchdays/${matchdayId}/queue-suggestion`);
-        if (response.ok) {
-          const result = await response.json();
-          const suggestion = result.data.suggestion;
-          setQueueSuggestion(suggestion);
-          if (suggestion && useQueueSuggestion) {
-            setSelectedHomeTeam(suggestion.homeTeamId);
-            setSelectedAwayTeam(suggestion.awayTeamId);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to get queue suggestion:', error);
-      }
-    };
-    
-    if (matchdayId && availableTeams.length >= 3) {
-      loadQueueSuggestion();
-    }
-  }, [matchdayId, availableTeams.length, useQueueSuggestion]);
   
   const handleStartGame = async (force = false) => {
     if (!selectedHomeTeam || !selectedAwayTeam) {
@@ -375,60 +349,14 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
     <div className="bg-card border rounded-lg p-6">
       <h4 className="text-md font-semibold mb-4">Start New Game</h4>
       
-      {/* Queue Suggestion */}
-      {queueSuggestion && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between mb-3">
-            <h5 className="font-medium text-blue-900">Winner-Stays Queue Suggestion</h5>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUseQueueSuggestion(!useQueueSuggestion)}
-            >
-              {useQueueSuggestion ? 'Manual Selection' : 'Use Suggestion'}
-            </Button>
-          </div>
-          
-          <div className="flex items-center justify-center space-x-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: queueSuggestion.homeTeam.colorHex }}
-              />
-              <span className="font-medium">{queueSuggestion.homeTeam.name}</span>
-            </div>
-            <span className="text-muted-foreground">vs</span>
-            <div className="flex items-center space-x-2">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: queueSuggestion.awayTeam.colorHex }}
-              />
-              <span className="font-medium">{queueSuggestion.awayTeam.name}</span>
-            </div>
-            <span className="text-muted-foreground">•</span>
-            <div className="flex items-center space-x-2">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: queueSuggestion.waitingTeam.colorHex }}
-              />
-              <span className="text-xs text-muted-foreground">{queueSuggestion.waitingTeam.name} waiting</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <div className="grid gap-4 md:grid-cols-3">
         {/* Home Team */}
         <div>
           <label className="block text-sm font-medium mb-2">Home Team</label>
           <select
             value={selectedHomeTeam}
-            onChange={(e) => {
-              setSelectedHomeTeam(e.target.value);
-              setUseQueueSuggestion(false);
-            }}
+            onChange={(e) => setSelectedHomeTeam(e.target.value)}
             className="w-full p-2 border rounded-md"
-            disabled={useQueueSuggestion && queueSuggestion}
           >
             <option value="">Select home team</option>
             {availableTeams.map((team: any) => (
@@ -444,12 +372,8 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
           <label className="block text-sm font-medium mb-2">Away Team</label>
           <select
             value={selectedAwayTeam}
-            onChange={(e) => {
-              setSelectedAwayTeam(e.target.value);
-              setUseQueueSuggestion(false);
-            }}
+            onChange={(e) => setSelectedAwayTeam(e.target.value)}
             className="w-full p-2 border rounded-md"
-            disabled={useQueueSuggestion && queueSuggestion}
           >
             <option value="">Select away team</option>
             {availableTeams
