@@ -12,7 +12,7 @@ interface RouteParams {
 // POST /api/games/:id/penalties/kick - Log a penalty kick
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const { user } = await requireAuth();
     const { id: gameId } = await params;
     const body = await request.json();
     

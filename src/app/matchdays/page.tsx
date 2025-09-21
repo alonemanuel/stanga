@@ -196,7 +196,7 @@ export default function MatchdaysPage() {
           {matchdaysData.data.map((matchday) => (
             <div
               key={matchday.id}
-              className="rounded-lg border p-4 bg-card hover:shadow-md transition-shadow cursor-pointer"
+              className="rounded-lg border p-4 bg-card hover:shadow-md transition-shadow"
               onClick={() => window.location.href = `/matchdays/${matchday.id}`}
             >
               <div className="flex items-start justify-between mb-3">

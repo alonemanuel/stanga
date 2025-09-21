@@ -215,9 +215,9 @@ export function useGame(gameId: string) {
     queryKey: ['game', gameId],
     queryFn: () => fetchGame(gameId),
     enabled: !!gameId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Refetch every 5 seconds if game is active
-      return data?.status === 'active' ? 5000 : false;
+      return query.state.data?.status === 'active' ? 5000 : false;
     },
   });
 }

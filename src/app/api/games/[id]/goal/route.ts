@@ -12,7 +12,7 @@ interface RouteParams {
 // POST /api/games/:id/goal - Log a goal
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const { user } = await requireAuth();
     const { id: gameId } = await params;
     const body = await request.json();
     
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .where(eq(matchdays.id, currentGame.matchdayId))
       .limit(1);
     
-    const maxGoals = matchday[0]?.rules?.max_goals_to_win || currentGame.maxGoals || 5;
+    const maxGoals = (matchday[0]?.rules as any)?.max_goals_to_win || currentGame.maxGoals || 5;
     const shouldEndEarly = Math.max(newHomeScore, newAwayScore) >= maxGoals;
     
     const gameUpdateData: any = {
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 // DELETE /api/games/:id/goal - Undo last goal (soft delete last active goal event)
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const { user } = await requireAuth();
     const { id: gameId } = await params;
     
     // Get game details

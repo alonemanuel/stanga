@@ -69,7 +69,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PATCH /api/games/:id - Update game (end game)
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const { user } = await requireAuth();
     const { id: gameId } = await params;
     const body = await request.json();
     

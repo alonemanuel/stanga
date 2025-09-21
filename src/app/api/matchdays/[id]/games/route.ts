@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    const requiredTeamSize = matchday.rules.team_size || 5;
+    const requiredTeamSize = (matchday.rules as any)?.team_size || 5;
     
     if (!force && (homePlayerCount < requiredTeamSize || awayPlayerCount < requiredTeamSize)) {
       return NextResponse.json(
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       awayTeamId,
       status: 'active',
       startedAt: new Date(),
-      maxGoals: matchday.rules.max_goals_to_win || 5,
+      maxGoals: (matchday.rules as any)?.max_goals_to_win || 5,
       queuePosition: nextQueuePosition,
       createdBy: user.id,
       updatedBy: user.id,

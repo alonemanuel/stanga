@@ -1,5 +1,6 @@
 import React from "react";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,9 +11,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         Skip to content
       </a>
-      <header className="h-12 flex items-center justify-between px-4 border-b">
-        <span className="font-semibold">Stanga</span>
-        <UserMenu />
+      <header 
+        className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        role="banner"
+      >
+        <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
+          <div className="flex items-center space-x-2">
+            <h1 className="font-semibold text-lg tracking-tight">Stanga</h1>
+          </div>
+          <nav className="flex items-center space-x-2" role="navigation" aria-label="Header navigation">
+            <ModeToggle />
+            <UserMenu />
+          </nav>
+        </div>
       </header>
       <main id="main-content" className="flex-1">
         {children}

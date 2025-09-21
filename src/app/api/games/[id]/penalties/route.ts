@@ -12,7 +12,7 @@ interface RouteParams {
 // POST /api/games/:id/penalties - Start penalty shootout
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth();
+    const { user } = await requireAuth();
     const { id: gameId } = await params;
     
     // Get game details
