@@ -649,12 +649,24 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Remove 'Winner-Stays Queue Suggestion' Feature from Game Creation Interface",
+        "description": "Eliminate the automatic queue suggestion feature from the game creation interface to focus on manual team selection.",
+        "details": "To remove the 'Winner-Stays Queue Suggestion' feature, start by identifying the UI components responsible for displaying the queue suggestion in the game creation interface. Remove these components from the UI codebase. Next, locate and delete any API endpoints and backend logic that handle automatic team suggestions based on previous game winners. This may involve removing specific routes and associated business logic in the backend services. Update the game creation interface to emphasize manual team selection, ensuring that any UI elements or instructions related to manual selection are clear and user-friendly. Consider updating any related documentation or user guides to reflect these changes.",
+        "testStrategy": "Verify that the queue suggestion UI component is no longer visible in the game creation interface. Test the game creation process to ensure that users can manually select teams without any automatic suggestions appearing. Check the backend logs and API responses to confirm that no requests related to queue suggestions are being processed. Conduct a code review to ensure all related code has been removed and that there are no references to the queue suggestion feature in the codebase.",
+        "status": "pending",
+        "dependencies": [
+          17
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T12:02:26.257Z",
-      "description": "Tasks for master context"
+      "updated": "2025-09-21T11:55:56.094Z",      "description": "Tasks for master context"
     }
   }
 }
