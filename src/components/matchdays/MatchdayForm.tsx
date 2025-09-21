@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TextField, SelectField } from "@/components/forms/fields";
 import { NumberInput } from "@/components/forms/NumberInput";
 import { useZodForm, Form } from "@/components/forms/Form";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchdayCreateSchema, MatchdayUpdateSchema, DEFAULT_RULES, type MatchdayCreate, type MatchdayUpdate } from "@/lib/validations/matchday";
 import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 
@@ -24,6 +25,8 @@ interface MatchdayFormProps {
 
 export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProps) {
   const isEditing = !!matchday;
+  const [isRulesExpanded, setIsRulesExpanded] = React.useState(false); // Collapsed by default
+  
   const createMutation = useCreateMatchday();
   const updateMutation = useUpdateMatchday();
   
@@ -117,99 +120,79 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
       </div>
 
       {/* Rules Section */}
-      <div className="border rounded-lg p-4 space-y-4">
-        <h3 className="text-lg font-medium">Game Rules</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <TextField
-            name="rules.team_size"
-            label="Team Size"
-            type="number"
-            placeholder="6"
-          />
-          
-          <TextField
-            name="rules.game_minutes"
-            label="Game Duration (minutes)"
-            type="number"
-            placeholder="8"
-          />
-          
-          <TextField
-            name="rules.extra_minutes"
-            label="Extra Time (minutes)"
-            type="number"
-            placeholder="2"
-          />
-          
-          <TextField
-            name="rules.max_goals_to_win"
-            label="Max Goals to Win"
-            type="number"
-            placeholder="2"
-          />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">
-              Penalties on Tie
-            </label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                {...methods.register('rules.penalties_on_tie')}
-                className="rounded border-input"
-              />
-              <span className="text-sm text-muted-foreground">
-                Use penalty shootouts for ties
-              </span>
-            </div>
-          </div>
-          
-          <TextField
-            name="rules.penalty_win_weight"
-            label="Penalty Win Weight"
-            type="number"
-            step="0.1"
-            placeholder="0.5"
-          />
-        </div>
-
-        {/* Points System */}
-        <div className="space-y-3">
-          <h4 className="text-md font-medium">Points System</h4>
+      <CollapsibleSection
+        title="Game Rules"
+        isExpanded={isRulesExpanded}
+        onToggle={() => setIsRulesExpanded(!isRulesExpanded)}
+        contentId="game-rules-form"
+      >
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField
-              name="rules.points.loss"
-              label="Loss Points"
+              name="rules.team_size"
+              label="Team Size"
               type="number"
-              placeholder="0"
+              placeholder={`${DEFAULT_RULES.team_size}`}
             />
             
             <TextField
-              name="rules.points.draw"
-              label="Draw Points"
+              name="rules.game_minutes"
+              label="Game Duration (minutes)"
               type="number"
-              placeholder="1"
+              placeholder={`${DEFAULT_RULES.game_minutes}`}
             />
             
             <TextField
-              name="rules.points.penalty_bonus_win"
-              label="Penalty Win Points"
+              name="rules.extra_minutes"
+              label="Extra Time (minutes)"
               type="number"
-              placeholder="2"
+              placeholder={`${DEFAULT_RULES.extra_minutes}`}
             />
             
             <TextField
-              name="rules.points.regulation_win"
-              label="Regulation Win Points"
+              name="rules.max_goals_to_win"
+              label="Max Goals to Win"
               type="number"
-              placeholder="3"
+              placeholder={`${DEFAULT_RULES.max_goals_to_win}`}
             />
           </div>
+          
+
+          {/* Points System */}
+          <div className="space-y-3">
+            <h4 className="text-md font-medium">Points System</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                name="rules.points.loss"
+                label="Loss Points"
+                type="number"
+                placeholder={`${DEFAULT_RULES.points.loss}`}
+              />
+              
+              <TextField
+                name="rules.points.draw"
+                label="Draw Points"
+                type="number"
+                placeholder={`${DEFAULT_RULES.points.draw}`}
+              />
+              
+              <TextField
+                name="rules.points.penalty_bonus_win"
+                label="Penalty Win Points"
+                type="number"
+                placeholder={`${DEFAULT_RULES.points.penalty_bonus_win}`}
+              />
+              
+              <TextField
+                name="rules.points.regulation_win"
+                label="Regulation Win Points"
+                type="number"
+                placeholder={`${DEFAULT_RULES.points.regulation_win}`}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      </CollapsibleSection>
       
       <div className="flex gap-2 justify-end">
         {onCancel && (
