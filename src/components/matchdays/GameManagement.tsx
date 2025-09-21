@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useGames, useGame, useStartGame, useEndGame, usePenalties } from "@/lib/hooks/use-games";
+import { useGames, useGame, useStartGame, useEndGame, usePenalties, useStartPenalties, useLogPenaltyKick } from "@/lib/hooks/use-games";
 import { useMatchdayTeams } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { useGameGoals, useAddGoal, useEditGoal, useDeleteGoal } from "@/lib/hooks/use-goal-management";
@@ -158,18 +158,15 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     }
   };
   
-  // Show penalty shootout if game is completed and tied
+  // Show penalty mode if enabled
   if (showPenalties) {
     return (
-      <div className="space-y-6">
-        <PenaltyShootout 
-          game={game} 
-          onShootoutEnd={() => {
-            setShowPenalties(false);
-            onGameEnd();
-          }}
-        />
-      </div>
+      <PenaltyMode 
+        game={game}
+        matchdayId={matchdayId}
+        onBackToRegular={() => setShowPenalties(false)}
+        onGameEnd={onGameEnd}
+      />
     );
   }
 
@@ -679,6 +676,220 @@ export function GameManagement({ matchdayId, maxPlayersPerTeam }: GameManagement
       )}
       
       <RecentGames matchdayId={matchdayId} />
+    </div>
+  );
+}
+
+// Penalty Mode Component
+interface PenaltyModeProps {
+  game: Game;
+  matchdayId: string;
+  onBackToRegular: () => void;
+  onGameEnd: () => void;
+}
+
+function PenaltyMode({ game, matchdayId, onBackToRegular, onGameEnd }: PenaltyModeProps) {
+  const { data: playersData } = usePlayers();
+  const { data: teamsData } = useMatchdayTeams(matchdayId);
+  const { data: penaltyData, refetch: refetchPenalties } = usePenalties(game.id);
+  const startPenaltiesMutation = useStartPenalties();
+  const logPenaltyKickMutation = useLogPenaltyKick();
+  const endGameMutation = useEndGame();
+
+  const players = playersData?.data || [];
+  const teams = teamsData?.data || [];
+
+  // Filter players by team assignments
+  const teamAssignments = teams.flatMap((team: any) => 
+    team.assignments?.map((assignment: any) => ({
+      teamId: team.id,
+      playerId: assignment.playerId,
+      player: assignment.player
+    })) || []
+  );
+
+  const homeTeamPlayers = teamAssignments
+    .filter((assignment: any) => assignment.teamId === game.homeTeamId)
+    .map((assignment: any) => assignment.player);
+
+  const awayTeamPlayers = teamAssignments
+    .filter((assignment: any) => assignment.teamId === game.awayTeamId)
+    .map((assignment: any) => assignment.player);
+
+  // Initialize penalty shootout if it doesn't exist
+  React.useEffect(() => {
+    if (!penaltyData && game.homeScore === game.awayScore) {
+      startPenaltiesMutation.mutate(game.id);
+    }
+  }, [penaltyData, game.homeScore, game.awayScore, game.id, startPenaltiesMutation]);
+
+  const handleAddPenaltyGoal = async (teamId: string, playerId: string) => {
+    try {
+      await logPenaltyKickMutation.mutateAsync({
+        gameId: game.id,
+        playerId,
+        teamId,
+        result: 'goal',
+      });
+      refetchPenalties();
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  const handleEditPenaltyGoal = async (goalId: string, playerId: string) => {
+    // For penalties, we might need a different edit approach
+    // For now, we'll handle this in the penalty kick API
+    console.log('Edit penalty goal:', goalId, playerId);
+  };
+
+  const handleDeletePenaltyGoal = async (goalId: string) => {
+    // For penalties, we might need a different delete approach
+    // For now, we'll handle this in the penalty kick API
+    console.log('Delete penalty goal:', goalId);
+  };
+
+  const handleEndGame = async (reason: string) => {
+    try {
+      let winnerId: string | undefined;
+      if (penaltyData && penaltyData.homeTeamScore !== penaltyData.awayTeamScore) {
+        winnerId = penaltyData.homeTeamScore > penaltyData.awayTeamScore 
+          ? game.homeTeamId 
+          : game.awayTeamId;
+      }
+
+      await endGameMutation.mutateAsync({
+        gameId: game.id,
+        endReason: reason,
+        winnerTeamId: winnerId,
+      });
+      onGameEnd();
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
+  // Convert penalty kicks to goal format for GoalList component
+  const homeTeamPenalties = penaltyData?.kicks
+    ?.filter(kick => kick.teamId === game.homeTeamId && kick.result === 'goal')
+    ?.map(kick => ({
+      id: kick.id,
+      playerId: kick.playerId,
+      playerName: kick.player?.name || 'Unknown Player',
+      minute: kick.kickOrder,
+      teamId: kick.teamId,
+    })) || [];
+
+  const awayTeamPenalties = penaltyData?.kicks
+    ?.filter(kick => kick.teamId === game.awayTeamId && kick.result === 'goal')
+    ?.map(kick => ({
+      id: kick.id,
+      playerId: kick.playerId,
+      playerName: kick.player?.name || 'Unknown Player',
+      minute: kick.kickOrder,
+      teamId: kick.teamId,
+    })) || [];
+
+  const isLoading = startPenaltiesMutation.isPending || logPenaltyKickMutation.isPending || endGameMutation.isPending;
+
+  return (
+    <div className="space-y-6">
+      {/* Penalty Header */}
+      <div className="bg-card border rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Penalty Shootout</h3>
+          <div className="flex items-center gap-2">
+            <Badge variant="default" className="bg-orange-100 text-orange-800">
+              Penalties
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBackToRegular}
+            >
+              Back to Game
+            </Button>
+          </div>
+        </div>
+        
+        {/* Penalty Score Display */}
+        <div className="flex items-center justify-center space-x-8 mb-6">
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-1">Regular Score</div>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
+              style={{ backgroundColor: game.homeTeam?.colorHex }}
+            >
+              {game.homeScore}
+            </div>
+            <div className="text-lg font-bold text-orange-600">
+              ({penaltyData?.homeTeamScore || 0})
+            </div>
+            <p className="text-sm font-medium">{game.homeTeam?.name}</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-muted-foreground mb-2">PENALTIES</div>
+            <GameTimer game={game} />
+          </div>
+          
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-1">Regular Score</div>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
+              style={{ backgroundColor: game.awayTeam?.colorHex }}
+            >
+              {game.awayScore}
+            </div>
+            <div className="text-lg font-bold text-orange-600">
+              ({penaltyData?.awayTeamScore || 0})
+            </div>
+            <p className="text-sm font-medium">{game.awayTeam?.name}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Penalty Goal Lists */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Home Team Penalties */}
+        <GoalList
+          teamId={game.homeTeamId}
+          teamName={`${game.homeTeam?.name || 'Home Team'} - Penalties`}
+          goals={homeTeamPenalties}
+          players={homeTeamPlayers}
+          onAddGoal={(playerId) => handleAddPenaltyGoal(game.homeTeamId, playerId)}
+          onEditGoal={handleEditPenaltyGoal}
+          onDeleteGoal={handleDeletePenaltyGoal}
+          isLoading={isLoading}
+          isPenaltyMode={true}
+        />
+        
+        {/* Away Team Penalties */}
+        <GoalList
+          teamId={game.awayTeamId}
+          teamName={`${game.awayTeam?.name || 'Away Team'} - Penalties`}
+          goals={awayTeamPenalties}
+          players={awayTeamPlayers}
+          onAddGoal={(playerId) => handleAddPenaltyGoal(game.awayTeamId, playerId)}
+          onEditGoal={handleEditPenaltyGoal}
+          onDeleteGoal={handleDeletePenaltyGoal}
+          isLoading={isLoading}
+          isPenaltyMode={true}
+        />
+      </div>
+      
+      {/* Penalty Controls */}
+      <div className="bg-card border rounded-lg p-6">
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => handleEndGame('penalties')}
+            disabled={endGameMutation.isPending}
+          >
+            End Game
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
