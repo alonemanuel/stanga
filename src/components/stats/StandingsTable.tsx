@@ -86,6 +86,7 @@ export function StandingsTable({ standings, isLoading, error, isRefetching }: St
               <th className="text-left py-2 px-2">Team</th>
               <th className="text-center py-2 px-2">GP</th>
               <th className="text-center py-2 px-2">W</th>
+              <th className="text-center py-2 px-2">PW</th>
               <th className="text-center py-2 px-2">D</th>
               <th className="text-center py-2 px-2">L</th>
               <th className="text-center py-2 px-2">GF</th>
@@ -100,25 +101,12 @@ export function StandingsTable({ standings, isLoading, error, isRefetching }: St
                 <td className="py-2 px-2 text-center font-medium">{index + 1}</td>
                 <td className="py-2 px-2 font-medium">{team.teamName}</td>
                 <td className="py-2 px-2 text-center">{team.gamesPlayed}</td>
-                <td className="py-2 px-2 text-center">
-                  {team.wins}
-                  {team.penaltyWins > 0 && (
-                    <span className="text-xs text-muted-foreground ml-1">
-                      (+{team.penaltyWins})
-                    </span>
-                  )}
-                </td>
+                <td className="py-2 px-2 text-center">{team.wins - team.penaltyWins}</td>
+                <td className="py-2 px-2 text-center">{team.penaltyWins}</td>
                 <td className="py-2 px-2 text-center">
                   {team.draws - team.penaltyWins - team.penaltyLosses}
                 </td>
-                <td className="py-2 px-2 text-center">
-                  {team.losses}
-                  {team.penaltyLosses > 0 && (
-                    <span className="text-xs text-muted-foreground ml-1">
-                      (+{team.penaltyLosses})
-                    </span>
-                  )}
-                </td>
+                <td className="py-2 px-2 text-center">{team.losses - team.penaltyLosses}</td>
                 <td className="py-2 px-2 text-center">{team.goalsFor}</td>
                 <td className="py-2 px-2 text-center">{team.goalsAgainst}</td>
                 <td className="py-2 px-2 text-center">
@@ -135,14 +123,8 @@ export function StandingsTable({ standings, isLoading, error, isRefetching }: St
       
       {/* Legend */}
       <div className="mt-4 text-xs text-muted-foreground">
-        <p className="mb-1">
-          <strong>GP:</strong> Games Played, <strong>W:</strong> Wins, <strong>D:</strong> Draws, <strong>L:</strong> Losses
-        </p>
-        <p className="mb-1">
-          <strong>GF:</strong> Goals For, <strong>GA:</strong> Goals Against, <strong>GD:</strong> Goal Difference, <strong>Pts:</strong> Points
-        </p>
         <p>
-          Numbers in parentheses indicate penalty wins/losses
+          <strong>GP:</strong> Games Played, <strong>PW:</strong> Penalty Wins
         </p>
       </div>
     </div>
