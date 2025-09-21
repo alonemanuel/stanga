@@ -65,13 +65,16 @@ interface AssignmentResponse {
 
 // API functions
 async function fetchMatchdayTeams(matchdayId: string): Promise<TeamsResponse> {
+  console.log('🌐 Fetching teams for matchday:', matchdayId);
   const response = await fetch(`/api/matchdays/${matchdayId}/teams`);
   
   if (!response.ok) {
     throw new Error('Failed to fetch teams');
   }
   
-  return response.json();
+  const data = await response.json();
+  console.log('📦 Teams data received:', data);
+  return data;
 }
 
 async function initializeTeams(matchdayId: string): Promise<TeamsResponse> {
@@ -144,7 +147,9 @@ export function useMatchdayTeams(matchdayId: string) {
     queryFn: () => fetchMatchdayTeams(matchdayId),
     enabled: !!matchdayId,
     staleTime: 0, // Always consider data stale to allow immediate refetching after mutations
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes but always refetch when needed
     refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests
+    refetchOnMount: true, // Always refetch when component mounts
   });
 }
 
@@ -190,6 +195,8 @@ export function useAssignPlayer() {
     mutationFn: ({ teamId, data }: { teamId: string; data: TeamAssignmentCreateInput }) => 
       assignPlayer(teamId, data),
     onMutate: async ({ teamId, data }) => {
+      console.log('🔄 Assigning player - onMutate called', { teamId, data });
+      
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ['teams'] });
       
@@ -199,10 +206,14 @@ export function useAssignPlayer() {
       return { previousTeams };
     },
     onSuccess: (data, variables) => {
-      // Invalidate teams queries to refresh with server data
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      // Also invalidate players queries in case they're affected
-      queryClient.invalidateQueries({ queryKey: ['players'] });
+      console.log('✅ Assign player - onSuccess called', { data, variables });
+      
+      // Force immediate refetch of teams queries
+      queryClient.refetchQueries({ queryKey: ['teams'] });
+      // Also refetch players queries in case they're affected
+      queryClient.refetchQueries({ queryKey: ['players'] });
+      
+      console.log('🔄 Forced refetch for teams and players');
       toast.success(data.message || 'Player assigned successfully');
     },
     onError: (error: Error, variables, context) => {
@@ -227,6 +238,8 @@ export function useUnassignPlayer() {
   return useMutation({
     mutationFn: unassignPlayer,
     onMutate: async (assignmentId) => {
+      console.log('🔄 Unassigning player - onMutate called', { assignmentId });
+      
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ['teams'] });
       
@@ -236,10 +249,14 @@ export function useUnassignPlayer() {
       return { previousTeams };
     },
     onSuccess: (data) => {
-      // Invalidate teams queries to refresh with server data
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      // Also invalidate players queries in case they're affected
-      queryClient.invalidateQueries({ queryKey: ['players'] });
+      console.log('✅ Unassign player - onSuccess called', { data });
+      
+      // Force immediate refetch of teams queries
+      queryClient.refetchQueries({ queryKey: ['teams'] });
+      // Also refetch players queries in case they're affected
+      queryClient.refetchQueries({ queryKey: ['players'] });
+      
+      console.log('🔄 Forced refetch for teams and players');
       toast.success(data.message || 'Player unassigned successfully');
     },
     onError: (error: Error, variables, context) => {
