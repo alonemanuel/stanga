@@ -12,7 +12,8 @@ interface Matchday {
   id: string;
   scheduledAt: string;
   location?: string | null;
-  maxPlayers: number;
+  teamSize: number;
+  numberOfTeams: number;
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
   rules: any;
   isPublic: boolean;
@@ -213,7 +214,7 @@ export default function HomePage() {
                 )}
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">👥</span>
-                  <span>Max {matchday.maxPlayers} players</span>
+                  <span>{matchday.numberOfTeams} teams of {matchday.teamSize}</span>
                 </div>
               </div>
               

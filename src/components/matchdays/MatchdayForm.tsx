@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, SelectField } from "@/components/forms/fields";
+import { NumberInput } from "@/components/forms/NumberInput";
 import { useZodForm, Form } from "@/components/forms/Form";
 import { MatchdayCreateSchema, MatchdayUpdateSchema, DEFAULT_RULES, type MatchdayCreate, type MatchdayUpdate } from "@/lib/validations/matchday";
 import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
@@ -12,7 +13,8 @@ interface MatchdayFormProps {
     id: string;
     scheduledAt: string;
     location?: string | null;
-    maxPlayers: number;
+    teamSize: number;
+    numberOfTeams: number;
     rules: any;
   };
   onSuccess?: () => void;
@@ -30,12 +32,14 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
     defaultValues: isEditing ? {
       scheduledAt: matchday.scheduledAt.slice(0, 16), // Convert to datetime-local format
       location: matchday.location || "",
-      maxPlayers: matchday.maxPlayers,
+      teamSize: matchday.teamSize,
+      numberOfTeams: matchday.numberOfTeams,
       rules: matchday.rules,
     } : {
       scheduledAt: "",
       location: "",
-      maxPlayers: 18,
+      teamSize: 9,
+      numberOfTeams: 2,
       rules: DEFAULT_RULES,
     },
   });
@@ -90,12 +94,27 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
         placeholder="e.g., Central Park Field 1"
       />
       
-      <TextField
-        name="maxPlayers"
-        label="Max Players"
-        type="number"
-        placeholder="18"
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <NumberInput
+          name="teamSize"
+          label="Team Size"
+          value={methods.watch('teamSize') || 9}
+          onChange={(value) => methods.setValue('teamSize', value)}
+          min={3}
+          max={15}
+          placeholder="9"
+        />
+        
+        <NumberInput
+          name="numberOfTeams"
+          label="Number of Teams"
+          value={methods.watch('numberOfTeams') || 2}
+          onChange={(value) => methods.setValue('numberOfTeams', value)}
+          min={2}
+          max={20}
+          placeholder="2"
+        />
+      </div>
 
       {/* Rules Section */}
       <div className="border rounded-lg p-4 space-y-4">

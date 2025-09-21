@@ -11,7 +11,8 @@ interface Matchday {
   description?: string | null;
   scheduledAt: string;
   location?: string | null;
-  maxPlayers: number;
+  teamSize: number;
+  numberOfTeams: number;
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
   rules: any; // RulesSnapshot type
   isPublic: boolean;

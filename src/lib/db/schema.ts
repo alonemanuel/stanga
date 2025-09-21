@@ -49,7 +49,8 @@ export const matchdays = pgTable('matchdays', {
   description: text('description'),
   scheduledAt: timestamp('scheduled_at').notNull(),
   location: text('location'),
-  maxPlayers: integer('max_players').default(18).notNull(),
+  teamSize: integer('team_size').default(9).notNull(),
+  numberOfTeams: integer('number_of_teams').default(2).notNull(),
   status: text('status').default('upcoming').notNull(), // 'upcoming', 'active', 'completed', 'cancelled'
   rules: jsonb('rules').notNull(), // Snapshot of rules at creation time
   isPublic: boolean('is_public').default(true).notNull(),

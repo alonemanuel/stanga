@@ -803,7 +803,7 @@
         "description": "Replace the max players setting with team size in matchday settings, moving it from game rules, and implement plus/minus buttons for adjustment.",
         "details": "To implement this task, first update the matchday settings schema to include team size and remove the max players field. Modify the UI to display the team size setting within the matchday settings section, replacing the current max players field. Implement plus and minus buttons next to the team size input field to allow users to easily adjust the team size incrementally. Additionally, provide an option for users to manually input a team size value. Ensure that the UI updates dynamically as users interact with the controls. Update any backend logic to handle the new team size field appropriately, ensuring that it is stored and retrieved correctly from the database. Consider using a UI library for the plus/minus buttons to ensure consistency with existing UI components.",
         "testStrategy": "Verify that the matchday settings UI displays the team size field instead of max players. Test the plus and minus buttons to ensure they increment and decrement the team size correctly. Check that manual input of team size is accepted and updates the field appropriately. Ensure that the team size value is correctly saved to and retrieved from the database. Conduct UI tests to confirm that the controls are responsive and accessible. Validate that the backend logic correctly processes the team size field during matchday creation and updates.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           22
@@ -817,7 +817,7 @@
         "description": "Implement plus/minus buttons and manual input for adjusting the number of teams in the matchday creation form to enhance user experience.",
         "details": "To implement this feature, update the matchday creation form to include a new field for the number of teams. Add plus and minus buttons adjacent to this field to allow users to increment or decrement the number of teams easily. Ensure the field also supports manual input for direct number entry. Use React state to manage the value of the number of teams, updating the state on button clicks or manual input changes. Consider accessibility by ensuring the buttons are keyboard navigable and have appropriate ARIA labels. Update the form validation logic to ensure the number of teams is within a reasonable range (e.g., 2 to 20). Modify the backend API to accept and process the number of teams field, updating any relevant data models or schemas as necessary.",
         "testStrategy": "Verify that the matchday creation form displays the number of teams field with functional plus and minus buttons. Test that clicking the plus button increments the number of teams and the minus button decrements it, ensuring the value stays within the allowed range. Check that manual input is accepted and updates the field correctly. Ensure the form submits successfully with the number of teams included and that the backend processes this data correctly. Conduct accessibility testing to confirm that the controls are usable via keyboard and screen readers.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           22,
@@ -885,7 +885,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T13:30:16.443Z",
+      "updated": "2025-09-21T13:39:14.656Z",
       "description": "Tasks for master context"
     }
   }

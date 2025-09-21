@@ -210,7 +210,8 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               id: matchday.id,
               scheduledAt: matchday.scheduledAt,
               location: matchday.location,
-              maxPlayers: matchday.maxPlayers,
+              teamSize: matchday.teamSize,
+              numberOfTeams: matchday.numberOfTeams,
               rules: matchday.rules,
             }}
             onSuccess={handleEditSuccess}
@@ -253,8 +254,12 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Max Players</label>
-                  <p className="text-sm">{matchday.maxPlayers}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Team Size</label>
+                  <p className="text-sm">{matchday.teamSize} players per team</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Number of Teams</label>
+                  <p className="text-sm">{matchday.numberOfTeams} teams</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
