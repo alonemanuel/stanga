@@ -130,35 +130,6 @@ async function endGame(gameId: string, endReason: string, winnerTeamId?: string)
   return endResult.data;
 }
 
-async function logGoal(gameId: string, scorerId: string, teamId: string, assistId?: string, minute?: number) {
-  const response = await fetch(`/api/games/${gameId}/goal`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ scorerId, teamId, assistId, minute }),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to log goal');
-  }
-  
-  const goalResult = await response.json();
-  return goalResult.data;
-}
-
-async function undoGoal(gameId: string) {
-  const response = await fetch(`/api/games/${gameId}/goal`, {
-    method: 'DELETE',
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to undo goal');
-  }
-  
-  const undoResult = await response.json();
-  return undoResult.data;
-}
 
 async function startPenalties(gameId: string): Promise<PenaltyShootout> {
   const response = await fetch(`/api/games/${gameId}/penalties`, {
@@ -174,9 +145,13 @@ async function startPenalties(gameId: string): Promise<PenaltyShootout> {
   return penaltyStartResult.data;
 }
 
-async function fetchPenalties(gameId: string): Promise<PenaltyShootout> {
+async function fetchPenalties(gameId: string): Promise<PenaltyShootout | null> {
   const response = await fetch(`/api/games/${gameId}/penalties`);
   if (!response.ok) {
+    // Return null for 404 (no penalty data) instead of throwing
+    if (response.status === 404) {
+      return null;
+    }
     throw new Error('Failed to fetch penalties');
   }
   const penaltyResult = await response.json();
@@ -256,48 +231,7 @@ export function useEndGame() {
   });
 }
 
-export function useLogGoal() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ gameId, scorerId, teamId, assistId, minute }: { 
-      gameId: string; 
-      scorerId: string; 
-      teamId: string; 
-      assistId?: string; 
-      minute?: number; 
-    }) => logGoal(gameId, scorerId, teamId, assistId, minute),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['game', data.updatedGame.id] });
-      queryClient.invalidateQueries({ queryKey: ['games', data.updatedGame.matchdayId] });
-      
-      if (data.earlyFinish) {
-        toast.success('Goal scored! Game ended by early finish.');
-      } else {
-        toast.success('Goal scored!');
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-}
 
-export function useUndoGoal() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (gameId: string) => undoGoal(gameId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['game', data.updatedGame.id] });
-      queryClient.invalidateQueries({ queryKey: ['games', data.updatedGame.matchdayId] });
-      toast.success('Goal undone successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-}
 
 export function useStartPenalties() {
   const queryClient = useQueryClient();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { games, gameEvents, teams, players } from '@/lib/db/schema';
+import { games, gameEvents, teams, players, penaltyShootouts } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { logActivity } from '@/lib/activity-log';
@@ -124,6 +124,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .set(updateData)
       .where(eq(games.id, gameId))
       .returning();
+    
+    // If game ended with penalties, mark penalty shootout as completed
+    if (endReason === 'penalties') {
+      await db
+        .update(penaltyShootouts)
+        .set({ 
+          status: 'completed',
+          updatedBy: user.id 
+        })
+        .where(eq(penaltyShootouts.gameId, gameId));
+    }
     
     // Log the activity
     await logActivity({
