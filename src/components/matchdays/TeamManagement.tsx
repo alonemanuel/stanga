@@ -138,6 +138,13 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
 
   const handleUnassignPlayer = async (assignmentId: string) => {
     if (!user) return;
+    
+    // Prevent rapid clicking
+    if (unassignPlayerMutation.isPending) {
+      console.log('⏳ Unassign already in progress, ignoring click');
+      return;
+    }
+    
     console.log('🚀 handleUnassignPlayer called with:', assignmentId);
     try {
       await unassignPlayerMutation.mutateAsync(assignmentId);
@@ -149,6 +156,13 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
 
   const handleAssignPlayer = async (teamId: string, playerId: string) => {
     if (!user) return;
+    
+    // Prevent rapid clicking
+    if (assignPlayerMutation.isPending) {
+      console.log('⏳ Assign already in progress, ignoring click');
+      return;
+    }
+    
     console.log('🚀 handleAssignPlayer called with:', { teamId, playerId });
     try {
       await assignPlayerMutation.mutateAsync({

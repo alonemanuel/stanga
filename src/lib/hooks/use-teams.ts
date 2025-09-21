@@ -194,10 +194,12 @@ export function useAssignPlayer() {
   return useMutation({
     mutationFn: ({ teamId, data }: { teamId: string; data: TeamAssignmentCreateInput }) => 
       assignPlayer(teamId, data),
+    // Prevent concurrent mutations on the same resource
+    mutationKey: ['assign-player'],
     onMutate: async ({ teamId, data }) => {
       console.log('🔄 Assigning player - onMutate called', { teamId, data });
       
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      // Cancel any outgoing refetches to prevent conflicts
       await queryClient.cancelQueries({ queryKey: ['teams'] });
       
       // Snapshot the previous value for rollback
@@ -235,9 +237,16 @@ export function useAssignPlayer() {
         
         const updatedTeams = oldData.data.map((team: any) => {
           if (team.id === teamId) {
+            // Check if player is already assigned to this team
+            const existingAssignment = team.assignments?.find((a: any) => a.playerId === data.playerId);
+            if (existingAssignment) {
+              console.log('⚠️ Player already assigned to team, skipping optimistic update');
+              return team;
+            }
+            
             // Create a mock assignment for optimistic update with real player data if available
             const mockAssignment = {
-              id: `temp-${Date.now()}`,
+              id: `temp-${Date.now()}-${data.playerId}`, // Include playerId for uniqueness
               playerId: data.playerId,
               teamId: teamId,
               player: playerInfo || {
@@ -297,10 +306,12 @@ export function useUnassignPlayer() {
   
   return useMutation({
     mutationFn: unassignPlayer,
+    // Prevent concurrent mutations on the same resource
+    mutationKey: ['unassign-player'],
     onMutate: async (assignmentId) => {
       console.log('🔄 Unassigning player - onMutate called', { assignmentId });
       
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      // Cancel any outgoing refetches to prevent conflicts
       await queryClient.cancelQueries({ queryKey: ['teams'] });
       
       // Snapshot the previous value for rollback
@@ -314,14 +325,19 @@ export function useUnassignPlayer() {
         
         const updatedTeams = oldData.data.map((team: any) => {
           if (team.assignments && team.assignments.length > 0) {
-            const filteredAssignments = team.assignments.filter((assignment: any) => assignment.id !== assignmentId);
+            const originalLength = team.assignments.length;
+            const filteredAssignments = team.assignments.filter((assignment: any) => {
+              // Handle both real assignment IDs and temporary optimistic IDs
+              return assignment.id !== assignmentId;
+            });
             
-            if (filteredAssignments.length !== team.assignments.length) {
+            if (filteredAssignments.length !== originalLength) {
               // Assignment was removed from this team
+              console.log('🔄 Optimistically removed assignment from team:', team.name);
               return {
                 ...team,
                 assignments: filteredAssignments,
-                playerCount: Math.max(0, (team.playerCount || 0) - 1),
+                playerCount: Math.max(0, filteredAssignments.length), // Use actual count for accuracy
               };
             }
           }
