@@ -2,9 +2,6 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse } from 'next/server'
 
 export async function middleware(request: any) {
-  // Temporarily bypass middleware to debug routing issues
-  console.log('Middleware called for:', request.nextUrl.pathname)
-  
   // Only run Supabase middleware for API routes that need auth
   if (request.nextUrl.pathname.startsWith('/api/private')) {
     return await updateSession(request)
