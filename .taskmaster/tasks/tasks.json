@@ -623,11 +623,24 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Remove Refresh Button from Home Page",
+        "description": "Remove the refresh button from the home page UI, which is currently located in the top-right corner next to the 'Create Matchday' button.",
+        "details": "To remove the refresh button from the home page, locate the component or template file where the home page UI is defined. Identify the section of the code where the refresh button is rendered. This may involve searching for button elements or specific identifiers related to the refresh functionality. Once located, remove the HTML or JSX code responsible for rendering the refresh button. Ensure that any associated event handlers or state management logic related to the refresh button are also removed to prevent any potential errors or warnings. After removal, review the layout to ensure that the absence of the button does not affect the alignment or spacing of other UI elements. Consider updating any documentation or comments in the codebase that reference the refresh button to reflect its removal.",
+        "testStrategy": "Verify that the refresh button is no longer visible on the home page by manually inspecting the UI. Check the browser console for any errors or warnings that might indicate leftover event handlers or state logic related to the refresh button. Ensure that the layout of the home page remains consistent and that other elements, such as the 'Create Matchday' button, are properly aligned. Conduct a code review to confirm that all references to the refresh button have been removed from the codebase.",
+        "status": "pending",
+        "dependencies": [
+          14
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T11:08:15.265Z",
+      "updated": "2025-09-21T11:21:30.246Z",
       "description": "Tasks for master context"
     }
   }
