@@ -210,37 +210,38 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
             </div>
 
             {/* Rules Snapshot */}
-            <div className="bg-card border rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-card border rounded-lg overflow-hidden">
+              <div 
+                className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setIsRulesExpanded(!isRulesExpanded)}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isRulesExpanded}
+                aria-controls="game-rules-content"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsRulesExpanded(!isRulesExpanded);
+                  }
+                }}
+              >
                 <h3 className="text-lg font-semibold">Game Rules</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsRulesExpanded(!isRulesExpanded)}
-                  aria-expanded={isRulesExpanded}
-                  aria-controls="game-rules-content"
-                  className="flex items-center gap-2"
+                <svg
+                  className={`w-5 h-5 transition-transform duration-200 ${
+                    isRulesExpanded ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
-                  <span className="text-sm">
-                    {isRulesExpanded ? 'Hide' : 'Show'} Details
-                  </span>
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isRulesExpanded ? 'rotate-180' : ''
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </Button>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
               </div>
               
               <div
@@ -250,7 +251,8 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                 }`}
                 aria-hidden={!isRulesExpanded}
               >
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="px-6 pb-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Team Size</label>
                     <p className="text-sm">{matchday.rules.team_size} players</p>
@@ -296,6 +298,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                     <div className="bg-muted/50 rounded-lg p-3">
                       <label className="text-xs font-medium text-muted-foreground">Regulation Win</label>
                       <p className="text-lg font-semibold">{matchday.rules.points.regulation_win}</p>
+                    </div>
                     </div>
                   </div>
                 </div>
