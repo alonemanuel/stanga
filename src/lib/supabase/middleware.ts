@@ -6,6 +6,12 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  // Check if environment variables are available
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.error('Missing Supabase environment variables in middleware')
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -31,9 +37,16 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const {
+      data: { user: fetchedUser },
+    } = await supabase.auth.getUser()
+    user = fetchedUser
+  } catch (error) {
+    console.error('Error fetching user in middleware:', error)
+    // Continue without user authentication
+  }
 
   // Protect /api/private/* routes
   if (request.nextUrl.pathname.startsWith('/api/private') && !user) {
