@@ -48,9 +48,23 @@ export async function updateSession(request: NextRequest) {
     // Continue without user authentication
   }
 
-  // Protect /api/private/* routes
-  if (request.nextUrl.pathname.startsWith('/api/private') && !user) {
-    // No user, potentially respond by redirecting the user to the login page
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/sign-in',
+    '/auth/callback',
+    '/auth/auth-code-error',
+    '/api/public',
+    '/api/auth'
+  ]
+  
+  // Check if current path is a public route
+  const isPublicRoute = publicRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
+  
+  // Protect all routes except public ones
+  if (!isPublicRoute && !user) {
+    // No user, redirect to sign-in page
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
     return NextResponse.redirect(url)

@@ -8,9 +8,12 @@ import { createId } from '@paralleldrive/cuid2';
 import { and, eq, gte, lt, desc, isNull, or } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
-// GET /api/matchdays - List matchdays (public read access)
+// GET /api/matchdays - List matchdays (auth required)
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication for all operations
+    await requireAuth();
+    
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
     
@@ -98,6 +101,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to fetch matchdays:', error);
+    
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch matchdays' },
       { status: 500 }

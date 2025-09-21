@@ -8,11 +8,15 @@ import {
   getTopAssists,
   type Rules 
 } from '@/lib/stats';
+import { requireAuth } from '@/lib/auth-guards';
 import { eq, and, isNull } from 'drizzle-orm';
 
-// GET /api/stats/overall - Get overall statistics across all matchdays
+// GET /api/stats/overall - Get overall statistics across all matchdays (auth required)
 export async function GET(request: NextRequest) {
   try {
+    // Require authentication for all operations
+    await requireAuth();
+    
     // Fetch all completed games with their matchday rules
     const completedGames = await db
       .select({
@@ -185,6 +189,14 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Failed to fetch overall stats:', error);
+    
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch overall stats' },
       { status: 500 }
