@@ -349,10 +349,9 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
     <div className="bg-card border rounded-lg p-6">
       <h4 className="text-md font-semibold mb-4">Start New Game</h4>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Team A */}
-        <div>
-          <label className="block text-sm font-medium mb-2">TEAM A</label>
+      <div className="flex items-center gap-4">
+        {/* Team A Dropdown */}
+        <div className="flex-1">
           <select
             value={selectedHomeTeam}
             onChange={(e) => setSelectedHomeTeam(e.target.value)}
@@ -367,9 +366,13 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
           </select>
         </div>
         
-        {/* Team B */}
-        <div>
-          <label className="block text-sm font-medium mb-2">TEAM B</label>
+        {/* VS Separator */}
+        <div className="text-lg font-semibold text-muted-foreground px-2">
+          VS
+        </div>
+        
+        {/* Team B Dropdown */}
+        <div className="flex-1">
           <select
             value={selectedAwayTeam}
             onChange={(e) => setSelectedAwayTeam(e.target.value)}

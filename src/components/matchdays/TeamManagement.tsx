@@ -255,6 +255,7 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
                   onUnassignPlayer={handleUnassignPlayer}
                   onAssignPlayer={handleAssignPlayer}
                   unassignedPlayers={unassignedPlayers}
+                  allTeams={teams}
                 />
               ))}
             </div>
@@ -298,9 +299,13 @@ interface TeamCardProps {
     id: string;
     name: string;
   }>;
+  allTeams: Array<{
+    id: string;
+    colorToken: ColorToken;
+  }>;
 }
 
-function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, unassignedPlayers }: TeamCardProps) {
+function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, unassignedPlayers, allTeams }: TeamCardProps) {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const colorPickerRef = React.useRef<HTMLDivElement>(null);
   const colorInfo = TEAM_COLORS[team.colorToken];
@@ -323,6 +328,16 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showColorPicker]);
+
+  // Get colors that are already in use by other teams
+  const usedColors = new Set(
+    allTeams.filter(t => t.id !== team.id).map(t => t.colorToken)
+  );
+
+  // Get available colors (not used by other teams)
+  const availableColors = Object.entries(TEAM_COLORS).filter(
+    ([token]) => !usedColors.has(token as ColorToken)
+  );
 
   const handleColorChange = async (newColorToken: ColorToken) => {
     const newColorInfo = TEAM_COLORS[newColorToken];
@@ -370,14 +385,14 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
             {showColorPicker && canEdit && (
               <div 
                 ref={colorPickerRef}
-                className="absolute top-6 left-0 z-50 bg-white dark:bg-gray-800 border rounded-lg shadow-lg p-2 min-w-[120px]"
+                className="absolute top-6 left-0 z-50 bg-white dark:bg-gray-800 border rounded-lg shadow-lg p-3 min-w-[160px]"
               >
-                <div className="text-xs font-medium mb-2 text-muted-foreground">Choose Color:</div>
+                <div className="text-xs font-medium mb-3 text-muted-foreground">Choose Color:</div>
                 <div className="grid grid-cols-3 gap-2">
-                  {Object.entries(TEAM_COLORS).map(([token, colorInfo]) => (
+                  {availableColors.map(([token, colorInfo]) => (
                     <button
                       key={token}
-                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${
                         team.colorToken === token 
                           ? 'border-primary ring-2 ring-primary ring-offset-1' 
                           : 'border-gray-300 hover:border-gray-400'
@@ -388,9 +403,23 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
                       disabled={updateTeamMutation.isPending}
                     />
                   ))}
+                  {/* Show current color even if it would normally be filtered out */}
+                  {usedColors.has(team.colorToken) && (
+                    <button
+                      className="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-primary ring-offset-1"
+                      style={{ backgroundColor: TEAM_COLORS[team.colorToken].hex }}
+                      title={`${TEAM_COLORS[team.colorToken].name} (Current)`}
+                      disabled={true}
+                    />
+                  )}
                 </div>
+                {availableColors.length === 0 && (
+                  <div className="text-xs text-muted-foreground text-center py-2">
+                    No other colors available
+                  </div>
+                )}
                 <button
-                  className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground"
                   onClick={() => setShowColorPicker(false)}
                 >
                   Cancel

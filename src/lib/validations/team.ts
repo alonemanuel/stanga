@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { TEAM_COLORS } from '@/lib/teams';
 
 // Color token validation
-export const ColorTokenSchema = z.enum(['blue', 'amber', 'rose'] as const);
+export const ColorTokenSchema = z.enum(['blue', 'amber', 'rose', 'green', 'purple', 'orange'] as const);
 
 // Team creation schema
 export const TeamCreateSchema = z.object({

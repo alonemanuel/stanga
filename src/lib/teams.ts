@@ -18,6 +18,21 @@ export const TEAM_COLORS = {
     hex: '#f43f5e',
     name: 'Rose',
   },
+  green: {
+    token: 'green' as const,
+    hex: '#10b981',
+    name: 'Green',
+  },
+  purple: {
+    token: 'purple' as const,
+    hex: '#8b5cf6',
+    name: 'Purple',
+  },
+  orange: {
+    token: 'orange' as const,
+    hex: '#f97316',
+    name: 'Orange',
+  },
 } as const;
 
 export type ColorToken = keyof typeof TEAM_COLORS;
