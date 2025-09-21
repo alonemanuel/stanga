@@ -59,11 +59,10 @@ export async function GET(request: NextRequest) {
     const matchdaysList = await db
       .select({
         id: matchdays.id,
-        name: matchdays.name,
-        description: matchdays.description,
         scheduledAt: matchdays.scheduledAt,
         location: matchdays.location,
-        maxPlayers: matchdays.maxPlayers,
+        teamSize: matchdays.teamSize,
+        numberOfTeams: matchdays.numberOfTeams,
         status: matchdays.status,
         isPublic: matchdays.isPublic,
         createdAt: matchdays.createdAt,
@@ -131,13 +130,12 @@ export async function POST(request: NextRequest) {
       .insert(matchdays)
       .values({
         id: createId(),
-        name: matchdayData.name,
-        description: matchdayData.description,
         scheduledAt: new Date(matchdayData.scheduledAt),
         location: matchdayData.location,
-        maxPlayers: matchdayData.maxPlayers,
+        teamSize: matchdayData.teamSize,
+        numberOfTeams: matchdayData.numberOfTeams,
         rules: matchdayData.rules,
-        isPublic: matchdayData.isPublic,
+        isPublic: true, // All matchdays are public by default
         createdBy: user.id,
         updatedBy: user.id,
       })

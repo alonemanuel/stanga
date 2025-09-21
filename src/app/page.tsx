@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { createClient } from "@/lib/supabase/client";
+import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Matchday {
   id: string;
-  name: string;
-  description?: string | null;
   scheduledAt: string;
   location?: string | null;
-  maxPlayers: number;
+  teamSize: number;
+  numberOfTeams: number;
   status: 'upcoming' | 'active' | 'completed' | 'cancelled';
   rules: any;
   isPublic: boolean;
@@ -190,12 +190,7 @@ export default function HomePage() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{matchday.name}</h3>
-                  {matchday.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {matchday.description}
-                    </p>
-                  )}
+                  <h3 className="font-semibold text-lg">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h3>
                 </div>
                 <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(matchday.status)}`}>
                   {matchday.status.charAt(0).toUpperCase() + matchday.status.slice(1)}
@@ -219,7 +214,7 @@ export default function HomePage() {
                 )}
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium">👥</span>
-                  <span>Max {matchday.maxPlayers} players</span>
+                  <span>{matchday.numberOfTeams} teams of {matchday.teamSize}</span>
                 </div>
               </div>
               

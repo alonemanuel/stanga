@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { TextField, SelectField } from "@/components/forms/fields";
+import { NumberInput } from "@/components/forms/NumberInput";
 import { useZodForm, Form } from "@/components/forms/Form";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchdayCreateSchema, MatchdayUpdateSchema, DEFAULT_RULES, type MatchdayCreate, type MatchdayUpdate } from "@/lib/validations/matchday";
@@ -11,17 +12,16 @@ import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays"
 interface MatchdayFormProps {
   matchday?: {
     id: string;
-    name: string;
-    description?: string | null;
     scheduledAt: string;
     location?: string | null;
-    maxPlayers: number;
+    teamSize: number;
+    numberOfTeams: number;
     rules: any;
-    isPublic: boolean;
   };
   onSuccess?: () => void;
   onCancel?: () => void;
 }
+
 
 export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProps) {
   const isEditing = !!matchday;
@@ -33,21 +33,17 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
   const schema = isEditing ? MatchdayUpdateSchema : MatchdayCreateSchema;
   const methods = useZodForm(schema, {
     defaultValues: isEditing ? {
-      name: matchday.name,
-      description: matchday.description || "",
       scheduledAt: matchday.scheduledAt.slice(0, 16), // Convert to datetime-local format
       location: matchday.location || "",
-      maxPlayers: matchday.maxPlayers,
+      teamSize: matchday.teamSize,
+      numberOfTeams: matchday.numberOfTeams,
       rules: matchday.rules,
-      isPublic: matchday.isPublic,
     } : {
-      name: "",
-      description: "",
       scheduledAt: "",
       location: "",
-      maxPlayers: 18,
+      teamSize: 9,
+      numberOfTeams: 2,
       rules: DEFAULT_RULES,
-      isPublic: true,
     },
   });
 
@@ -89,21 +85,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
   return (
     <Form methods={methods} onSubmit={onSubmit} className="space-y-4">
       <TextField
-        name="name"
-        label="Matchday Name"
-        placeholder="e.g., Sunday Football Session"
-        required
-      />
-      
-      <TextField
-        name="description"
-        label="Description"
-        placeholder="Optional description of the matchday"
-        multiline
-        rows={3}
-      />
-      
-      <TextField
         name="scheduledAt"
         label="Date & Time"
         type="datetime-local"
@@ -117,28 +98,25 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
       />
       
       <div className="grid grid-cols-2 gap-4">
-        <TextField
-          name="maxPlayers"
-          label="Max Players"
-          type="number"
-          placeholder="18"
+        <NumberInput
+          name="teamSize"
+          label="Team Size"
+          value={methods.watch('teamSize') || 9}
+          onChange={(value) => methods.setValue('teamSize', value)}
+          min={3}
+          max={15}
+          placeholder="9"
         />
         
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Public Matchday
-          </label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              {...methods.register('isPublic')}
-              className="rounded border-input"
-            />
-            <span className="text-sm text-muted-foreground">
-              Allow public viewing
-            </span>
-          </div>
-        </div>
+        <NumberInput
+          name="numberOfTeams"
+          label="Number of Teams"
+          value={methods.watch('numberOfTeams') || 2}
+          onChange={(value) => methods.setValue('numberOfTeams', value)}
+          min={2}
+          max={20}
+          placeholder="2"
+        />
       </div>
 
       {/* Rules Section */}
