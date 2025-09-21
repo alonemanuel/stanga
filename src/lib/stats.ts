@@ -241,20 +241,28 @@ export function computeStandings(
 
     // Update wins/draws/losses
     if (game.winnerTeamId === game.homeTeamId) {
-      homeStanding.wins++;
-      awayStanding.losses++;
-      
       if (game.endReason === 'penalties') {
+        // Penalty win: both teams get a draw, winner gets penalty win
+        homeStanding.draws++;
+        awayStanding.draws++;
         homeStanding.penaltyWins++;
         awayStanding.penaltyLosses++;
+      } else {
+        // Regular win
+        homeStanding.wins++;
+        awayStanding.losses++;
       }
     } else if (game.winnerTeamId === game.awayTeamId) {
-      awayStanding.wins++;
-      homeStanding.losses++;
-      
       if (game.endReason === 'penalties') {
+        // Penalty win: both teams get a draw, winner gets penalty win
+        homeStanding.draws++;
+        awayStanding.draws++;
         awayStanding.penaltyWins++;
         homeStanding.penaltyLosses++;
+      } else {
+        // Regular win
+        awayStanding.wins++;
+        homeStanding.losses++;
       }
     } else {
       // Draw
