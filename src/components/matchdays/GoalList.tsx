@@ -43,11 +43,10 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading }: AddGoalFormProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedScorer) {
-      onSubmit(selectedScorer, selectedAssist || undefined);
-      setSelectedScorer('');
-      setSelectedAssist('');
-    }
+    // Allow submitting without a scorer (scorer can be empty string)
+    onSubmit(selectedScorer || '', selectedAssist || undefined);
+    setSelectedScorer('');
+    setSelectedAssist('');
   };
 
   return (
@@ -57,15 +56,14 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading }: AddGoalFormProp
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Scorer *
+            Scorer (optional)
           </label>
           <select
             value={selectedScorer}
             onChange={(e) => setSelectedScorer(e.target.value)}
             className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
           >
-            <option value="">Select scorer</option>
+            <option value="">No scorer specified</option>
             {players.map(player => (
               <option key={player.id} value={player.id}>
                 {player.name}
@@ -99,7 +97,7 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading }: AddGoalFormProp
         <Button
           type="submit"
           size="sm"
-          disabled={!selectedScorer || isLoading}
+          disabled={isLoading}
           loading={isLoading}
           className="flex-1"
         >
@@ -128,14 +126,13 @@ interface EditGoalFormProps {
 }
 
 function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading }: EditGoalFormProps) {
-  const [selectedScorer, setSelectedScorer] = React.useState<string>(goal.playerId);
+  const [selectedScorer, setSelectedScorer] = React.useState<string>(goal.playerId || '');
   const [selectedAssist, setSelectedAssist] = React.useState<string>(goal.assistId || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedScorer) {
-      onSubmit(selectedScorer, selectedAssist || undefined);
-    }
+    // Allow submitting with or without a scorer
+    onSubmit(selectedScorer || '', selectedAssist || undefined);
   };
 
   return (
@@ -145,15 +142,14 @@ function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading }: EditGoal
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="block text-xs font-medium text-blue-600 mb-1">
-            Scorer *
+            Scorer (optional)
           </label>
           <select
             value={selectedScorer}
             onChange={(e) => setSelectedScorer(e.target.value)}
             className="w-full p-2 text-sm border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
           >
-            <option value="">Select scorer</option>
+            <option value="">No scorer specified</option>
             {players.map(player => (
               <option key={player.id} value={player.id}>
                 {player.name}
@@ -187,7 +183,7 @@ function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading }: EditGoal
         <Button
           type="submit"
           size="sm"
-          disabled={!selectedScorer || isLoading}
+          disabled={isLoading}
           loading={isLoading}
           className="flex-1"
         >
@@ -295,7 +291,9 @@ export function GoalList({
                 </Badge>
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">{goal.playerName}</span>
+                  <span className="font-medium">
+                    {goal.playerName || 'Unknown Player'}
+                  </span>
                   {goal.assistName && (
                     <>
                       <span className="text-gray-400">•</span>

@@ -118,9 +118,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     const { teamId, playerId, assistId } = body;
     
-    if (!teamId || !playerId) {
+    if (!teamId) {
       return NextResponse.json(
-        { error: 'Team ID and player ID are required' },
+        { error: 'Team ID is required' },
         { status: 400 }
       );
     }
@@ -163,18 +163,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    // Validate scorer exists and is active
-    const scorer = await db
-      .select()
-      .from(players)
-      .where(and(eq(players.id, playerId), isNull(players.deletedAt)))
-      .limit(1);
-    
-    if (!scorer.length || !scorer[0].isActive) {
-      return NextResponse.json(
-        { error: 'Scorer not found or inactive' },
-        { status: 404 }
-      );
+    // Validate scorer exists and is active (if specified)
+    let scorer = null;
+    if (playerId) {
+      const scorerResult = await db
+        .select()
+        .from(players)
+        .where(and(eq(players.id, playerId), isNull(players.deletedAt)))
+        .limit(1);
+      
+      if (!scorerResult.length || !scorerResult[0].isActive) {
+        return NextResponse.json(
+          { error: 'Scorer not found or inactive' },
+          { status: 404 }
+        );
+      }
+      scorer = scorerResult[0];
     }
     
     // Validate assist player if provided
@@ -201,13 +205,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       : 0;
     
     // Create goal event
+    const scorerName = scorer ? scorer.name : 'Unknown Player';
     const [goalEvent] = await db.insert(gameEvents).values({
       gameId,
-      playerId,
+      playerId: playerId || null,
       teamId,
       eventType: 'goal',
       minute: gameMinute,
-      description: `Goal by ${scorer[0].name}${assistPlayer ? ` (assist: ${assistPlayer.name})` : ''}`,
+      description: `Goal by ${scorerName}${assistPlayer ? ` (assist: ${assistPlayer.name})` : ''}`,
       metadata: assistId ? { assistId } as any : null,
       createdBy: user.id,
       updatedBy: user.id,
@@ -242,24 +247,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const homeGoals = allGoalEvents.filter(e => e.teamId === currentGame.homeTeamId).length;
     const awayGoals = allGoalEvents.filter(e => e.teamId === currentGame.awayTeamId).length;
     
-    // Update game score
+    // Update game score (no automatic ending)
     const gameUpdateData: any = {
       homeScore: homeGoals,
       awayScore: awayGoals,
       updatedBy: user.id,
     };
-    
-    // Check for early finish condition (this logic should match the original)
-    const maxGoals = currentGame.maxGoals || 5;
-    const shouldEndEarly = Math.max(homeGoals, awayGoals) >= maxGoals;
-    
-    if (shouldEndEarly) {
-      gameUpdateData.status = 'completed';
-      gameUpdateData.endedAt = new Date();
-      gameUpdateData.endReason = 'early_finish';
-      gameUpdateData.winnerTeamId = homeGoals > awayGoals ? currentGame.homeTeamId : currentGame.awayTeamId;
-      gameUpdateData.duration = Math.floor((new Date().getTime() - new Date(currentGame.startedAt!).getTime()) / 1000 / 60);
-    }
     
     const [updatedGame] = await db
       .update(games)
@@ -275,26 +268,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       actorId: user.id,
       changes: {
         goal_added: {
-          scorer: scorer[0].name,
+          scorer: scorerName,
           assist: assistPlayer?.name || null,
           team: teamId,
           minute: gameMinute,
-          newScore: `${homeGoals}-${awayGoals}`,
-          earlyFinish: shouldEndEarly
+          newScore: `${homeGoals}-${awayGoals}`
         }
       }
     });
     
     const response = {
       id: goalEvent.id,
-      playerId,
-      playerName: scorer[0].name,
+      playerId: playerId || '',
+      playerName: scorerName,
       minute: gameMinute,
       assistId: assistId || undefined,
       assistName: assistPlayer?.name || undefined,
       teamId,
-      updatedGame,
-      earlyFinish: shouldEndEarly
+      updatedGame
     };
     
     return NextResponse.json({ data: response }, { status: 201 });
