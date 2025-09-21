@@ -175,49 +175,48 @@ export default function PlayersPage() {
                 player.deletedAt ? 'bg-muted/50 opacity-75' : 'bg-card'
               }`}
             >
-              <div className="mb-3">
+              <div className="flex items-center justify-between">
                 <h3 className="font-semibold">{player.name}</h3>
+                {user && (
+                  <div className="flex gap-1 ml-2">
+                    {!player.deletedAt ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditPlayer(player)}
+                          aria-label={`Edit ${player.name}`}
+                          title={`Edit ${player.name}`}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeletePlayer(player.id)}
+                          aria-label={`Delete ${player.name}`}
+                          title={`Delete ${player.name}`}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRestorePlayer(player.id)}
+                        aria-label={`Restore ${player.name}`}
+                        title={`Restore ${player.name}`}
+                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                      >
+                        <RotateCcw className="h-5 w-5" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
-              
-              {user && (
-                <div className="flex gap-2">
-                  {!player.deletedAt ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditPlayer(player)}
-                        aria-label={`Edit ${player.name}`}
-                        title={`Edit ${player.name}`}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeletePlayer(player.id)}
-                        aria-label={`Delete ${player.name}`}
-                        title={`Delete ${player.name}`}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRestorePlayer(player.id)}
-                      aria-label={`Restore ${player.name}`}
-                      title={`Restore ${player.name}`}
-                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
             </div>
           ))}
         </div>
