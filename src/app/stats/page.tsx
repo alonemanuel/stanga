@@ -5,6 +5,8 @@ import { useOverallStats } from "@/lib/hooks/use-stats";
 import { useMatchdays } from "@/lib/hooks/use-matchdays";
 import { Button } from "@/components/ui/button";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
+import { StandingsTable } from "@/components/stats/StandingsTable";
+import { TopScorerTable } from "@/components/stats/TopScorerTable";
 
 type TabType = 'overall' | 'matchday' | 'players' | 'teams';
 
@@ -238,12 +240,85 @@ export default function StatsPage() {
   };
 
   const renderTeamsTab = () => {
+    if (overallLoading) {
+      return (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="mt-2 text-muted-foreground">Loading team stats...</p>
+        </div>
+      );
+    }
+
+    if (overallError || !overallStats) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-red-600">Failed to load team stats</p>
+        </div>
+      );
+    }
+
+    const { matchdayStandings, topScorers } = overallStats.data;
+
+    // Aggregate standings across all matchdays
+    const aggregatedStandings = new Map();
+    
+    Object.values(matchdayStandings).forEach((standings: any) => {
+      standings.forEach((team: any) => {
+        const existing = aggregatedStandings.get(team.teamId);
+        if (existing) {
+          // Aggregate stats
+          existing.gamesPlayed += team.gamesPlayed;
+          existing.wins += team.wins;
+          existing.draws += team.draws;
+          existing.losses += team.losses;
+          existing.penaltyWins += team.penaltyWins;
+          existing.penaltyLosses += team.penaltyLosses;
+          existing.goalsFor += team.goalsFor;
+          existing.goalsAgainst += team.goalsAgainst;
+          existing.goalDifference = existing.goalsFor - existing.goalsAgainst;
+          existing.points += team.points;
+        } else {
+          // First time seeing this team
+          aggregatedStandings.set(team.teamId, {
+            teamId: team.teamId,
+            teamName: team.teamName,
+            matchdayId: team.matchdayId,
+            gamesPlayed: team.gamesPlayed,
+            wins: team.wins,
+            draws: team.draws,
+            losses: team.losses,
+            penaltyWins: team.penaltyWins,
+            penaltyLosses: team.penaltyLosses,
+            goalsFor: team.goalsFor,
+            goalsAgainst: team.goalsAgainst,
+            goalDifference: team.goalDifference,
+            points: team.points,
+          });
+        }
+      });
+    });
+
+    const overallStandings = Array.from(aggregatedStandings.values());
+
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Team statistics coming soon...</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          This will show team standings and performance across matchdays
-        </p>
+      <div className="space-y-6">
+        {/* Standings and Top Scorers Grid */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Standings Table */}
+          <StandingsTable 
+            standings={overallStandings}
+            isLoading={overallLoading}
+            error={overallError ? String(overallError) : null}
+          />
+          
+          {/* Top Scorers Table */}
+          <TopScorerTable 
+            topScorers={topScorers}
+            isLoading={overallLoading}
+            error={overallError ? String(overallError) : null}
+            limit={10}
+          />
+        </div>
       </div>
     );
   };
