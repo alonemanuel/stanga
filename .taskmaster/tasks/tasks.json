@@ -983,7 +983,7 @@
         "description": "Revamp the goal logging system to use individual goal lists under each team's score, allowing users to add, edit, and delete goals with optional player selection.",
         "details": "To redesign the goal logging system, first replace the current goal logging mechanism with a list-based system under each team's score. Implement a UI component that displays a list of goals for each team, allowing users to add new goals by selecting from a list of team players. This requires integrating with the existing players module (Task 4) to fetch and display player names. Provide functionality to edit and delete goals, ensuring that the team's score automatically updates to reflect the total number of goals. Remove the 'undo last goal' feature as it becomes redundant with the new system. Update the backend to support CRUD operations for goals, ensuring that changes are persisted in the database. Consider using a modal or inline editing for goal management to enhance user experience.",
         "testStrategy": "Verify that the goal logging system displays individual goal lists under each team's score. Test adding a goal by selecting a player from the team, and ensure the score updates correctly. Edit and delete goals, checking that the score reflects these changes accurately. Confirm that the 'undo last goal' feature is removed and no longer accessible. Use integration tests to validate the CRUD operations for goals, ensuring data consistency in the database. Conduct UI tests to ensure the interface is intuitive and responsive.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           4,
           15
@@ -996,7 +996,7 @@
             "description": "Develop UI components to display a list of goals under each team's score.",
             "dependencies": [],
             "details": "Design and implement a UI component that shows a list of goals for each team. Ensure the component is responsive and integrates seamlessly with the existing UI. Use a list or table format to display goals, and ensure it can dynamically update as goals are added or removed.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the UI component displays correctly under each team's score and updates dynamically as goals are added or removed."
           },
           {
@@ -1007,7 +1007,7 @@
               "37.1"
             ],
             "details": "Integrate with the existing players module to fetch and display a list of players for each team. Implement a form or modal that allows users to select a player and add a goal. Ensure the player's name is associated with the goal in the UI.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test adding a goal by selecting a player and verify that the goal appears in the list with the correct player name."
           },
           {
@@ -1018,7 +1018,7 @@
               "37.2"
             ],
             "details": "Provide an inline editing option or a modal to edit goals. Allow users to change the player associated with a goal or modify other goal details. Ensure changes are reflected in the UI and persisted in the backend.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Edit a goal and verify that changes are correctly displayed in the UI and persisted in the database."
           },
           {
@@ -1029,7 +1029,7 @@
               "37.3"
             ],
             "details": "Add a delete option to each goal entry in the list. Ensure that deleting a goal updates the UI and removes the goal from the backend. Consider using a confirmation dialog to prevent accidental deletions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Delete a goal and verify that it is removed from the UI and the backend. Ensure the team's score updates accordingly."
           },
           {
@@ -1040,7 +1040,7 @@
               "37.4"
             ],
             "details": "Calculate the team's score by counting the number of goals in the list. Update the score display in real-time as goals are added, edited, or deleted.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Add, edit, and delete goals, verifying that the team's score updates correctly each time."
           },
           {
@@ -1051,7 +1051,7 @@
               "37.5"
             ],
             "details": "Identify and remove the old goal logging code and the 'undo last goal' feature from the codebase. Ensure that no remnants of the old system remain and that the new system functions independently.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the codebase to ensure all old goal logging and undo features are removed. Test the new system to confirm it operates without reliance on the old features."
           }
         ]
@@ -1126,7 +1126,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T14:52:41.915Z",
+      "updated": "2025-09-21T15:43:11.135Z",
       "description": "Tasks for master context"
     }
   }
