@@ -1,0 +1,233 @@
+---
+description: Best practices for debugging deployment failures and preventing common Next.js 15 issues
+globs: src/**/*.{ts,tsx}, next.config.ts, eslint.config.mjs, package.json
+alwaysApply: true
+---
+
+- **Always Test Locally First**
+  - **CRITICAL**: Run `npm run build` locally before pushing to catch all errors at once
+  - Never rely on Vercel logs alone - they mask underlying TypeScript/ESLint issues
+  - Use the same build process as production (`next build`, not raw `tsc`)
+  - Fix all issues in batch rather than iterative deployments
+
+- **Next.js 15 API Route Types**
+  - **Route Parameters**: In Next.js 15, `params` is a `Promise<{ id: string }>`, not `{ id: string }`
+  ```typescript
+  // ✅ DO: Next.js 15 correct type
+  interface RouteParams {
+    params: Promise<{ id: string }>;
+  }
+  
+  export async function GET(request: Request, { params }: RouteParams) {
+    const { id } = await params; // Must await params
+    // ...
+  }
+  
+  // ❌ DON'T: Next.js 14 style (will fail in 15)
+  interface RouteParams {
+    params: { id: string };
+  }
+  ```
+
+- **ESLint Configuration with Next.js**
+  - **Plugin Conflicts**: `next/core-web-vitals` and `next/typescript` include many plugins already
+  - Never redefine plugins that are already included in Next.js configs
+  ```javascript
+  // ✅ DO: Use Next.js configs without redefinition
+  const eslintConfig = [
+    ...compat.extends("next/core-web-vitals", "next/typescript"),
+    {
+      rules: {
+        // Add custom rules here
+        "react-hooks/exhaustive-deps": "warn",
+      }
+    }
+  ];
+  
+  // ❌ DON'T: Redefine plugins already in Next.js configs
+  // These are already included in next/core-web-vitals:
+  // - react-hooks
+  // - jsx-a11y
+  // These are already included in next/typescript:
+  // - @typescript-eslint
+  ```
+
+- **Supabase Error Handling**
+  - **Environment Variables**: Always check for missing env vars and provide fallbacks
+  - **Static Generation**: Supabase clients must handle missing env vars during build
+  ```typescript
+  // ✅ DO: Robust client creation with fallbacks
+  export function createClient() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase environment variables')
+      // Return mock client to prevent crashes during static generation
+      return {
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+          onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        }
+      } as any
+    }
+
+    return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  }
+  
+  // ❌ DON'T: Crash on missing env vars
+  export function createClient() {
+    return createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!, // Will crash if undefined
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  ```
+
+- **TypeScript Callback Types**
+  - **Supabase Auth**: Always explicitly type auth state change callbacks
+  ```typescript
+  // ✅ DO: Explicit callback types
+  import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+  
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (_event: AuthChangeEvent, session: Session | null) => {
+      setUser(session?.user ?? null);
+    }
+  );
+  
+  // ❌ DON'T: Implicit any types (will fail in strict mode)
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (event, session) => { // TypeScript error: implicit any
+      setUser(session?.user ?? null);
+    }
+  );
+  ```
+
+- **Form Component Generics**
+  - **React Hook Form**: Make form components generic to preserve type safety
+  ```typescript
+  // ✅ DO: Generic form component
+  interface FormProps<T extends FieldValues = FieldValues> {
+    children: React.ReactNode;
+    methods: UseFormReturn<T>;
+    onSubmit?: (data: T) => void | Promise<void>;
+  }
+
+  export function Form<T extends FieldValues = FieldValues>({ 
+    children, methods, onSubmit 
+  }: FormProps<T>) {
+    // Implementation preserves T type
+  }
+  
+  // ❌ DON'T: Non-generic form (loses type information)
+  interface FormProps {
+    methods: UseFormReturn<FieldValues>; // Too generic
+  }
+  ```
+
+- **Database Schema Alignment**
+  - **Column Names**: Ensure API code matches actual database schema
+  - **Entity Types**: Use defined types from activity logging, don't invent new ones
+  ```typescript
+  // ✅ DO: Use actual schema column names
+  const stats = await db.select({
+    color: teams.colorToken, // Matches schema
+    name: teams.name
+  }).from(teams);
+  
+  // ❌ DON'T: Use non-existent columns
+  const stats = await db.select({
+    color: teams.color, // Column doesn't exist
+  }).from(teams);
+  
+  // ✅ DO: Use defined entity types
+  await logActivity({
+    entityType: 'team', // Defined in EntityType
+    // ...
+  });
+  
+  // ❌ DON'T: Invent new entity types
+  await logActivity({
+    entityType: 'team_assignment', // Not in EntityType union
+    // ...
+  });
+  ```
+
+- **Next.js Middleware Debugging**
+  - **Conditional Execution**: Temporarily simplify middleware to isolate issues
+  - **Error Boundaries**: Wrap auth operations in try-catch blocks
+  ```typescript
+  // ✅ DO: Simplified debugging middleware
+  export async function middleware(request: NextRequest) {
+    console.log('Middleware called for:', request.nextUrl.pathname)
+    
+    // Only run auth middleware for specific routes during debugging
+    if (request.nextUrl.pathname.startsWith('/api/private')) {
+      try {
+        return await updateSession(request)
+      } catch (error) {
+        console.error('Middleware error:', error)
+        return NextResponse.next()
+      }
+    }
+    
+    return NextResponse.next()
+  }
+  ```
+
+- **Build Configuration**
+  - **ESLint Bypass**: Use `ignoreDuringBuilds` temporarily while fixing issues
+  - **Invalid Configs**: Remove unsupported experimental features
+  ```typescript
+  // ✅ DO: Temporary ESLint bypass with warning
+  const nextConfig: NextConfig = {
+    eslint: {
+      // Warning: This allows production builds to successfully complete even if
+      // your project has ESLint errors.
+      ignoreDuringBuilds: true,
+    },
+    // Remove unsupported configs like experimental.logging in Next.js 15
+  };
+  
+  // ❌ DON'T: Use unsupported experimental features
+  const nextConfig: NextConfig = {
+    experimental: {
+      logging: { level: 'verbose' }, // Not available in Next.js 15
+    },
+  };
+  ```
+
+- **Systematic Error Resolution**
+  - **Pattern Recognition**: After fixing one instance, search codebase for similar patterns
+  - **Batch Fixes**: Use find/replace or codebase search to fix all instances at once
+  ```bash
+  # ✅ DO: Find all similar patterns after fixing one
+  grep -r "onAuthStateChange" src/ --include="*.tsx" --include="*.ts"
+  
+  # Then fix all instances with proper types in one commit
+  ```
+
+- **Local Production Testing**
+  - **Build and Start**: Test production build locally before deploying
+  ```bash
+  # ✅ DO: Full production test locally
+  npm run build    # Catch build errors
+  npm run start    # Test production runtime
+  
+  # ❌ DON'T: Only test development mode
+  npm run dev      # Doesn't catch production issues
+  ```
+
+- **Environment Variable Validation**
+  - **Public vs Private**: Understand `NEXT_PUBLIC_` prefix implications
+  - **Vercel Warnings**: `NEXT_PUBLIC_` vars with "KEY" in name trigger security warnings
+  ```bash
+  # ✅ DO: Use appropriate prefixes
+  NEXT_PUBLIC_SUPABASE_URL=...      # Safe to expose (URL)
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=... # Safe to expose (anon key)
+  DATABASE_URL=...                  # Private (no NEXT_PUBLIC_)
+  
+  # The warning about NEXT_PUBLIC_SUPABASE_ANON_KEY is expected - 
+  # anon keys are designed to be public
+  ```
