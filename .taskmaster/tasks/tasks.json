@@ -888,7 +888,7 @@
         "description": "Eliminate the team size field from the game rules section in both match creation and viewing interfaces, ensuring it is only present in matchday settings.",
         "details": "To streamline the game rules interface, first identify the UI components and backend logic where the team size field is currently included in the game rules section. Remove this field from the UI codebase, ensuring that any associated state management and event handlers are also deleted. Update the backend data models and API endpoints to no longer expect or process the team size field in the game rules context. Ensure that the team size is only configurable within the matchday settings. This may involve updating the matchday settings UI to ensure the team size field is clearly visible and functional. Additionally, review any documentation or help text to ensure it accurately reflects the new configuration location for team size.",
         "testStrategy": "Verify that the game rules section in both the match creation and viewing interfaces no longer displays the team size field. Test the match creation and viewing processes to ensure they function correctly without this field. Check the matchday settings to confirm that the team size field is present and functional. Ensure that API requests and responses do not include the team size field in the game rules context. Review the application documentation to ensure it accurately reflects the new configuration location for team size.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           27
         ],
@@ -901,7 +901,7 @@
         "description": "Update the matchday view interface to exclude the 'penalties on tie' and 'penalty win weight' fields, aligning with the updated game rules.",
         "details": "To remove the 'penalties on tie' and 'penalty win weight' fields from the matchday view, first identify the UI components where these fields are currently displayed. This may involve searching through the matchday view templates or components for any references to these fields. Once located, remove the HTML or JSX code responsible for rendering these fields. Ensure that any associated state management logic, event handlers, or data fetching related to these fields are also removed. Update any relevant stylesheets to ensure the layout remains consistent after the removal of these elements. Additionally, review the backend API endpoints and data models to confirm that they no longer send or expect data related to these fields in the matchday view context. This task is dependent on the completion of Task 27, which removes these fields from the game rules configuration.",
         "testStrategy": "Verify that the matchday view no longer displays the 'penalties on tie' and 'penalty win weight' fields by manually inspecting the UI. Ensure that the layout remains consistent and that there are no visual gaps or misalignments. Check the browser console for any errors or warnings related to missing data or event handlers. Test the matchday view functionality to ensure it operates correctly without these fields. Confirm that the backend API responses do not include data related to these fields in the matchday view context.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           27
         ],
@@ -929,7 +929,7 @@
         "description": "Eliminate the start matchday button and the concept of a 'started' state, allowing users to edit and log activities in matchdays at any time.",
         "details": "To remove the start matchday button and the associated 'started' state logic, begin by identifying the UI components and backend logic where the start button is implemented. This includes the button's rendering in the matchday interface and any state management logic that tracks whether a matchday has started. Remove the button from the UI codebase and ensure that any state variables or flags related to the 'started' state are also eliminated. Update the backend to no longer track or enforce a 'started' state, ensuring that matchday activities can be edited or logged at any time. This may involve modifying API endpoints and data models to remove any constraints related to the 'started' state. Ensure that the matchday interface remains intuitive and that users can seamlessly interact with matchdays without needing to start them first.",
         "testStrategy": "Verify that the start matchday button is no longer visible in the matchday interface by manually inspecting the UI. Test the ability to edit and log activities in matchdays without any restrictions related to a 'started' state. Check the backend logs and API responses to confirm that no state tracking or constraints related to the 'started' state are present. Ensure that the matchday interface remains functional and user-friendly, allowing for seamless interaction with matchdays at any time.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5
         ],
@@ -942,7 +942,7 @@
         "description": "Make the available players list sticky or floating during team creation to facilitate drag and drop from any scroll position.",
         "details": "To implement a sticky or floating available players list during team creation, modify the UI to ensure that the list remains visible regardless of the user's scroll position. This can be achieved by using CSS properties such as 'position: sticky' or 'position: fixed' to keep the list anchored in a visible area of the screen. Consider using a floating sidebar or a draggable panel that users can reposition as needed. Ensure that the drag and drop functionality is seamless and intuitive, allowing users to easily drag players from the list into the team creation area. Update any relevant JavaScript logic to handle the positioning and interaction of the floating list. Ensure compatibility across different browsers and devices, and test for responsiveness and accessibility.",
         "testStrategy": "Verify that the available players list remains visible and accessible during team creation, regardless of scroll position. Test the drag and drop functionality to ensure players can be moved from the list to the team area without issues. Check the UI on various screen sizes and devices to ensure the list is responsive and does not obstruct other elements. Use accessibility tools to confirm that the floating list is navigable via keyboard and screen readers. Conduct cross-browser testing to ensure consistent behavior.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           11,
           4
@@ -1062,7 +1062,7 @@
         "description": "Implement a 'Go to Penalties' button next to 'End Game' that is enabled only when the game is tied, with a tooltip explanation when disabled.",
         "details": "To implement the 'Go to Penalties' functionality, first identify the UI component where the 'End Game' button is located. Add a new button labeled 'Go to Penalties' next to it. This button should be conditionally enabled only when the game's score is tied. Use state management to track the game's score and update the button's enabled state accordingly. When the button is disabled, display a tooltip explaining that it is only available when the game is tied. Upon activation, switch the interface to a penalty logging mode. This involves updating the UI to display penalty scores in brackets next to the regular score. Ensure that the penalty logging mode integrates with the existing goal logging system (Task 37) to allow for seamless transition and score updates. Consider edge cases such as rapid score changes and ensure the button's state updates correctly in real-time.",
         "testStrategy": "Verify that the 'Go to Penalties' button appears next to the 'End Game' button and is only enabled when the game is tied. Test the tooltip to ensure it appears with the correct message when the button is disabled. Activate the button in a tied game scenario and confirm that the UI switches to penalty logging mode, displaying penalty scores in brackets. Test the integration with the goal logging system to ensure penalty scores update correctly. Simulate various game states to ensure the button's state updates in real-time without errors.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           37
         ],
@@ -1074,7 +1074,7 @@
             "description": "Add a new button labeled 'Go to Penalties' next to the 'End Game' button in the UI.",
             "dependencies": [],
             "details": "Identify the UI component where the 'End Game' button is located. Add a new button element labeled 'Go to Penalties' next to it. Ensure the button is styled consistently with the existing UI elements.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the 'Go to Penalties' button appears next to the 'End Game' button in the UI."
           },
           {
@@ -1085,7 +1085,7 @@
               "38.1"
             ],
             "details": "Use state management to track the game's score. Implement logic to check if the scores are tied and update the button's enabled state accordingly. Ensure the button is disabled when the scores are not tied.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test various game scenarios to ensure the button is only enabled when the scores are tied."
           },
           {
@@ -1096,7 +1096,7 @@
               "38.2"
             ],
             "details": "Implement a tooltip that appears when the 'Go to Penalties' button is disabled. The tooltip should provide a clear message indicating that the button is only enabled when the game is tied.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the tooltip appears with the correct message when the button is disabled."
           },
           {
@@ -1107,7 +1107,7 @@
               "38.2"
             ],
             "details": "Implement functionality to switch the UI to a penalty logging mode when the 'Go to Penalties' button is clicked. Update the UI to display penalty scores in brackets next to the regular score. Ensure integration with the existing goal logging system.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Activate the button in a tied game scenario and confirm that the UI switches to penalty logging mode."
           },
           {
@@ -1118,15 +1118,84 @@
               "38.4"
             ],
             "details": "Update the game logic to include penalty results in determining the final game outcome. Ensure that penalty scores are displayed correctly and integrated with the existing score display.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the entire game flow, including penalties, to ensure the final outcome reflects penalty results accurately."
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "title": "Implement Comprehensive Stats Tab with Standings and Top Scorer Tables",
+        "description": "Develop a stats section featuring a standings table and a top scorer table to enhance the app's competitive features.",
+        "details": "To implement the comprehensive stats tab, first design the UI layout to accommodate both the standings table and the top scorer table. The standings table should display columns for games played, wins, draws (with penalty wins in parentheses), losses, and points for each team. The top scorer table should rank players by goals scored. Use a responsive design approach to ensure the tables are accessible on various devices. Fetch data from the backend API endpoints that provide team standings and player statistics. Ensure that the data is updated in real-time using WebSockets or a similar technology to reflect changes immediately. Consider using a library like React Table for efficient table rendering and sorting capabilities. Implement pagination or infinite scroll if the data set is large. Ensure the UI is accessible, with appropriate ARIA roles and keyboard navigation support.",
+        "testStrategy": "Verify that the standings and top scorer tables display accurate data by cross-referencing with backend data sources. Test the responsiveness of the tables on different screen sizes and devices. Ensure real-time updates are reflected in the UI by simulating data changes in the backend. Use browser developer tools to check for accessibility compliance, including ARIA roles and keyboard navigation. Conduct user testing to ensure the tables are intuitive and easy to navigate. Perform load testing to ensure the tables handle large data sets efficiently.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          32
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design UI Layout for Stats Tab",
+            "description": "Create a responsive UI layout to accommodate both the standings table and the top scorer table.",
+            "dependencies": [],
+            "details": "Use a design tool like Figma or Sketch to draft the layout. Ensure the design is responsive and accessible, with clear sections for the standings and top scorer tables. Consider mobile-first design principles and ensure the layout adapts well to different screen sizes.",
+            "status": "pending",
+            "testStrategy": "Review the design with stakeholders and conduct usability testing with mockups on various devices."
+          },
+          {
+            "id": 2,
+            "title": "Implement Standings Table UI Component",
+            "description": "Develop the UI component for the standings table, displaying team statistics.",
+            "dependencies": [
+              "39.1"
+            ],
+            "details": "Use a library like React Table to create the standings table. Include columns for games played, wins, draws (with penalty wins in parentheses), losses, and points. Ensure the table is sortable and paginated if necessary. Implement ARIA roles for accessibility.",
+            "status": "pending",
+            "testStrategy": "Test the table's responsiveness and sorting functionality. Verify accessibility features using screen readers."
+          },
+          {
+            "id": 3,
+            "title": "Implement Top Scorer Table UI Component",
+            "description": "Develop the UI component for the top scorer table, ranking players by goals scored.",
+            "dependencies": [
+              "39.1"
+            ],
+            "details": "Use React Table to create the top scorer table. Display player names and goals scored. Ensure the table is sortable and supports pagination or infinite scroll for large datasets. Implement ARIA roles for accessibility.",
+            "status": "pending",
+            "testStrategy": "Test the table's responsiveness and sorting functionality. Verify accessibility features using screen readers."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Real-Time Data Updates",
+            "description": "Set up real-time data updates for both tables using WebSockets or a similar technology.",
+            "dependencies": [
+              "39.2",
+              "39.3"
+            ],
+            "details": "Establish a WebSocket connection to listen for updates from the backend. Update the standings and top scorer tables dynamically as new data is received. Ensure efficient connection management to handle reconnections and data integrity.",
+            "status": "pending",
+            "testStrategy": "Simulate data changes in the backend and verify that updates are reflected in real-time in the UI. Test connection stability under various network conditions."
+          },
+          {
+            "id": 5,
+            "title": "Create Stats Tab Page and Integrate Components",
+            "description": "Develop the stats tab page and integrate both the standings and top scorer table components.",
+            "dependencies": [
+              "39.4"
+            ],
+            "details": "Create a new page or component for the stats tab. Import and integrate the standings and top scorer table components. Ensure the layout matches the design and that both tables function correctly within the page. Implement navigation and ensure the page is accessible.",
+            "status": "pending",
+            "testStrategy": "Verify that the page loads correctly and both tables display accurate data. Test navigation to and from the stats tab. Conduct cross-browser testing to ensure consistent behavior."
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T15:43:11.135Z",
+      "updated": "2025-09-21T16:37:33.402Z",
       "description": "Tasks for master context"
     }
   }
