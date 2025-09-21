@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
     const matchdaysList = await db
       .select({
         id: matchdays.id,
-        name: matchdays.name,
         description: matchdays.description,
         scheduledAt: matchdays.scheduledAt,
         location: matchdays.location,
@@ -126,21 +125,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const matchdayData = MatchdayCreateSchema.parse(body);
     
-    // Generate default name if not provided
-    let finalName = matchdayData.name;
-    if (!finalName || finalName.trim() === '') {
-      const scheduledDate = new Date(matchdayData.scheduledAt);
-      const day = scheduledDate.getDate().toString().padStart(2, '0');
-      const month = (scheduledDate.getMonth() + 1).toString().padStart(2, '0');
-      finalName = `${day}/${month} Matchday`;
-    }
-    
     // Create matchday
     const newMatchday = await db
       .insert(matchdays)
       .values({
         id: createId(),
-        name: finalName,
         description: matchdayData.description,
         scheduledAt: new Date(matchdayData.scheduledAt),
         location: matchdayData.location,

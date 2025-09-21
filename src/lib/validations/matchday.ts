@@ -39,7 +39,6 @@ export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
 
 // Schema for creating a matchday
 export const MatchdayCreateSchema = z.object({
-  name: z.string().max(100, 'Name must be less than 100 characters').optional().nullable().transform(val => val === '' ? null : val),
   description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable().transform(val => val === '' ? null : val),
   scheduledAt: z.string().min(1, 'Date and time is required').refine((val) => {
     // Accept datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO
@@ -54,7 +53,6 @@ export const MatchdayCreateSchema = z.object({
 
 // Schema for updating a matchday
 export const MatchdayUpdateSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters').optional(),
   description: z.string().max(500, 'Description must be less than 500 characters').optional().nullable(),
   scheduledAt: z.string().refine((val) => {
     const date = new Date(val);

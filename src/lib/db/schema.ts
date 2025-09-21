@@ -45,7 +45,7 @@ export const players = pgTable('players', {
 // Matchdays table
 export const matchdays = pgTable('matchdays', {
   ...auditFields,
-  name: text('name').notNull(),
+  name: text('name'), // Optional - display names are computed from date/location
   description: text('description'),
   scheduledAt: timestamp('scheduled_at').notNull(),
   location: text('location'),

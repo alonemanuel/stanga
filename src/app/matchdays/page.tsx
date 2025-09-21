@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { createClient } from "@/lib/supabase/client";
+import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Matchday {
   id: string;
-  name: string;
   description?: string | null;
   scheduledAt: string;
   location?: string | null;
@@ -198,7 +198,7 @@ export default function MatchdaysPage() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{matchday.name}</h3>
+                  <h3 className="font-semibold text-lg">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h3>
                   {matchday.description && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {matchday.description}

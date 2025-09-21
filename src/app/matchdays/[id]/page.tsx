@@ -7,6 +7,7 @@ import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { GameManagement } from "@/components/matchdays/GameManagement";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface MatchdayDetailPageProps {
@@ -207,7 +208,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
           <MatchdayForm
             matchday={{
               id: matchday.id,
-              name: matchday.name,
               description: matchday.description,
               scheduledAt: matchday.scheduledAt,
               location: matchday.location,
@@ -377,7 +377,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               ← Back
             </Button>
           </div>
-          <h1 className="text-2xl font-semibold">{matchday.name}</h1>
+          <h1 className="text-2xl font-semibold">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h1>
           <p className="text-muted-foreground">
             {formatDate(matchday.scheduledAt)}
           </p>

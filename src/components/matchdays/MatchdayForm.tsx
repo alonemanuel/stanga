@@ -10,7 +10,6 @@ import { useCreateMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays"
 interface MatchdayFormProps {
   matchday?: {
     id: string;
-    name: string;
     description?: string | null;
     scheduledAt: string;
     location?: string | null;
@@ -22,22 +21,6 @@ interface MatchdayFormProps {
   onCancel?: () => void;
 }
 
-// Generate default matchday name from date in DD/MM Matchday format
-const generateDefaultMatchdayName = (dateString: string): string => {
-  if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    
-    return `${day}/${month} Matchday`;
-  } catch (error) {
-    return '';
-  }
-};
 
 export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProps) {
   const isEditing = !!matchday;
@@ -47,7 +30,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
   const schema = isEditing ? MatchdayUpdateSchema : MatchdayCreateSchema;
   const methods = useZodForm(schema, {
     defaultValues: isEditing ? {
-      name: matchday.name,
       description: matchday.description || "",
       scheduledAt: matchday.scheduledAt.slice(0, 16), // Convert to datetime-local format
       location: matchday.location || "",
@@ -55,7 +37,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
       rules: matchday.rules,
       isPublic: matchday.isPublic,
     } : {
-      name: "",
       description: "",
       scheduledAt: "",
       location: "",
@@ -67,19 +48,13 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
 
   const onSubmit = async (data: MatchdayCreate | MatchdayUpdate) => {
     try {
-      // For new matchdays, ensure name is filled if empty
-      if (!isEditing) {
-        const createData = data as MatchdayCreate;
-        if (!createData.name || createData.name.trim() === '') {
-          const defaultName = generateDefaultMatchdayName(createData.scheduledAt);
-          createData.name = defaultName || 'New Matchday';
-        }
-        await createMutation.mutateAsync(createData);
-      } else {
+      if (isEditing) {
         await updateMutation.mutateAsync({
           id: matchday.id,
           data: data as MatchdayUpdate,
         });
+      } else {
+        await createMutation.mutateAsync(data as MatchdayCreate);
       }
       onSuccess?.();
     } catch (error) {
@@ -106,28 +81,8 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
     }
   }, [methods, isEditing]);
 
-  // Watch for changes in scheduledAt and auto-fill name if empty
-  const scheduledAt = methods.watch('scheduledAt');
-  const currentName = methods.watch('name');
-  
-  React.useEffect(() => {
-    // Only auto-fill for new matchdays when name is empty
-    if (!isEditing && scheduledAt && (!currentName || currentName.trim() === '')) {
-      const defaultName = generateDefaultMatchdayName(scheduledAt);
-      if (defaultName) {
-        methods.setValue('name', defaultName);
-      }
-    }
-  }, [scheduledAt, currentName, isEditing, methods]);
-
   return (
     <Form methods={methods} onSubmit={onSubmit} className="space-y-4">
-      <TextField
-        name="name"
-        label="Matchday Name"
-        placeholder="e.g., Sunday Football Session (leave empty to auto-generate)"
-      />
-      
       <TextField
         name="description"
         label="Description"
