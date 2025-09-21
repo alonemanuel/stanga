@@ -173,17 +173,25 @@ export function useDeleteMatchday() {
   
   return useMutation({
     mutationFn: deleteMatchday,
-    onSuccess: (data) => {
-      // Invalidate all matchdays queries to refresh the list
-      queryClient.invalidateQueries({ 
+    onSuccess: (data, deletedId) => {
+      // Remove all matchdays queries from cache and refetch
+      queryClient.removeQueries({ 
         queryKey: ['matchdays'],
-        exact: false // This ensures all queries starting with ['matchdays'] are invalidated
-      });
-      // Also invalidate any individual matchday queries
-      queryClient.invalidateQueries({ 
-        queryKey: ['matchday'],
         exact: false 
       });
+      
+      // Remove the specific matchday from cache
+      queryClient.removeQueries({ 
+        queryKey: ['matchday', deletedId],
+        exact: true 
+      });
+      
+      // Force refetch of all matchdays queries
+      queryClient.refetchQueries({ 
+        queryKey: ['matchdays'],
+        exact: false 
+      });
+      
       toast.success(data.message || 'Matchday deleted successfully');
     },
     onError: (error: Error) => {
