@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 // Rules snapshot schema - strict validation for game rules
 export const RulesSnapshotSchema = z.object({
-  team_size: z.coerce.number().int().min(1).max(11).default(6),
   game_minutes: z.coerce.number().int().positive().default(8),
   extra_minutes: z.coerce.number().int().nonnegative().default(2),
   max_goals_to_win: z.coerce.number().int().positive().default(2),
@@ -21,7 +20,6 @@ export const RulesSnapshotSchema = z.object({
 
 // Default rules configuration
 export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
-  team_size: 6,
   game_minutes: 8,
   extra_minutes: 2,
   max_goals_to_win: 2,
