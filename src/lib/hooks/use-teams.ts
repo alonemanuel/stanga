@@ -203,13 +203,48 @@ export function useAssignPlayer() {
       // Snapshot the previous value for rollback
       const previousTeams = queryClient.getQueriesData({ queryKey: ['teams'] });
       
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: ['teams'] }, (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        
+        console.log('🔄 Optimistically adding player to team', { teamId, playerId: data.playerId });
+        
+        const updatedTeams = oldData.data.map((team: any) => {
+          if (team.id === teamId) {
+            // Create a mock assignment for optimistic update
+            const mockAssignment = {
+              id: `temp-${Date.now()}`,
+              playerId: data.playerId,
+              teamId: teamId,
+              player: {
+                id: data.playerId,
+                name: 'Loading...',
+                skillLevel: 5,
+              }
+            };
+            
+            return {
+              ...team,
+              assignments: [...(team.assignments || []), mockAssignment],
+              playerCount: (team.playerCount || 0) + 1,
+            };
+          }
+          return team;
+        });
+        
+        return { ...oldData, data: updatedTeams };
+      });
+      
       return { previousTeams };
     },
     onSuccess: (data, variables) => {
       console.log('✅ Assign player - onSuccess called', { data, variables });
       
-      // Force immediate refetch of teams queries
-      queryClient.refetchQueries({ queryKey: ['teams'] });
+      // Force immediate refetch of the specific matchday teams query
+      queryClient.refetchQueries({ 
+        queryKey: ['teams', 'matchday'], 
+        exact: false 
+      });
       // Also refetch players queries in case they're affected
       queryClient.refetchQueries({ queryKey: ['players'] });
       
@@ -227,7 +262,10 @@ export function useAssignPlayer() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.refetchQueries({ 
+        queryKey: ['teams', 'matchday'], 
+        exact: false 
+      });
     },
   });
 }
@@ -246,13 +284,41 @@ export function useUnassignPlayer() {
       // Snapshot the previous value for rollback
       const previousTeams = queryClient.getQueriesData({ queryKey: ['teams'] });
       
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: ['teams'] }, (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        
+        console.log('🔄 Optimistically removing player assignment', { assignmentId });
+        
+        const updatedTeams = oldData.data.map((team: any) => {
+          if (team.assignments && team.assignments.length > 0) {
+            const filteredAssignments = team.assignments.filter((assignment: any) => assignment.id !== assignmentId);
+            
+            if (filteredAssignments.length !== team.assignments.length) {
+              // Assignment was removed from this team
+              return {
+                ...team,
+                assignments: filteredAssignments,
+                playerCount: Math.max(0, (team.playerCount || 0) - 1),
+              };
+            }
+          }
+          return team;
+        });
+        
+        return { ...oldData, data: updatedTeams };
+      });
+      
       return { previousTeams };
     },
     onSuccess: (data) => {
       console.log('✅ Unassign player - onSuccess called', { data });
       
-      // Force immediate refetch of teams queries
-      queryClient.refetchQueries({ queryKey: ['teams'] });
+      // Force immediate refetch of the specific matchday teams query
+      queryClient.refetchQueries({ 
+        queryKey: ['teams', 'matchday'], 
+        exact: false 
+      });
       // Also refetch players queries in case they're affected
       queryClient.refetchQueries({ queryKey: ['players'] });
       
@@ -270,7 +336,10 @@ export function useUnassignPlayer() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.refetchQueries({ 
+        queryKey: ['teams', 'matchday'], 
+        exact: false 
+      });
     },
   });
 }
