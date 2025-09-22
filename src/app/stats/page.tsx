@@ -240,9 +240,9 @@ export default function StatsPage() {
   const renderTeamsTab = () => {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Team statistics coming soon...</p>
+        <p className="text-muted-foreground">Overall team statistics coming soon...</p>
         <p className="text-sm text-muted-foreground mt-2">
-          This will show team standings and performance across matchdays
+          This will show aggregated team standings and performance across all matchdays
         </p>
       </div>
     );
