@@ -145,9 +145,13 @@ async function startPenalties(gameId: string): Promise<PenaltyShootout> {
   return penaltyStartResult.data;
 }
 
-async function fetchPenalties(gameId: string): Promise<PenaltyShootout> {
+async function fetchPenalties(gameId: string): Promise<PenaltyShootout | null> {
   const response = await fetch(`/api/games/${gameId}/penalties`);
   if (!response.ok) {
+    // Return null for 404 (no penalty data) instead of throwing
+    if (response.status === 404) {
+      return null;
+    }
     throw new Error('Failed to fetch penalties');
   }
   const penaltyResult = await response.json();
