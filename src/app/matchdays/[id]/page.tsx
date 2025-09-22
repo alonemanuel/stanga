@@ -17,7 +17,7 @@ interface MatchdayDetailPageProps {
   }>;
 }
 
-type TabType = 'overview' | 'teams' | 'games' | 'stats' | 'activity';
+type TabType = 'overview' | 'teams' | 'games' | 'stats';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -235,7 +235,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games' },
     { id: 'stats', label: 'Stats', disabled: true },
-    { id: 'activity', label: 'Activity', disabled: true },
   ];
 
   const renderTabContent = () => {
@@ -344,12 +343,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         return (
           <div className="text-center py-8">
             <p className="text-muted-foreground">Statistics coming soon...</p>
-          </div>
-        );
-      case 'activity':
-        return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Activity log coming soon...</p>
           </div>
         );
       default:
