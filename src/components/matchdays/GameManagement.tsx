@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useGames, useGame, useStartGame, useLogGoal, useUndoGoal, useEndGame } from "@/lib/hooks/use-games";
+import { useGames, useGame, useStartGame, useEndGame } from "@/lib/hooks/use-games";
 import { useMatchdayTeams } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
+import { useGameGoals, useAddGoal, useEditGoal, useDeleteGoal } from "@/lib/hooks/use-goal-management";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PenaltyShootout } from "./PenaltyShootout";
+import { GoalList } from "./GoalList";
+import { ChevronDown, ChevronUp, User, Clock } from "lucide-react";
 import type { Game } from "@/lib/hooks/use-games";
 
 interface GameManagementProps {
@@ -73,17 +76,33 @@ interface ActiveGameProps {
 
 function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const { data: playersData } = usePlayers();
-  const logGoalMutation = useLogGoal();
-  const undoGoalMutation = useUndoGoal();
+  const { data: teamsData } = useMatchdayTeams(matchdayId);
+  const { data: goalsData, isLoading: goalsLoading } = useGameGoals(game.id);
+  const addGoalMutation = useAddGoal();
+  const editGoalMutation = useEditGoal();
+  const deleteGoalMutation = useDeleteGoal();
   const endGameMutation = useEndGame();
   
-  const [selectedScorer, setSelectedScorer] = React.useState<string>('');
-  const [selectedAssist, setSelectedAssist] = React.useState<string>('');
-  const [selectedTeam, setSelectedTeam] = React.useState<string>('');
   const [showPenalties, setShowPenalties] = React.useState(false);
   
   const players = playersData?.data || [];
-  const activePlayers = players.filter(p => p.isActive);
+  const teams = teamsData?.data || [];
+  
+  // Get team players for goal assignment from team assignments
+  const homeTeam = teams.find(t => t.id === game.homeTeamId);
+  const awayTeam = teams.find(t => t.id === game.awayTeamId);
+  
+  const homeTeamPlayers = homeTeam?.assignments?.map(assignment => ({
+    id: assignment.player.id,
+    name: assignment.player.name,
+    isActive: assignment.player.isActive
+  })).filter(p => p.isActive) || [];
+  
+  const awayTeamPlayers = awayTeam?.assignments?.map(assignment => ({
+    id: assignment.player.id,
+    name: assignment.player.name,
+    isActive: assignment.player.isActive
+  })).filter(p => p.isActive) || [];
   
   // Check if game should show penalties (tied and ended)
   React.useEffect(() => {
@@ -92,31 +111,34 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     }
   }, [game.status, game.homeScore, game.awayScore]);
   
-  const handleGoal = async () => {
-    if (!selectedScorer || !selectedTeam) {
-      return;
-    }
-    
+  const handleAddGoal = async (teamId: string, playerId: string, assistId?: string) => {
     try {
-      await logGoalMutation.mutateAsync({
+      await addGoalMutation.mutateAsync({
         gameId: game.id,
-        scorerId: selectedScorer,
-        teamId: selectedTeam,
-        assistId: selectedAssist || undefined,
+        teamId,
+        playerId,
+        assistId,
       });
-      
-      // Reset form
-      setSelectedScorer('');
-      setSelectedAssist('');
-      setSelectedTeam('');
     } catch (error) {
       // Error handled by mutation
     }
   };
   
-  const handleUndo = async () => {
+  const handleEditGoal = async (goalId: string, playerId: string, assistId?: string) => {
     try {
-      await undoGoalMutation.mutateAsync(game.id);
+      await editGoalMutation.mutateAsync({
+        goalId,
+        playerId,
+        assistId,
+      });
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+  
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      await deleteGoalMutation.mutateAsync(goalId);
     } catch (error) {
       // Error handled by mutation
     }
@@ -150,6 +172,8 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     );
   }
 
+  const isLoading = goalsLoading || addGoalMutation.isPending || editGoalMutation.isPending || deleteGoalMutation.isPending;
+
   return (
     <div className="space-y-6">
       {/* Game Header */}
@@ -170,7 +194,7 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
               className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
               style={{ backgroundColor: game.homeTeam?.colorHex }}
             >
-              {game.homeScore}
+              {goalsData?.homeTeamGoals.length || 0}
             </div>
             <p className="text-sm font-medium">{game.homeTeam?.name}</p>
           </div>
@@ -185,100 +209,50 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
               className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mb-2"
               style={{ backgroundColor: game.awayTeam?.colorHex }}
             >
-              {game.awayScore}
+              {goalsData?.awayTeamGoals.length || 0}
             </div>
             <p className="text-sm font-medium">{game.awayTeam?.name}</p>
           </div>
         </div>
       </div>
       
-      {/* Goal Logging */}
+      {/* Goal Lists */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Home Team Goals */}
+        <GoalList
+          teamId={game.homeTeamId}
+          teamName={game.homeTeam?.name || 'Home Team'}
+          goals={goalsData?.homeTeamGoals || []}
+          players={homeTeamPlayers}
+          onAddGoal={(playerId, assistId) => handleAddGoal(game.homeTeamId, playerId, assistId)}
+          onEditGoal={handleEditGoal}
+          onDeleteGoal={handleDeleteGoal}
+          isLoading={isLoading}
+        />
+        
+        {/* Away Team Goals */}
+        <GoalList
+          teamId={game.awayTeamId}
+          teamName={game.awayTeam?.name || 'Away Team'}
+          goals={goalsData?.awayTeamGoals || []}
+          players={awayTeamPlayers}
+          onAddGoal={(playerId, assistId) => handleAddGoal(game.awayTeamId, playerId, assistId)}
+          onEditGoal={handleEditGoal}
+          onDeleteGoal={handleDeleteGoal}
+          isLoading={isLoading}
+        />
+      </div>
+      
+      {/* Game Controls */}
       <div className="bg-card border rounded-lg p-6">
-        <h4 className="text-md font-semibold mb-4">Log Goal</h4>
-        
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Team Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Team</label>
-            <select
-              value={selectedTeam}
-              onChange={(e) => setSelectedTeam(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select team</option>
-              <option value={game.homeTeamId}>{game.homeTeam?.name}</option>
-              <option value={game.awayTeamId}>{game.awayTeam?.name}</option>
-            </select>
-          </div>
-          
-          {/* Scorer Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Scorer</label>
-            <select
-              value={selectedScorer}
-              onChange={(e) => setSelectedScorer(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">Select scorer</option>
-              {activePlayers.map(player => (
-                <option key={player.id} value={player.id}>
-                  {player.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Assist Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Assist (Optional)</label>
-            <select
-              value={selectedAssist}
-              onChange={(e) => setSelectedAssist(e.target.value)}
-              className="w-full p-2 border rounded-md"
-            >
-              <option value="">No assist</option>
-              {activePlayers
-                .filter(p => p.id !== selectedScorer)
-                .map(player => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-          
-          {/* Actions */}
-          <div className="flex items-end space-x-2">
-            <Button
-              onClick={handleGoal}
-              disabled={!selectedScorer || !selectedTeam || logGoalMutation.isPending}
-              loading={logGoalMutation.isPending}
-              className="flex-1"
-            >
-              Goal!
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center mt-4">
+        <div className="flex justify-end space-x-2">
           <Button
             variant="outline"
-            onClick={handleUndo}
-            disabled={undoGoalMutation.isPending}
-            loading={undoGoalMutation.isPending}
+            onClick={() => handleEndGame('regulation')}
+            disabled={endGameMutation.isPending}
           >
-            Undo Last Goal
+            End Game
           </Button>
-          
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => handleEndGame('regulation')}
-              disabled={endGameMutation.isPending}
-            >
-              End Game
-            </Button>
-          </div>
         </div>
       </div>
     </div>
@@ -413,11 +387,133 @@ interface RecentGamesProps {
   matchdayId: string;
 }
 
+interface ChronologicalGoalsListProps {
+  homeGoals: Array<{
+    id: string;
+    playerId: string;
+    playerName: string;
+    minute: number;
+    assistId?: string;
+    assistName?: string;
+  }>;
+  awayGoals: Array<{
+    id: string;
+    playerId: string;
+    playerName: string;
+    minute: number;
+    assistId?: string;
+    assistName?: string;
+  }>;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeTeamColor: string;
+  awayTeamColor: string;
+}
+
+function ChronologicalGoalsList({ 
+  homeGoals, 
+  awayGoals, 
+  homeTeamName, 
+  awayTeamName, 
+  homeTeamColor, 
+  awayTeamColor 
+}: ChronologicalGoalsListProps) {
+  // Combine all goals and add team information
+  const allGoals = [
+    ...homeGoals.map(goal => ({
+      ...goal,
+      teamName: homeTeamName,
+      teamColor: homeTeamColor,
+      isHome: true
+    })),
+    ...awayGoals.map(goal => ({
+      ...goal,
+      teamName: awayTeamName,
+      teamColor: awayTeamColor,
+      isHome: false
+    }))
+  ];
+
+  // Sort by minute (chronological order)
+  const sortedGoals = allGoals.sort((a, b) => a.minute - b.minute);
+
+  if (sortedGoals.length === 0) {
+    return (
+      <div className="text-center text-sm text-gray-500 py-2">
+        No goals were scored in this game
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium text-gray-700">
+        Goals in chronological order ({sortedGoals.length})
+      </div>
+      
+      <div className="space-y-2">
+        {sortedGoals.map((goal, index) => (
+          <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+            {/* Team color indicator */}
+            <div 
+              className="w-4 h-4 rounded-full flex-shrink-0"
+              style={{ backgroundColor: goal.teamColor }}
+            />
+            
+            {/* Goal details */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
+                  #{index + 1}
+                </span>
+                <div className="flex items-center gap-1">
+                  <User className="h-3 w-3 text-gray-500" />
+                  <span className="font-medium truncate">
+                    {goal.playerName || 'Unknown Player'}
+                  </span>
+                </div>
+                {goal.assistName && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-xs text-gray-600 truncate">
+                      Assist: {goal.assistName}
+                    </span>
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                <span className="font-medium">{goal.teamName}</span>
+                <span className="text-gray-400">•</span>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{goal.minute}' minute</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RecentGames({ matchdayId }: RecentGamesProps) {
   const { data: gamesData } = useGames(matchdayId, 'completed');
+  const [expandedGames, setExpandedGames] = React.useState<Set<string>>(new Set());
   
   const games = gamesData || [];
   const recentGames = games.slice(0, 5); // Show last 5 games
+  
+  const toggleGameExpansion = (gameId: string) => {
+    const newExpanded = new Set(expandedGames);
+    if (newExpanded.has(gameId)) {
+      newExpanded.delete(gameId);
+    } else {
+      newExpanded.add(gameId);
+    }
+    setExpandedGames(newExpanded);
+  };
   
   if (recentGames.length === 0) {
     return (
@@ -433,38 +529,95 @@ function RecentGames({ matchdayId }: RecentGamesProps) {
       <h4 className="text-md font-semibold mb-4">Recent Results</h4>
       
       <div className="space-y-3">
-        {recentGames.map(game => (
-          <div key={game.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div 
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: game.homeTeam?.colorHex }}
-                />
-                <span className="text-sm font-medium">{game.homeTeam?.name}</span>
-              </div>
-              
-              <div className="text-lg font-bold">
-                {game.homeScore} - {game.awayScore}
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium">{game.awayTeam?.name}</span>
-                <div 
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: game.awayTeam?.colorHex }}
-                />
-              </div>
-            </div>
-            
-            <div className="text-xs text-muted-foreground">
-              {game.endReason === 'early_finish' && 'Early finish'}
-              {game.endReason === 'regulation' && 'Full time'}
-              {game.endReason === 'penalties' && 'Penalties'}
-            </div>
-          </div>
-        ))}
+        {recentGames.map(game => {
+          const isExpanded = expandedGames.has(game.id);
+          
+          return (
+            <RecentGameItem 
+              key={game.id} 
+              game={game} 
+              isExpanded={isExpanded}
+              onToggle={() => toggleGameExpansion(game.id)}
+            />
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+interface RecentGameItemProps {
+  game: Game;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
+  const { data: goalsData, isLoading } = useGameGoals(game.id);
+  
+  return (
+    <div className="bg-muted/50 rounded-lg overflow-hidden">
+      {/* Main game row - clickable */}
+      <div 
+        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/70 transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div 
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: game.homeTeam?.colorHex }}
+            />
+            <span className="text-sm font-medium">{game.homeTeam?.name}</span>
+          </div>
+          
+          <div className="text-lg font-bold">
+            {game.homeScore} - {game.awayScore}
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">{game.awayTeam?.name}</span>
+            <div 
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: game.awayTeam?.colorHex }}
+            />
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4 text-gray-500" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+          )}
+        </div>
+      </div>
+      
+      {/* Expandable goal details */}
+      {isExpanded && (
+        <div className="px-3 pb-3 border-t border-gray-200">
+          {isLoading ? (
+            <div className="py-4 text-center text-sm text-gray-500">
+              Loading goal details...
+            </div>
+          ) : goalsData ? (
+            <div className="pt-3">
+              <ChronologicalGoalsList 
+                homeGoals={goalsData.homeTeamGoals}
+                awayGoals={goalsData.awayTeamGoals}
+                homeTeamName={game.homeTeam?.name || 'Home Team'}
+                awayTeamName={game.awayTeam?.name || 'Away Team'}
+                homeTeamColor={game.homeTeam?.colorHex || '#3b82f6'}
+                awayTeamColor={game.awayTeam?.colorHex || '#ef4444'}
+              />
+            </div>
+          ) : (
+            <div className="py-4 text-center text-sm text-red-500">
+              Failed to load goal details
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
