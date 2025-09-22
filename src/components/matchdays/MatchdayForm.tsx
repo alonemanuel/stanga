@@ -129,13 +129,6 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField
-              name="rules.team_size"
-              label="Team Size"
-              type="number"
-              placeholder={`${DEFAULT_RULES.team_size}`}
-            />
-            
-            <TextField
               name="rules.game_minutes"
               label="Game Duration (minutes)"
               type="number"

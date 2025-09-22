@@ -343,50 +343,56 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
     <div className="bg-card border rounded-lg p-6">
       <h4 className="text-md font-semibold mb-4">Start New Game</h4>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Home Team */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Home Team</label>
-          <select
-            value={selectedHomeTeam}
-            onChange={(e) => setSelectedHomeTeam(e.target.value)}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="">Select home team</option>
-            {availableTeams.map((team: any) => (
-              <option key={team.id} value={team.id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        {/* Away Team */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Away Team</label>
-          <select
-            value={selectedAwayTeam}
-            onChange={(e) => setSelectedAwayTeam(e.target.value)}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="">Select away team</option>
-            {availableTeams
-              .filter((t: any) => t.id !== selectedHomeTeam)
-              .map((team: any) => (
+      <div className="space-y-4">
+        {/* Team Selection Row */}
+        <div className="flex items-center gap-4">
+          {/* Team A Dropdown */}
+          <div className="flex-1">
+            <select
+              value={selectedHomeTeam}
+              onChange={(e) => setSelectedHomeTeam(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="">Select team A</option>
+              {availableTeams.map((team: any) => (
                 <option key={team.id} value={team.id}>
                   {team.name}
                 </option>
               ))}
-          </select>
+            </select>
+          </div>
+          
+          {/* VS Separator */}
+          <div className="text-lg font-semibold text-muted-foreground px-2">
+            VS
+          </div>
+          
+          {/* Team B Dropdown */}
+          <div className="flex-1">
+            <select
+              value={selectedAwayTeam}
+              onChange={(e) => setSelectedAwayTeam(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="">Select team B</option>
+              {availableTeams
+                .filter((t: any) => t.id !== selectedHomeTeam)
+                .map((team: any) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+            </select>
+          </div>
         </div>
         
-        {/* Start Button */}
-        <div className="flex items-end">
+        {/* Start Button Row */}
+        <div className="flex justify-center">
           <Button
             onClick={() => handleStartGame()}
             disabled={!selectedHomeTeam || !selectedAwayTeam || startGameMutation.isPending}
             loading={startGameMutation.isPending}
-            className="w-full"
+            size="lg"
           >
             Start Game
           </Button>
@@ -669,14 +675,14 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
             <span className="text-sm font-medium">{game.homeTeam?.name}</span>
           </div>
           
-                  <div className="text-lg font-bold">
-                    {game.homeScore} - {game.awayScore}
-                    {penaltyData && penaltyData.status === 'completed' && (
-                      <span className="text-sm text-orange-600 ml-2">
-                        ({penaltyData.homeTeamScore}-{penaltyData.awayTeamScore} pens)
-                      </span>
-                    )}
-                  </div>
+          <div className="text-lg font-bold">
+            {game.homeScore} - {game.awayScore}
+            {penaltyData && penaltyData.status === 'completed' && (
+              <span className="text-sm text-orange-600 ml-2">
+                ({penaltyData.homeTeamScore}-{penaltyData.awayTeamScore} pens)
+              </span>
+            )}
+          </div>
           
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium">{game.awayTeam?.name}</span>

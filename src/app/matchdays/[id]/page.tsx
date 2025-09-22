@@ -122,18 +122,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     setIsEditing(false);
   };
 
-  const handleStartMatchday = async () => {
-    if (!matchdayData) return;
-    
-    try {
-      await updateMutation.mutateAsync({
-        id: matchdayId,
-        data: { status: 'active' }
-      });
-    } catch (error) {
-      // Error handling is done in the mutation hook
-    }
-  };
 
   const handleDeleteMatchday = async () => {
     if (!matchdayData) return;
@@ -299,10 +287,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
             >
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Team Size</label>
-                  <p className="text-sm">{matchday.rules.team_size} players</p>
-                </div>
-                <div>
                   <label className="text-sm font-medium text-muted-foreground">Game Duration</label>
                   <p className="text-sm">{matchday.rules.game_minutes} minutes</p>
                 </div>
@@ -313,14 +297,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Max Goals to Win</label>
                   <p className="text-sm">{matchday.rules.max_goals_to_win} goals</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Penalties on Tie</label>
-                  <p className="text-sm">{matchday.rules.penalties_on_tie ? 'Yes' : 'No'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Penalty Win Weight</label>
-                  <p className="text-sm">{matchday.rules.penalty_win_weight}</p>
                 </div>
               </div>
               
@@ -353,14 +329,15 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         return (
           <TeamManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
+            numberOfTeams={matchday.numberOfTeams}
           />
         );
       case 'games':
         return (
           <GameManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
           />
         );
       case 'stats':
@@ -399,7 +376,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
             {formatDate(matchday.scheduledAt)}
           </p>
         </div>
-        {user && matchday.status === 'upcoming' && (
+        {user && (
           <div className="flex gap-2">
             <Button 
               variant="outline" 
@@ -420,9 +397,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               className="text-red-600 hover:text-red-700 hover:border-red-300"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button onClick={handleStartMatchday} loading={updateMutation.isPending}>
-              Start Matchday
             </Button>
           </div>
         )}

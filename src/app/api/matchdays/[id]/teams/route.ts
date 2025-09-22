@@ -57,8 +57,11 @@ export async function POST(
       );
     }
     
-    // Get all available colors
-    const availableColors = getAvailableColors();
+    // Get the number of teams to create from matchday settings
+    const numberOfTeams = matchday[0].numberOfTeams;
+    
+    // Get available colors (limit to the number of teams needed)
+    const availableColors = getAvailableColors().slice(0, numberOfTeams);
     
     // Create teams in a transaction
     const createdTeams = await db.transaction(async (tx) => {

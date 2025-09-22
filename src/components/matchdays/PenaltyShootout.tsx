@@ -160,7 +160,7 @@ function KickHistory({ kicks, homeTeamId, awayTeamId, homeTeamName, awayTeamName
       <h4 className="text-md font-semibold mb-4">Penalty Kicks</h4>
       
       <div className="grid grid-cols-2 gap-6">
-        {/* Home Team */}
+        {/* Team A */}
         <div>
           <h5 className="font-medium mb-3 text-center">{homeTeamName}</h5>
           <div className="space-y-2">
@@ -185,7 +185,7 @@ function KickHistory({ kicks, homeTeamId, awayTeamId, homeTeamName, awayTeamName
           </div>
         </div>
         
-        {/* Away Team */}
+        {/* Team B */}
         <div>
           <h5 className="font-medium mb-3 text-center">{awayTeamName}</h5>
           <div className="space-y-2">

@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMatchdayTeams, useInitializeTeams, useAssignPlayer, useUnassignPlayer } from "@/lib/hooks/use-teams";
+import { useMatchdayTeams, useInitializeTeams, useAssignPlayer, useUnassignPlayer, useUpdateTeam } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { TEAM_COLORS, type ColorToken } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +22,7 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 interface TeamManagementProps {
   matchdayId: string;
   maxPlayersPerTeam: number;
+  numberOfTeams: number;
 }
 
 interface DragData {
@@ -31,7 +32,7 @@ interface DragData {
   assignmentId?: string;
 }
 
-export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagementProps) {
+export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }: TeamManagementProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const supabase = createClient();
   
@@ -82,6 +83,14 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
     console.log('🔄 TeamManagement re-rendered with teams:', teams.length, 'teams');
     console.log('📊 Teams data:', teams);
   }, [teams]);
+
+  // Auto-initialize teams when none exist
+  React.useEffect(() => {
+    if (user && teams.length === 0 && !teamsLoading && !initializeTeamsMutation.isPending) {
+      console.log('🚀 Auto-initializing teams based on numberOfTeams:', numberOfTeams);
+      handleInitializeTeams();
+    }
+  }, [user, teams.length, teamsLoading, initializeTeamsMutation.isPending, numberOfTeams]);
   
   // Get unassigned players
   const assignedPlayerIds = new Set(
@@ -195,25 +204,24 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
     );
   }
 
-  // If no teams exist, show initialize button
+  // If no teams exist, show loading or sign in message
   if (teams.length === 0) {
+    if (!user) {
+      return (
+        <div className="text-center py-8">
+          <h3 className="text-lg font-semibold mb-2">Team Management</h3>
+          <p className="text-sm text-muted-foreground">Sign in to manage teams</p>
+        </div>
+      );
+    }
+    
     return (
       <div className="text-center py-8">
-        <h3 className="text-lg font-semibold mb-2">No Teams Created</h3>
+        <h3 className="text-lg font-semibold mb-2">Setting Up Teams</h3>
         <p className="text-muted-foreground mb-4">
-          Initialize 3 teams to start assigning players
+          Initializing {numberOfTeams} teams for this matchday...
         </p>
-        {user && (
-          <Button 
-            onClick={handleInitializeTeams}
-            disabled={initializeTeamsMutation.isPending}
-          >
-            {initializeTeamsMutation.isPending ? 'Creating Teams...' : 'Initialize Teams'}
-          </Button>
-        )}
-        {!user && (
-          <p className="text-sm text-muted-foreground">Sign in to manage teams</p>
-        )}
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
     );
   }
@@ -234,25 +242,32 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam }: TeamManagement
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="grid gap-6 lg:grid-cols-4">
-          {/* Teams */}
-          {teams.map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              maxPlayers={maxPlayersPerTeam}
-              canEdit={!!user}
-              onUnassignPlayer={handleUnassignPlayer}
-              onAssignPlayer={handleAssignPlayer}
-              unassignedPlayers={unassignedPlayers}
-            />
-          ))}
+        <div className="flex gap-6">
+          {/* Teams Grid */}
+          <div className="flex-1">
+            <div className="grid gap-6 lg:grid-cols-3">
+              {teams.map((team) => (
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  maxPlayers={maxPlayersPerTeam}
+                  canEdit={!!user}
+                  onUnassignPlayer={handleUnassignPlayer}
+                  onAssignPlayer={handleAssignPlayer}
+                  unassignedPlayers={unassignedPlayers}
+                  allTeams={teams}
+                />
+              ))}
+            </div>
+          </div>
 
-          {/* Unassigned Players */}
-          <UnassignedPlayersCard
-            players={unassignedPlayers}
-            canEdit={!!user}
-          />
+          {/* Sticky Available Players */}
+          <div className="w-80 sticky top-6 self-start">
+            <UnassignedPlayersCard
+              players={unassignedPlayers}
+              canEdit={!!user}
+            />
+          </div>
         </div>
       </DndContext>
     </div>
@@ -284,11 +299,61 @@ interface TeamCardProps {
     id: string;
     name: string;
   }>;
+  allTeams: Array<{
+    id: string;
+    colorToken: ColorToken;
+  }>;
 }
 
-function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, unassignedPlayers }: TeamCardProps) {
+function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, unassignedPlayers, allTeams }: TeamCardProps) {
+  const [showColorPicker, setShowColorPicker] = React.useState(false);
+  const colorPickerRef = React.useRef<HTMLDivElement>(null);
   const colorInfo = TEAM_COLORS[team.colorToken];
   const isTeamFull = team.playerCount >= maxPlayers;
+  const updateTeamMutation = useUpdateTeam();
+
+  // Close color picker when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorPicker]);
+
+  // Get colors that are already in use by other teams
+  const usedColors = new Set(
+    allTeams.filter(t => t.id !== team.id).map(t => t.colorToken)
+  );
+
+  // Get available colors (not used by other teams)
+  const availableColors = Object.entries(TEAM_COLORS).filter(
+    ([token]) => !usedColors.has(token as ColorToken)
+  );
+
+  const handleColorChange = async (newColorToken: ColorToken) => {
+    const newColorInfo = TEAM_COLORS[newColorToken];
+    try {
+      await updateTeamMutation.mutateAsync({
+        teamId: team.id,
+        data: {
+          colorToken: newColorToken,
+          name: newColorInfo.name, // Automatically update name to match color
+        }
+      });
+      setShowColorPicker(false);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+    }
+  };
   
   const { setNodeRef, isOver } = useDroppable({
     id: `team-${team.id}`,
@@ -308,10 +373,60 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
       {/* Team Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div 
-            className="w-4 h-4 rounded-full"
-            style={{ backgroundColor: team.colorHex }}
-          />
+          <div className="relative">
+            <div 
+              className={`w-4 h-4 rounded-full ${canEdit ? 'cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all' : ''}`}
+              style={{ backgroundColor: team.colorHex }}
+              onClick={() => canEdit && setShowColorPicker(!showColorPicker)}
+              title={canEdit ? "Click to change team color" : "Team color"}
+            />
+            
+            {/* Color Picker Dropdown */}
+            {showColorPicker && canEdit && (
+              <div 
+                ref={colorPickerRef}
+                className="absolute top-6 left-0 z-50 bg-white dark:bg-gray-800 border rounded-lg shadow-lg p-3 min-w-[160px]"
+              >
+                <div className="text-xs font-medium mb-3 text-muted-foreground">Choose Color:</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {availableColors.map(([token, colorInfo]) => (
+                    <button
+                      key={token}
+                      className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${
+                        team.colorToken === token 
+                          ? 'border-primary ring-2 ring-primary ring-offset-1' 
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                      style={{ backgroundColor: colorInfo.hex }}
+                      onClick={() => handleColorChange(token as ColorToken)}
+                      title={colorInfo.name}
+                      disabled={updateTeamMutation.isPending}
+                    />
+                  ))}
+                  {/* Show current color even if it would normally be filtered out */}
+                  {usedColors.has(team.colorToken) && (
+                    <button
+                      className="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-primary ring-offset-1"
+                      style={{ backgroundColor: TEAM_COLORS[team.colorToken].hex }}
+                      title={`${TEAM_COLORS[team.colorToken].name} (Current)`}
+                      disabled={true}
+                    />
+                  )}
+                </div>
+                {availableColors.length === 0 && (
+                  <div className="text-xs text-muted-foreground text-center py-2">
+                    No other colors available
+                  </div>
+                )}
+                <button
+                  className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowColorPicker(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
           <h4 className="font-semibold">{team.name}</h4>
         </div>
         <Badge variant={isTeamFull ? "destructive" : "secondary"}>
@@ -410,7 +525,7 @@ function PlayerChip({ player, assignmentId, teamId, canEdit, onUnassign }: Playe
       {...listeners}
     >
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium">
+        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium sm:flex hidden">
           {displayName.charAt(0).toUpperCase()}
         </div>
         <div>
