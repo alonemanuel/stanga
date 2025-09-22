@@ -101,12 +101,12 @@ export function StandingsTable({ standings, isLoading, error, isRefetching }: St
                 <td className="py-2 px-2 text-center font-medium">{index + 1}</td>
                 <td className="py-2 px-2 font-medium">{team.teamName}</td>
                 <td className="py-2 px-2 text-center">{team.gamesPlayed}</td>
-                <td className="py-2 px-2 text-center">{team.wins - team.penaltyWins}</td>
+                <td className="py-2 px-2 text-center">{team.wins}</td>
                 <td className="py-2 px-2 text-center">{team.penaltyWins}</td>
                 <td className="py-2 px-2 text-center">
                   {team.draws - team.penaltyWins - team.penaltyLosses}
                 </td>
-                <td className="py-2 px-2 text-center">{team.losses - team.penaltyLosses}</td>
+                <td className="py-2 px-2 text-center">{team.losses}</td>
                 <td className="py-2 px-2 text-center">{team.goalsFor}</td>
                 <td className="py-2 px-2 text-center">{team.goalsAgainst}</td>
                 <td className="py-2 px-2 text-center">
