@@ -248,7 +248,7 @@ export function computeStandings(
         homeStanding.penaltyWins++;
         awayStanding.penaltyLosses++;
       } else {
-        // Regular win
+        // Regular win (regulation, extra_time, early_finish, or null/undefined)
         homeStanding.wins++;
         awayStanding.losses++;
       }
@@ -260,12 +260,12 @@ export function computeStandings(
         awayStanding.penaltyWins++;
         homeStanding.penaltyLosses++;
       } else {
-        // Regular win
+        // Regular win (regulation, extra_time, early_finish, or null/undefined)
         awayStanding.wins++;
         homeStanding.losses++;
       }
     } else {
-      // Draw
+      // Draw (no winner)
       homeStanding.draws++;
       awayStanding.draws++;
     }
