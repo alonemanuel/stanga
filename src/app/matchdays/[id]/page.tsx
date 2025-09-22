@@ -329,14 +329,15 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         return (
           <TeamManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
+            numberOfTeams={matchday.numberOfTeams}
           />
         );
       case 'games':
         return (
           <GameManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
           />
         );
       case 'stats':

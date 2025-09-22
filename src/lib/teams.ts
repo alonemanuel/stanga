@@ -6,17 +6,32 @@ export const TEAM_COLORS = {
   blue: {
     token: 'blue' as const,
     hex: '#3b82f6',
-    name: 'Blue Team',
+    name: 'Blue',
   },
   amber: {
     token: 'amber' as const,
     hex: '#f59e0b',
-    name: 'Amber Team',
+    name: 'Amber',
   },
   rose: {
     token: 'rose' as const,
     hex: '#f43f5e',
-    name: 'Rose Team',
+    name: 'Rose',
+  },
+  green: {
+    token: 'green' as const,
+    hex: '#10b981',
+    name: 'Green',
+  },
+  purple: {
+    token: 'purple' as const,
+    hex: '#8b5cf6',
+    name: 'Purple',
+  },
+  orange: {
+    token: 'orange' as const,
+    hex: '#f97316',
+    name: 'Orange',
   },
 } as const;
 
