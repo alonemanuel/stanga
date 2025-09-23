@@ -7,6 +7,7 @@ import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { createClient } from "@/lib/supabase/client";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
 
 interface Matchday {
   id: string;
@@ -199,21 +200,21 @@ export default function HomePage() {
               
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">📅</span>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{formatDate(matchday.scheduledAt)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">⏰</span>
+                  <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{formatTime(matchday.scheduledAt)}</span>
                 </div>
                 {matchday.location && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">📍</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span>{matchday.location}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">👥</span>
+                  <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{matchday.numberOfTeams} teams of {matchday.teamSize}</span>
                 </div>
               </div>
