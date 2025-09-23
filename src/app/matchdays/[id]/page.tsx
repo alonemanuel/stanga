@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2 } from "lucide-react";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { MatchdayStatsTab } from "@/components/matchdays/MatchdayStatsTab";
 
 interface MatchdayDetailPageProps {
   params: Promise<{
@@ -100,7 +101,6 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const updateMutation = useUpdateMatchday();
   const deleteMutation = useDeleteMatchday();
-  
   // Get current user
   React.useEffect(() => {
     const getUser = async () => {
@@ -234,7 +234,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'overview', label: 'Overview' },
     { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games' },
-    { id: 'stats', label: 'Stats', disabled: true },
+    { id: 'stats', label: 'Stats' },
   ];
 
   const renderTabContent = () => {
@@ -334,17 +334,13 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         );
       case 'games':
         return (
-          <GameManagement 
+          <GameManagement
             matchdayId={matchdayId}
             maxPlayersPerTeam={matchday.teamSize}
           />
         );
       case 'stats':
-        return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Statistics coming soon...</p>
-          </div>
-        );
+        return <MatchdayStatsTab matchdayId={matchdayId} />;
       default:
         return null;
     }
