@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
+import { useMatchdayStats } from "@/lib/hooks/use-stats";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { GameManagement } from "@/components/matchdays/GameManagement";
@@ -100,6 +101,12 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const updateMutation = useUpdateMatchday();
   const deleteMutation = useDeleteMatchday();
+  const {
+    data: matchdayStats,
+    isLoading: matchdayStatsLoading,
+    error: matchdayStatsError,
+    refetch: refetchMatchdayStats,
+  } = useMatchdayStats(matchdayId);
   
   // Get current user
   React.useEffect(() => {
@@ -234,7 +241,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'overview', label: 'Overview' },
     { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games' },
-    { id: 'stats', label: 'Stats', disabled: true },
+    { id: 'stats', label: 'Stats' },
   ];
 
   const renderTabContent = () => {
@@ -334,17 +341,297 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         );
       case 'games':
         return (
-          <GameManagement 
+          <GameManagement
             matchdayId={matchdayId}
             maxPlayersPerTeam={matchday.teamSize}
           />
         );
-      case 'stats':
+      case 'stats': {
+        if (matchdayStatsLoading) {
+          return (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="mt-2 text-muted-foreground">Loading matchday statistics...</p>
+            </div>
+          );
+        }
+
+        if (matchdayStatsError) {
+          return (
+            <div className="text-center py-8 space-y-4">
+              <p className="text-red-600">Failed to load matchday statistics</p>
+              <Button variant="outline" onClick={() => refetchMatchdayStats()}>
+                Try again
+              </Button>
+            </div>
+          );
+        }
+
+        if (!matchdayStats?.data) {
+          return (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Matchday statistics are not available yet.</p>
+            </div>
+          );
+        }
+
+        const { summary, standings, topScorers, topAssists, playerStats, games: statsGames } = matchdayStats.data;
+        const hasStandings = (standings ?? []).length > 0;
+        const hasGames = (statsGames ?? []).length > 0;
+        const sortedPlayerStats = [...(playerStats ?? [])].sort((a, b) => {
+          if (b.goals !== a.goals) return b.goals - a.goals;
+          if (b.assists !== a.assists) return b.assists - a.assists;
+          return b.goalsPerGame - a.goalsPerGame;
+        });
+        const formatGameStatus = (status: string) => {
+          switch (status) {
+            case 'completed':
+              return 'Completed';
+            case 'in_progress':
+              return 'In progress';
+            case 'scheduled':
+              return 'Scheduled';
+            default:
+              return status
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase());
+          }
+        };
+
         return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Statistics coming soon...</p>
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Total Games</h3>
+                <p className="text-2xl font-bold">{summary.totalGames}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Completed Games</h3>
+                <p className="text-2xl font-bold">{summary.completedGames}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Total Goals</h3>
+                <p className="text-2xl font-bold">{summary.totalGoals}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Avg Goals/Game</h3>
+                <p className="text-2xl font-bold">{summary.averageGoalsPerGame.toFixed(1)}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Participating Players</h3>
+                <p className="text-2xl font-bold">{summary.totalPlayers}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground">Teams</h3>
+                <p className="text-2xl font-bold">{summary.totalTeams}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+              <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <h3 className="text-lg font-semibold">Team Standings</h3>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {summary.completedGames} / {summary.totalGames} games completed
+                  </span>
+                </div>
+                {hasStandings ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-xs uppercase text-muted-foreground/80">
+                        <tr>
+                          <th className="py-2 pr-3 text-left font-medium">Team</th>
+                          <th className="px-2 py-2 text-right font-medium">GP</th>
+                          <th className="px-2 py-2 text-right font-medium">W</th>
+                          <th className="px-2 py-2 text-right font-medium">PW</th>
+                          <th className="px-2 py-2 text-right font-medium">D</th>
+                          <th className="px-2 py-2 text-right font-medium">L</th>
+                          <th className="px-2 py-2 text-right font-medium">GF</th>
+                          <th className="px-2 py-2 text-right font-medium">GA</th>
+                          <th className="px-2 py-2 text-right font-medium">GD</th>
+                          <th className="px-2 py-2 text-right font-medium">Pts</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {standings.map((team, index) => (
+                          <tr
+                            key={team.teamId}
+                            className={index === 0 ? 'bg-muted/40' : undefined}
+                          >
+                            <td className="py-2 pr-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground w-6">#{index + 1}</span>
+                                <span className="font-medium">{team.teamName}</span>
+                              </div>
+                            </td>
+                            <td className="px-2 py-2 text-right">{team.gamesPlayed}</td>
+                            <td className="px-2 py-2 text-right">{team.wins}</td>
+                            <td className="px-2 py-2 text-right">{team.penaltyWins}</td>
+                            <td className="px-2 py-2 text-right">{team.draws}</td>
+                            <td className="px-2 py-2 text-right">{team.losses}</td>
+                            <td className="px-2 py-2 text-right">{team.goalsFor}</td>
+                            <td className="px-2 py-2 text-right">{team.goalsAgainst}</td>
+                            <td className="px-2 py-2 text-right">{team.goalDifference}</td>
+                            <td className="px-2 py-2 text-right font-semibold">{team.points}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Standings will appear once at least one game has been completed.
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Game Results</h3>
+                {hasGames ? (
+                  <div className="space-y-3">
+                    {statsGames.map((game) => {
+                      const homeTeamName = game.homeTeam?.name ?? 'Home';
+                      const awayTeamName = game.awayTeam?.name ?? 'Away';
+                      const isCompleted = game.status === 'completed';
+                      const endedLabel = game.endedAt
+                        ? new Date(game.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : null;
+
+                      return (
+                        <div
+                          key={game.id}
+                          className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div>
+                            <p className="font-medium">
+                              {homeTeamName}
+                              <span className="mx-2 text-xs text-muted-foreground">vs</span>
+                              {awayTeamName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {isCompleted
+                                ? endedLabel
+                                  ? `Finished • ${endedLabel}`
+                                  : 'Finished'
+                                : formatGameStatus(game.status)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-semibold">{game.homeScore ?? 0}</span>
+                            <span className="text-sm text-muted-foreground">-</span>
+                            <span className="text-xl font-semibold">{game.awayScore ?? 0}</span>
+                            {game.endReason === 'penalties' && (
+                              <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-100">
+                                Penalties
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No games have been scheduled for this matchday yet.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">🥅 Top Scorers</h3>
+                {topScorers?.length ? (
+                  <div className="space-y-3">
+                    {topScorers.map((player, index) => (
+                      <div key={player.playerId} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-muted-foreground w-6">#{index + 1}</span>
+                          <span className="font-medium">{player.playerName}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold">{player.goals}</span>
+                          <span className="text-sm text-muted-foreground ml-1">goals</span>
+                          <div className="text-xs text-muted-foreground">
+                            {player.goalsPerGame.toFixed(1)} per game
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No goals recorded yet.</p>
+                )}
+              </div>
+
+              <div className="bg-card border rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">🎯 Top Assists</h3>
+                {topAssists?.length ? (
+                  <div className="space-y-3">
+                    {topAssists.map((player, index) => (
+                      <div key={player.playerId} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-muted-foreground w-6">#{index + 1}</span>
+                          <span className="font-medium">{player.playerName}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-lg font-bold">{player.assists}</span>
+                          <span className="text-sm text-muted-foreground ml-1">assists</span>
+                          <div className="text-xs text-muted-foreground">
+                            {player.goals} goals
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No assists recorded yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-card border rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Player Breakdown</h3>
+              {sortedPlayerStats.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="text-xs uppercase text-muted-foreground/80">
+                      <tr>
+                        <th className="py-2 pr-3 text-left font-medium">Player</th>
+                        <th className="px-2 py-2 text-right font-medium">GP</th>
+                        <th className="px-2 py-2 text-right font-medium">Goals</th>
+                        <th className="px-2 py-2 text-right font-medium">Assists</th>
+                        <th className="px-2 py-2 text-right font-medium">G/GP</th>
+                        <th className="px-2 py-2 text-right font-medium">Penalty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedPlayerStats.slice(0, 10).map((player) => (
+                        <tr key={player.playerId}>
+                          <td className="py-2 pr-3">
+                            <span className="font-medium">{player.playerName}</span>
+                          </td>
+                          <td className="px-2 py-2 text-right">{player.gamesPlayed}</td>
+                          <td className="px-2 py-2 text-right">{player.goals}</td>
+                          <td className="px-2 py-2 text-right">{player.assists}</td>
+                          <td className="px-2 py-2 text-right">{player.goalsPerGame.toFixed(2)}</td>
+                          <td className="px-2 py-2 text-right text-xs text-muted-foreground">
+                            {player.penaltyGoals} scored / {player.penaltyMisses} missed
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Player statistics will appear once match events have been recorded.
+                </p>
+              )}
+            </div>
           </div>
         );
+      }
       default:
         return null;
     }
