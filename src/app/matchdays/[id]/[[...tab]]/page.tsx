@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
@@ -14,6 +15,7 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 interface MatchdayDetailPageProps {
   params: Promise<{
     id: string;
+    tab?: string[];
   }>;
 }
 
@@ -88,11 +90,19 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   
   const supabase = createClient();
   
-  // Await params and set matchdayId
+  // Await params and set matchdayId/tab state based on URL
   React.useEffect(() => {
     const getParams = async () => {
       const resolvedParams = await params;
       setMatchdayId(resolvedParams.id);
+
+      const [tabSegment] = resolvedParams.tab ?? [];
+      const normalizedTab: TabType =
+        tabSegment === 'teams' || tabSegment === 'games' || tabSegment === 'stats'
+          ? tabSegment
+          : 'overview';
+
+      setActiveTab((previousTab) => (previousTab === normalizedTab ? previousTab : normalizedTab));
     };
     getParams();
   }, [params]);
@@ -236,6 +246,16 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'games', label: 'Games' },
     { id: 'stats', label: 'Stats', disabled: true },
   ];
+
+  const getTabHref = (tabId: TabType) => {
+    if (!matchdayId) {
+      return '#';
+    }
+
+    return tabId === 'overview'
+      ? `/matchdays/${matchdayId}`
+      : `/matchdays/${matchdayId}/${tabId}`;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -398,22 +418,40 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
       {/* Tabs */}
       <div className="border-b">
         <nav className="flex space-x-8">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => !tab.disabled && setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
-                  ? 'border-primary text-primary'
-                  : tab.disabled
-                  ? 'border-transparent text-muted-foreground/50 cursor-not-allowed'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-              }`}
-              disabled={tab.disabled}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const isDisabled = tab.disabled || !matchdayId;
+            const className = `py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              isActive
+                ? 'border-primary text-primary'
+                : isDisabled
+                ? 'border-transparent text-muted-foreground/50 cursor-not-allowed'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+            }`;
+
+            if (isDisabled) {
+              return (
+                <span
+                  key={tab.id}
+                  className={className}
+                  aria-disabled="true"
+                >
+                  {tab.label}
+                </span>
+              );
+            }
+
+            return (
+              <Link
+                key={tab.id}
+                href={getTabHref(tab.id)}
+                className={className}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 
