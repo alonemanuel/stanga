@@ -1,7 +1,7 @@
 import { updateSession } from '@/lib/supabase/middleware'
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: any) {
+export async function middleware(request: NextRequest) {
   // Always run Supabase middleware to refresh sessions
   return await updateSession(request)
 }

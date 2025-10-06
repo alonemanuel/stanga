@@ -185,21 +185,25 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .where(and(...whereConditions))
       .orderBy(desc(games.createdAt));
     
-    // Get team details for each game
-    const gamesWithTeams = await Promise.all(
-      matchdayGames.map(async (game) => {
-        const [homeTeam, awayTeam] = await Promise.all([
-          db.select().from(teams).where(eq(teams.id, game.homeTeamId)).limit(1),
-          db.select().from(teams).where(eq(teams.id, game.awayTeamId)).limit(1)
-        ]);
-        
-        return {
-          ...game,
-          homeTeam: homeTeam[0] || null,
-          awayTeam: awayTeam[0] || null
-        };
-      })
-    );
+    // Get all unique team IDs from games
+    const teamIds = [...new Set(matchdayGames.flatMap(game => [game.homeTeamId, game.awayTeamId]))];
+    
+    // Fetch all teams in a single query
+    const allTeams = teamIds.length > 0 ? await db
+      .select()
+      .from(teams)
+      .where(eq(teams.matchdayId, matchdayId))
+      : [];
+    
+    // Create a map for O(1) team lookups
+    const teamMap = new Map(allTeams.map(team => [team.id, team]));
+    
+    // Attach team details to games
+    const gamesWithTeams = matchdayGames.map(game => ({
+      ...game,
+      homeTeam: teamMap.get(game.homeTeamId) || null,
+      awayTeam: teamMap.get(game.awayTeamId) || null
+    }));
     
     return NextResponse.json({ data: gamesWithTeams });
     

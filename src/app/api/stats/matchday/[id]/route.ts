@@ -8,7 +8,7 @@ import {
   getTopAssists,
   type Rules 
 } from '@/lib/stats';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, inArray } from 'drizzle-orm';
 
 interface RouteParams {
   params: Promise<{
@@ -73,18 +73,14 @@ export async function GET(
 
     // Fetch game events for games in this matchday
     const gameIds = matchdayGames.map(g => g.id);
-    const matchdayEvents = gameIds.length > 0 ? await db
+    const filteredEvents = gameIds.length > 0 ? await db
       .select()
       .from(gameEvents)
       .where(and(
+        inArray(gameEvents.gameId, gameIds),
         eq(gameEvents.isActive, true),
         isNull(gameEvents.deletedAt)
       )) : [];
-
-    // Filter events to only include those from this matchday's games
-    const filteredEvents = matchdayEvents.filter(event => 
-      gameIds.includes(event.gameId)
-    );
 
     // Fetch teams for this matchday
     const matchdayTeams = await db
