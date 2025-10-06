@@ -5,7 +5,7 @@ import { PlayerCreateSchema, PlayerQuerySchema } from '@/lib/validations/player'
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { createId } from '@paralleldrive/cuid2';
-import { and, eq, ilike, isNull, desc } from 'drizzle-orm';
+import { and, eq, ilike, isNull, desc, sql } from 'drizzle-orm';
 
 // GET /api/players - List players (auth required)
 export async function GET(request: NextRequest) {
@@ -55,13 +55,11 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
     
-    // Get total count for pagination
-    const totalCount = await db
-      .select({ count: players.id })
+    // Get total count for pagination (use SQL COUNT for accuracy)
+    const [{ value: total }] = await db
+      .select({ value: sql<number>`count(*)` })
       .from(players)
       .where(and(...conditions));
-    
-    const total = totalCount.length;
     const totalPages = Math.ceil(total / limit);
     
     return NextResponse.json({

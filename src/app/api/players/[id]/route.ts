@@ -23,7 +23,7 @@ export async function GET(
     const player = await db
       .select()
       .from(players)
-      .where(eq(players.id, id))
+      .where(and(eq(players.id, id), isNull(players.deletedAt)))
       .limit(1);
     
     if (!player.length) {

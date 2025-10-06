@@ -260,6 +260,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .where(eq(gameEvents.id, goalToUndo.id));
     
     // Also soft delete associated assist event if it exists
+    // We link assists via metadata.goalEventId when created
     if (goalToUndo.metadata && (goalToUndo.metadata as any).assistId) {
       await db
         .update(gameEvents)
@@ -270,8 +271,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         .where(and(
           eq(gameEvents.gameId, gameId),
           eq(gameEvents.eventType, 'assist'),
-          eq(gameEvents.playerId, (goalToUndo.metadata as any).assistId),
-          eq(gameEvents.minute, goalToUndo.minute || 0)
+          // Use the canonical link established at creation time
+          eq(gameEvents.metadata, { goalEventId: goalToUndo.id } as any)
         ));
     }
     
