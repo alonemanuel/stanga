@@ -95,11 +95,13 @@ async function fetchMatchdayStats(matchdayId: string): Promise<MatchdayStatsResp
 }
 
 // React Query hooks
-export function useOverallStats() {
+export function useOverallStats(options?: { enableRealTime?: boolean }) {
   return useQuery({
     queryKey: ['stats', 'overall'],
     queryFn: fetchOverallStats,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: options?.enableRealTime ? 30 * 1000 : false, // 30 seconds if real-time enabled
+    refetchIntervalInBackground: options?.enableRealTime ? true : false,
   });
 }
 

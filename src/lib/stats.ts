@@ -85,14 +85,19 @@ export function pointsFor(game: Game, teamId: string, rules: Rules): number {
     return 0;
   }
 
-  const isWinner = game.winnerTeamId === teamId;
-  const isLoser = game.winnerTeamId && game.winnerTeamId !== teamId;
-  const isDraw = !game.winnerTeamId;
+  // Determine actual winner if not set (based on score)
+  const actualWinnerId = game.winnerTeamId || 
+    (game.homeScore > game.awayScore ? game.homeTeamId : 
+     game.awayScore > game.homeScore ? game.awayTeamId : null);
+
+  const isWinner = actualWinnerId === teamId;
+  const isLoser = actualWinnerId && actualWinnerId !== teamId;
+  const isDraw = !actualWinnerId;
 
   if (isWinner) {
     if (game.endReason === 'penalties') {
-      // Penalty win: draw points + weighted bonus
-      return rules.points.draw + (rules.points.penalty_bonus_win * rules.penalty_win_weight);
+      // Penalty win: draw points + penalty bonus
+      return rules.points.draw + rules.points.penalty_bonus_win;
     }
     // Regulation or extra time win
     return rules.points.regulation_win;
@@ -239,22 +244,35 @@ export function computeStandings(
     homeStanding.goalDifference = homeStanding.goalsFor - homeStanding.goalsAgainst;
     awayStanding.goalDifference = awayStanding.goalsFor - awayStanding.goalsAgainst;
 
+    // Determine actual winner if not set (based on score)
+    const actualWinnerId = game.winnerTeamId || 
+      (game.homeScore > game.awayScore ? game.homeTeamId : 
+       game.awayScore > game.homeScore ? game.awayTeamId : null);
+
     // Update wins/draws/losses
-    if (game.winnerTeamId === game.homeTeamId) {
-      homeStanding.wins++;
-      awayStanding.losses++;
-      
+    if (actualWinnerId === game.homeTeamId) {
       if (game.endReason === 'penalties') {
+        // Penalty win: both teams get a draw, winner gets penalty win
+        homeStanding.draws++;
+        awayStanding.draws++;
         homeStanding.penaltyWins++;
         awayStanding.penaltyLosses++;
+      } else {
+        // Regular win
+        homeStanding.wins++;
+        awayStanding.losses++;
       }
-    } else if (game.winnerTeamId === game.awayTeamId) {
-      awayStanding.wins++;
-      homeStanding.losses++;
-      
+    } else if (actualWinnerId === game.awayTeamId) {
       if (game.endReason === 'penalties') {
+        // Penalty win: both teams get a draw, winner gets penalty win
+        homeStanding.draws++;
+        awayStanding.draws++;
         awayStanding.penaltyWins++;
         homeStanding.penaltyLosses++;
+      } else {
+        // Regular win
+        awayStanding.wins++;
+        homeStanding.losses++;
       }
     } else {
       // Draw
@@ -313,7 +331,11 @@ export function computeOverallPlayerStats(
       if (playerEvents.length === 0) return false;
       
       const playerTeamId = playerEvents[0].teamId;
-      return game.winnerTeamId === playerTeamId;
+      // Determine actual winner if not set (based on score)
+      const actualWinnerId = game.winnerTeamId || 
+        (game.homeScore > game.awayScore ? game.homeTeamId : 
+         game.awayScore > game.homeScore ? game.awayTeamId : null);
+      return actualWinnerId === playerTeamId;
     }).length;
 
     const winRate = playerGames.length > 0 ? (wins / playerGames.length) * 100 : 0;

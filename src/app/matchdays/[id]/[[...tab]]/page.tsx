@@ -3,9 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
+import { useMatchdayStats } from "@/lib/hooks/use-stats";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { GameManagement } from "@/components/matchdays/GameManagement";
+import { StandingsTable } from "@/components/stats/StandingsTable";
+import { TopScorerTable } from "@/components/stats/TopScorerTable";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2 } from "lucide-react";
@@ -110,6 +113,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const updateMutation = useUpdateMatchday();
   const deleteMutation = useDeleteMatchday();
+  const { data: statsData, isLoading: statsLoading, error: statsError, isRefetching } = useMatchdayStats(matchdayId);
   
   // Get current user
   React.useEffect(() => {
@@ -244,7 +248,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'overview', label: 'Overview' },
     { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games' },
-    { id: 'stats', label: 'Stats', disabled: true },
+    { id: 'stats', label: 'Stats' },
   ];
 
   const getTabHref = (tabId: TabType) => {
@@ -360,9 +364,74 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
           />
         );
       case 'stats':
+        if (statsLoading) {
+          return (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="mt-2 text-muted-foreground">Loading stats...</p>
+            </div>
+          );
+        }
+
+        if (statsError) {
+          return (
+            <div className="text-center py-8">
+              <p className="text-red-600">Failed to load statistics</p>
+            </div>
+          );
+        }
+
+        if (!statsData?.data) {
+          return (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No statistics available yet</p>
+            </div>
+          );
+        }
+
+        const { summary, standings, topScorers } = statsData.data;
+
         return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Statistics coming soon...</p>
+          <div className="space-y-6">
+            {/* Summary Stats */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Games</h3>
+                <p className="text-2xl font-bold">{summary.totalGames}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {summary.completedGames} completed
+                </p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Goals</h3>
+                <p className="text-2xl font-bold">{summary.totalGoals}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Avg Goals/Game</h3>
+                <p className="text-2xl font-bold">{summary.averageGoalsPerGame.toFixed(1)}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Teams</h3>
+                <p className="text-2xl font-bold">{summary.totalTeams}</p>
+              </div>
+            </div>
+
+            {/* Standings Table */}
+            <StandingsTable 
+              standings={standings} 
+              isLoading={statsLoading}
+              error={statsError ? String(statsError) : null}
+              isRefetching={isRefetching}
+            />
+
+            {/* Top Scorers */}
+            <TopScorerTable 
+              topScorers={topScorers}
+              isLoading={statsLoading}
+              error={statsError ? String(statsError) : null}
+              limit={5}
+              isRefetching={isRefetching}
+            />
           </div>
         );
       default:
