@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { games, teams, teamAssignments, matchdays, gameEvents } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, inArray } from 'drizzle-orm';
 import { logActivity } from '@/lib/activity-log';
 
 interface RouteParams {
@@ -12,9 +12,7 @@ interface RouteParams {
 // POST /api/matchdays/:id/games/start - Start a new game
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    // TODO: Re-enable auth once session issue is resolved
-    // const user = await requireAuth();
-    const user = { id: 'temp-user-id' }; // Temporary bypass
+    const { user } = await requireAuth();
     const { id: matchdayId } = await params;
     
     const body = await request.json();
@@ -52,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
     
     // Check if teams have enough players assigned
-    const [homePlayerCount, awayPlayerCount] = await Promise.all([
+    const [homeAssignments, awayAssignments] = await Promise.all([
       db.query.teamAssignments.findMany({
         where: and(
           eq(teamAssignments.teamId, homeTeamId),
@@ -60,7 +58,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           eq(teamAssignments.isActive, true),
           isNull(teamAssignments.deletedAt)
         )
-      }).then(assignments => assignments.length),
+      }),
       db.query.teamAssignments.findMany({
         where: and(
           eq(teamAssignments.teamId, awayTeamId),
@@ -68,8 +66,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           eq(teamAssignments.isActive, true),
           isNull(teamAssignments.deletedAt)
         )
-      }).then(assignments => assignments.length)
+      })
     ]);
+    const homePlayerCount = homeAssignments.length;
+    const awayPlayerCount = awayAssignments.length;
     
     // Get matchday to check team size requirements
     const matchday = await db.query.matchdays.findFirst({
@@ -179,27 +179,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       whereConditions.push(eq(games.status, status));
     }
     
-    const matchdayGames = await db
+    const matchdayGames: (typeof games.$inferSelect)[] = await db
       .select()
       .from(games)
       .where(and(...whereConditions))
       .orderBy(desc(games.createdAt));
     
-    // Get team details for each game
-    const gamesWithTeams = await Promise.all(
-      matchdayGames.map(async (game) => {
-        const [homeTeam, awayTeam] = await Promise.all([
-          db.select().from(teams).where(eq(teams.id, game.homeTeamId)).limit(1),
-          db.select().from(teams).where(eq(teams.id, game.awayTeamId)).limit(1)
-        ]);
-        
-        return {
-          ...game,
-          homeTeam: homeTeam[0] || null,
-          awayTeam: awayTeam[0] || null
-        };
-      })
-    );
+    // Batch-load team details to avoid N+1 queries
+    const uniqueTeamIds = Array.from(new Set(
+      matchdayGames.flatMap((g) => [g.homeTeamId, g.awayTeamId])
+    ));
+    const teamsById = new Map<string, any>();
+    if (uniqueTeamIds.length > 0) {
+      const fetchedTeams = await db
+        .select()
+        .from(teams)
+        .where(inArray(teams.id, uniqueTeamIds));
+      for (const t of fetchedTeams) teamsById.set(t.id, t);
+    }
+    const gamesWithTeams = matchdayGames.map((game) => ({
+      ...game,
+      homeTeam: teamsById.get(game.homeTeamId) ?? null,
+      awayTeam: teamsById.get(game.awayTeamId) ?? null,
+    }));
     
     return NextResponse.json({ data: gamesWithTeams });
     
