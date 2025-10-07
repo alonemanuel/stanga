@@ -3,9 +3,10 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Copy, RefreshCw, Trash2, Crown, User } from 'lucide-react';
+import { ArrowLeft, Copy, Check, RefreshCw, MoreVertical, ShieldCheck, User } from 'lucide-react';
 import { useGroupContext } from '@/lib/hooks/use-group-context';
 import { useGroups } from '@/lib/hooks/use-groups';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import type { Group, GroupMember } from '@/lib/db/schema';
 
@@ -20,20 +21,50 @@ export default function GroupSettingsPage({ params }: PageProps) {
   const { updateGroup, regenerateInviteCode, fetchGroupMembers, updateMemberRole, removeMember } = useGroups();
   
   const [group, setGroup] = useState<Group | null>(null);
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<Array<{
+    id: string;
+    userId: string;
+    role: string;
+    email: string;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+    createdAt: Date;
+  }>>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
-    loadData();
+    const initializeData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // First, get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || null;
+        setCurrentUserId(userId);
+        
+        // Then load group and members data
+        await loadData(userId);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to load group data');
+        router.push('/');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initializeData();
   }, [id]);
 
-  const loadData = async () => {
+  const loadData = async (userId: string | null = currentUserId) => {
     try {
-      setIsLoading(true);
-      
       // Fetch group details
       const groupRes = await fetch(`/api/groups/${id}`);
       if (!groupRes.ok) throw new Error('Failed to fetch group');
@@ -43,13 +74,18 @@ export default function GroupSettingsPage({ params }: PageProps) {
       setEditDescription(groupData.description || '');
       
       // Fetch members
-      const membersData = await fetchGroupMembers(id);
-      setMembers(membersData);
+      const membersData = await fetchGroupMembers(id) as any[];
+      
+      // Sort members: current user first, then by name
+      const sortedMembers = [...membersData].sort((a: any, b: any) => {
+        if (a.userId === userId) return -1;
+        if (b.userId === userId) return 1;
+        return (a.fullName || a.email).localeCompare(b.fullName || b.email);
+      });
+      
+      setMembers(sortedMembers);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to load group data');
-      router.push('/');
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
   };
 
@@ -57,6 +93,8 @@ export default function GroupSettingsPage({ params }: PageProps) {
     if (group?.inviteCode) {
       navigator.clipboard.writeText(group.inviteCode);
       toast.success('Invite code copied to clipboard!');
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     }
   };
 
@@ -99,7 +137,7 @@ export default function GroupSettingsPage({ params }: PageProps) {
     
     try {
       await updateMemberRole(group.id, userId, newRole);
-      await loadData(); // Reload members
+      await loadData(currentUserId); // Reload members
       toast.success(`Role updated to ${newRole}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to update role');
@@ -115,7 +153,7 @@ export default function GroupSettingsPage({ params }: PageProps) {
     
     try {
       await removeMember(group.id, userId);
-      await loadData(); // Reload members
+      await loadData(currentUserId); // Reload members
       toast.success(`${userName} removed from group`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to remove member');
@@ -212,16 +250,19 @@ export default function GroupSettingsPage({ params }: PageProps) {
         </p>
         
         <div className="flex items-center space-x-2">
-          <div className="flex-1 px-4 py-3 bg-muted rounded-md font-mono text-xl tracking-wider">
+          <div className={`flex-1 px-4 py-3 rounded-md font-mono text-xl tracking-wider transition-colors duration-300 ${
+            isCopied ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' : 'bg-muted'
+          }`}>
             {group.inviteCode}
           </div>
           <Button
-            variant="outline"
+            variant={isCopied ? "default" : "outline"}
             size="icon"
             onClick={handleCopyInviteCode}
-            title="Copy code"
+            title={isCopied ? "Copied!" : "Copy code"}
+            className={isCopied ? "bg-green-600 hover:bg-green-700" : ""}
           >
-            <Copy className="h-4 w-4" />
+            {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           </Button>
           <Button
             variant="outline"
@@ -239,52 +280,86 @@ export default function GroupSettingsPage({ params }: PageProps) {
         <h2 className="text-lg font-semibold">Members ({members.length})</h2>
         
         <div className="space-y-2">
-          {members.map((member) => (
-            <div
-              key={member.userId}
-              className="flex items-center justify-between p-3 rounded-md border"
-            >
-              <div className="flex items-center space-x-3">
-                {member.role === 'admin' ? (
-                  <Crown className="h-5 w-5 text-yellow-500" />
-                ) : (
+          {members.map((member) => {
+            const isCurrentUser = member.userId === currentUserId;
+            const isMenuOpen = openMenuId === member.userId;
+            
+            return (
+              <div
+                key={member.userId}
+                className="flex items-center justify-between p-3 rounded-md border"
+              >
+                <div className="flex items-center space-x-3">
                   <User className="h-5 w-5 text-muted-foreground" />
-                )}
-                <div>
-                  <p className="font-medium">{member.fullName || member.email}</p>
-                  <p className="text-sm text-muted-foreground">{member.email}</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">
+                        {member.fullName || member.email}
+                        {isCurrentUser && <span className="text-muted-foreground ml-2">(You)</span>}
+                      </p>
+                      {member.role === 'admin' && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-xs font-medium">
+                          <ShieldCheck className="h-3 w-3" />
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                {member.role === 'admin' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRoleChange(member.userId, 'member')}
-                  >
-                    Demote to Member
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRoleChange(member.userId, 'admin')}
-                  >
-                    Promote to Admin
-                  </Button>
+                
+                {!isCurrentUser && (
+                  <div className="relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setOpenMenuId(isMenuOpen ? null : member.userId)}
+                      title="Member actions"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                    
+                    {isMenuOpen && (
+                      <>
+                        {/* Backdrop */}
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setOpenMenuId(null)}
+                        />
+                        
+                        {/* Dropdown Menu */}
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-background border rounded-md shadow-lg z-50 py-1">
+                          <button
+                            onClick={() => {
+                              handleRoleChange(
+                                member.userId, 
+                                member.role === 'admin' ? 'member' : 'admin'
+                              );
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                            {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleRemoveMember(member.userId, member.fullName || member.email);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+                          >
+                            <User className="h-4 w-4" />
+                            Remove from group
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveMember(member.userId, member.fullName || member.email)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

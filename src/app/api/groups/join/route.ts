@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { groups, groupMembers } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
+import { ensureUser } from '@/lib/ensure-user';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -18,6 +19,14 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Ensure user exists in users table
+    await ensureUser({
+      id: user.id,
+      email: user.email || '',
+      fullName: user.user_metadata?.full_name,
+      avatarUrl: user.user_metadata?.avatar_url,
+    });
 
     // Find the group by invite code
     const targetGroup = await db

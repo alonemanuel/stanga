@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         user: users,
       })
       .from(groupMembers)
-      .innerJoin(users, eq(groupMembers.userId, users.id))
+      .leftJoin(users, eq(groupMembers.userId, users.id))
       .where(
         and(
           eq(groupMembers.groupId, id),
@@ -35,9 +35,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         id: m.member.id,
         userId: m.member.userId,
         role: m.member.role,
-        email: m.user.email,
-        fullName: m.user.fullName,
-        avatarUrl: m.user.avatarUrl,
+        email: m.user?.email || 'Unknown',
+        fullName: m.user?.fullName || null,
+        avatarUrl: m.user?.avatarUrl || null,
         createdAt: m.member.createdAt,
       })),
     });

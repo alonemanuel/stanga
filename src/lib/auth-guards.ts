@@ -1,6 +1,7 @@
 import { getUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { groupMembers } from "@/lib/db/schema";
+import { ensureUser } from "@/lib/ensure-user";
 import { and, eq } from "drizzle-orm";
 
 export async function requireAuth() {
@@ -10,6 +11,15 @@ export async function requireAuth() {
     err.status = 401;
     throw err;
   }
+  
+  // Ensure user exists in users table
+  await ensureUser({
+    id: user.id,
+    email: user.email || '',
+    fullName: user.user_metadata?.full_name,
+    avatarUrl: user.user_metadata?.avatar_url,
+  });
+  
   return { user };
 }
 
