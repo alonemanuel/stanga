@@ -50,7 +50,7 @@ async function updateProfile(data: ProfileSettings): Promise<ProfileResponse> {
 }
 
 export function useProfile(options?: { enabled?: boolean }) {
-  return useQuery({
+  return useQuery<ProfileResponse, Error>({
     queryKey: ['profile'],
     queryFn: fetchProfile,
     enabled: options?.enabled ?? true,
@@ -64,7 +64,7 @@ export function useProfile(options?: { enabled?: boolean }) {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<ProfileResponse, Error, ProfileSettings>({
     mutationFn: updateProfile,
     onSuccess: (data) => {
       queryClient.setQueryData(['profile'], data);
