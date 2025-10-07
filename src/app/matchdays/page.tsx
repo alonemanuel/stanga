@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
@@ -27,6 +28,7 @@ export default function MatchdaysPage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'upcoming' | 'past'>('upcoming');
   const [showForm, setShowForm] = React.useState(false);
+  const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
   
@@ -102,6 +104,34 @@ export default function MatchdaysPage() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Show loading state while checking group
+  if (groupLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-2">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no active group
+  if (!activeGroup) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4 max-w-md mx-auto p-6">
+          <CalendarDays className="h-16 w-16 text-muted-foreground mx-auto" />
+          <h2 className="text-2xl font-semibold">No Group Selected</h2>
+          <p className="text-muted-foreground">
+            You need to join or create a group to view matchdays. 
+            Click on "Select Group" in the header to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (showForm) {
     return (

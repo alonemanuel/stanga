@@ -33,6 +33,7 @@ export const DEFAULT_RULES: z.infer<typeof RulesSnapshotSchema> = {
 
 // Schema for creating a matchday
 export const MatchdayCreateSchema = z.object({
+  groupId: z.string().optional(), // Group ID for multi-group support
   scheduledAt: z.string().min(1, 'Date and time is required').refine((val) => {
     // Accept datetime-local format (YYYY-MM-DDTHH:MM) and convert to ISO
     const date = new Date(val);
@@ -58,6 +59,7 @@ export const MatchdayUpdateSchema = z.object({
 
 // Schema for query parameters
 export const MatchdayQuerySchema = z.object({
+  groupId: z.string().optional(), // Filter by group
   status: z.enum(['upcoming', 'past', 'active', 'completed', 'cancelled']).optional(),
   isPublic: z.coerce.boolean().default(true),
   page: z.coerce.number().int().min(1).default(1),

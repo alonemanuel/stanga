@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useGroupContext } from './use-group-context';
 import type { MatchdayCreate, MatchdayUpdate, MatchdayQuery } from '@/lib/validations/matchday';
 
 // Types for API responses
@@ -116,9 +117,17 @@ async function deleteMatchday(id: string): Promise<MatchdayResponse> {
 
 // React Query hooks
 export function useMatchdays(params: MatchdayQuery = { page: 1, limit: 20, isPublic: true }) {
+  const { activeGroup } = useGroupContext();
+  
+  // Add groupId to params if active group exists
+  const queryParams = activeGroup 
+    ? { ...params, groupId: activeGroup.id }
+    : params;
+  
   return useQuery({
-    queryKey: ['matchdays', params],
-    queryFn: () => fetchMatchdays(params),
+    queryKey: ['matchdays', queryParams],
+    queryFn: () => fetchMatchdays(queryParams),
+    enabled: !!activeGroup, // Only fetch when there's an active group
     staleTime: 30 * 1000, // 30 seconds - shorter for better UX
   });
 }
@@ -134,9 +143,16 @@ export function useMatchday(id: string) {
 
 export function useCreateMatchday() {
   const queryClient = useQueryClient();
+  const { activeGroup } = useGroupContext();
   
   return useMutation({
-    mutationFn: createMatchday,
+    mutationFn: (data: MatchdayCreate) => {
+      // Inject groupId into the matchday data
+      const dataWithGroup = activeGroup 
+        ? { ...data, groupId: activeGroup.id }
+        : data;
+      return createMatchday(dataWithGroup);
+    },
     onSuccess: (data) => {
       // Invalidate and refetch matchdays list
       queryClient.invalidateQueries({ queryKey: ['matchdays'] });
