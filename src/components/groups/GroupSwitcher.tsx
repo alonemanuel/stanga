@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGroupContext } from '@/lib/hooks/use-group-context';
 import { useGroups } from '@/lib/hooks/use-groups';
 import { Group } from '@/lib/db/schema';
@@ -17,6 +18,10 @@ export function GroupSwitcher() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const hasLoadedRef = React.useRef(false);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const router = useRouter();
+
+  const activeMembership = userGroups.find((group) => group.id === activeGroup?.id);
 
   const loadGroups = async () => {
     try {
@@ -67,6 +72,7 @@ export function GroupSwitcher() {
     <>
       <div className="relative">
         <Button
+          ref={triggerRef}
           variant="ghost"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center space-x-2 font-semibold text-lg"
@@ -117,6 +123,20 @@ export function GroupSwitcher() {
 
               {/* Actions */}
               <div className="px-2 space-y-1">
+                {activeMembership?.role === 'admin' && activeGroup && (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      triggerRef.current?.focus();
+                      setTimeout(() => {
+                        router.push(`/groups/${activeGroup.id}/settings`);
+                      }, 0);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm"
+                  >
+                    <span>Group Settings</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setIsOpen(false);
