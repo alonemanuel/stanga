@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGroupContext } from '@/lib/hooks/use-group-context';
 import { useGroups } from '@/lib/hooks/use-groups';
 import { Group } from '@/lib/db/schema';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Plus, LogIn } from 'lucide-react';
+import { ChevronDown, Plus, LogIn, Settings } from 'lucide-react';
 import { JoinGroupModal } from './JoinGroupModal';
 import { CreateGroupModal } from './CreateGroupModal';
 
 export function GroupSwitcher() {
+  const router = useRouter();
   const { activeGroup, setActiveGroup, isLoading: contextLoading } = useGroupContext();
   const { fetchUserGroups } = useGroups();
   const [userGroups, setUserGroups] = useState<(Group & { role: string })[]>([]);
@@ -103,9 +105,27 @@ export function GroupSwitcher() {
                     >
                       <div className="flex justify-between items-center">
                         <span className="text-sm">{group.name}</span>
-                        {group.role === 'admin' && (
-                          <span className="text-xs text-muted-foreground">Admin</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {group.role === 'admin' && (
+                            <>
+                              <span className="text-xs text-muted-foreground">Admin</span>
+                              {activeGroup?.id === group.id && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsOpen(false);
+                                    router.push(`/groups/${group.id}/settings`);
+                                  }}
+                                  className="hover:bg-background p-1 rounded transition-colors"
+                                  title="Group Settings"
+                                  aria-label="Open group settings"
+                                >
+                                  <Settings className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </button>
                   ))

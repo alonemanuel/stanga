@@ -70,6 +70,7 @@ Create `scripts/migrate-to-groups.ts`:
 ### 1. Group Switcher (`src/components/groups/GroupSwitcher.tsx`)
 
 Replace "Stanga" in AppShell header with dropdown showing:
+
 - Current group name
 - List of user's groups
 - "Join Group" option
@@ -78,12 +79,14 @@ Replace "Stanga" in AppShell header with dropdown showing:
 ### 2. Join Group Modal (`src/components/groups/JoinGroupModal.tsx`)
 
 Two methods:
+
 - Input field for 6-character invite code
 - Auto-join if accessed via invite link
 
 ### 3. Create Group Modal (`src/components/groups/CreateGroupModal.tsx`)
 
 Form with:
+
 - Group name (required)
 - Description (optional)
 - Auto-generate 6-character invite code
@@ -92,6 +95,7 @@ Form with:
 ### 4. Group Settings Page (`src/app/groups/[id]/settings/page.tsx`)
 
 Admin-only page with:
+
 - Group details editing
 - Invite code display/regenerate
 - Member list with role management
@@ -104,18 +108,21 @@ Allow users to claim/link themselves to existing guest players in the group
 ## API Routes
 
 ### Group Management
+
 - `POST /api/groups` - Create group
 - `GET /api/groups/[id]` - Get group details
 - `PATCH /api/groups/[id]` - Update group (admin only)
 - `DELETE /api/groups/[id]` - Soft delete group (admin only)
 
 ### Group Membership
+
 - `POST /api/groups/[id]/join` - Join via invite code
 - `GET /api/groups/[id]/members` - List members
 - `PATCH /api/groups/[id]/members/[userId]` - Update member role (admin only)
 - `DELETE /api/groups/[id]/members/[userId]` - Remove member (admin only)
 
 ### Player Identity
+
 - `POST /api/players/[id]/claim` - Link player to current user
 - `DELETE /api/players/[id]/claim` - Unlink player from user
 
@@ -124,6 +131,7 @@ Allow users to claim/link themselves to existing guest players in the group
 ### 1. Group Context Provider (`src/lib/hooks/use-group-context.ts`)
 
 Store current active group in:
+
 - Client-side context/state
 - Cookie for server-side access
 - Sync across tabs
@@ -131,6 +139,7 @@ Store current active group in:
 ### 2. Permission Guards (`src/lib/auth-guards.ts`)
 
 Add functions:
+
 - `isGroupAdmin(userId, groupId)` - Check admin status
 - `isGroupMember(userId, groupId)` - Check membership
 - `canManageMatchdays(userId, groupId)` - Admin-only actions
@@ -142,6 +151,7 @@ Validate group access for all protected routes
 ## Updated Hooks
 
 Modify existing hooks to filter by current group:
+
 - `use-matchdays.ts` - Filter by groupId
 - `use-players.ts` - Filter by groupId
 - `use-stats.ts` - Calculate per-group stats
@@ -150,14 +160,17 @@ Modify existing hooks to filter by current group:
 ## Key Features
 
 **Group Invite Links:**
+
 Format: `https://stanga.app/groups/join?code=ABC123`
 
 **Guest vs Registered Players:**
+
 - Guest players: Just name, no userId, group-specific
 - Registered players: Have userId, can track across groups
 - Users can "claim" guest players to link them
 
 **Role Permissions:**
+
 - Admins: Full CRUD on matchdays, players, games, group settings
 - Members: Read-only + can log goals/events during active games
 
