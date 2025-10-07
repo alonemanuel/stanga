@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { useProfile } from "@/lib/hooks/use-profile";
 
 export function UserMenu() {
   const { user, loading, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const profileQuery = useProfile({ enabled: !!user });
+  const profile = profileQuery.data?.data;
 
   // Handle click outside to close dropdown
   React.useEffect(() => {
@@ -53,9 +56,13 @@ export function UserMenu() {
   }
 
   if (user) {
-    const displayName = user.user_metadata?.full_name || 
-                       user.email?.split('@')[0] || 
-                       'User';
+    const displayName =
+      user.user_metadata?.display_name ||
+      profile?.displayName ||
+      user.user_metadata?.full_name ||
+      profile?.fullName ||
+      user.email?.split('@')[0] ||
+      'User';
     
     return (
       <div className="relative" ref={dropdownRef}>

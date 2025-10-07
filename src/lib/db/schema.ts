@@ -26,6 +26,9 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
   avatarUrl: text('avatar_url'),
+  displayName: text('display_name'),
+  birthDate: text('birth_date'),
+  gender: text('gender'),
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => ({
   emailIdx: index('users_email_idx').on(table.email),
