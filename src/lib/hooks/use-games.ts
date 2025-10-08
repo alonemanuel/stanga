@@ -251,6 +251,8 @@ export function useDeleteGame() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['game', variables.gameId] });
       queryClient.invalidateQueries({ queryKey: ['games', variables.matchdayId] });
+      queryClient.invalidateQueries({ queryKey: ['matchday-stats', variables.matchdayId] });
+      queryClient.invalidateQueries({ queryKey: ['overall-stats'] });
       toast.success('Game deleted successfully!');
     },
     onError: (error: Error) => {
