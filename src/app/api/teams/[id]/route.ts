@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { teams, matchdays } from '@/lib/db/schema';
+import { teams, matchdays, teamAssignments } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { TeamUpdateSchema } from '@/lib/validations/team';
@@ -211,18 +211,32 @@ export async function DELETE(
     
     const oldTeam = existingTeam[0];
     
-    // Soft delete team
-    const deletedTeam = await db
-      .update(teams)
-      .set({
-        deletedAt: new Date(),
-        updatedBy: user.id,
-        updatedAt: new Date(),
-      })
-      .where(eq(teams.id, teamId))
-      .returning();
-    
-    const newTeam = deletedTeam[0];
+    // Use transaction to delete team and all assignments
+    const result = await db.transaction(async (tx) => {
+      // First, soft delete all team assignments
+      await tx
+        .update(teamAssignments)
+        .set({
+          deletedAt: new Date(),
+        })
+        .where(and(
+          eq(teamAssignments.teamId, teamId),
+          isNull(teamAssignments.deletedAt)
+        ));
+      
+      // Then, soft delete the team
+      const deletedTeam = await tx
+        .update(teams)
+        .set({
+          deletedAt: new Date(),
+          updatedBy: user.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(teams.id, teamId))
+        .returning();
+      
+      return deletedTeam[0];
+    });
     
     // Log activity
     await logActivity({
@@ -230,14 +244,15 @@ export async function DELETE(
       entityId: teamId,
       action: 'delete',
       actorId: user.id,
-      changes: generateDiff(oldTeam, newTeam),
+      changes: generateDiff(oldTeam, result),
     });
     
     // Revalidate cache
     revalidateTag('teams');
+    revalidateTag('team-assignments');
     
     return NextResponse.json({
-      data: newTeam,
+      data: result,
       message: 'Team deleted successfully',
     });
     
