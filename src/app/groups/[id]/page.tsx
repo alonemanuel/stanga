@@ -59,23 +59,40 @@ export default function GroupOverviewPage({ params }: PageProps) {
         }
 
         // Fetch group statistics
-        const statsRes = await fetch(`/api/stats/overall?groupId=${id}`);
+        const [statsRes, membersRes] = await Promise.all([
+          fetch(`/api/stats/overall?groupId=${id}`),
+          fetch(`/api/groups/${id}/members`)
+        ]);
+        
+        let totalMembers = 0;
+        let totalMatchdays = 0;
+        let totalGames = 0;
+        let totalGoals = 0;
+
+        // Get member count
+        if (membersRes.ok) {
+          const membersData = await membersRes.json();
+          totalMembers = membersData.members?.length || 0;
+        }
+
+        // Get game statistics
         if (statsRes.ok) {
           const statsData = await statsRes.json();
+          const summary = statsData.data?.summary;
           
-          // Calculate stats from the response
-          const totalMembers = statsData.teams?.length || 0;
-          const totalMatchdays = statsData.matchdays?.length || 0;
-          const totalGames = statsData.games?.length || 0;
-          const totalGoals = statsData.goals?.length || 0;
-
-          setStats({
-            totalMembers,
-            totalMatchdays,
-            totalGames,
-            totalGoals
-          });
+          if (summary) {
+            totalMatchdays = summary.totalMatchdays || 0;
+            totalGames = summary.totalGames || 0;
+            totalGoals = summary.totalGoals || 0;
+          }
         }
+
+        setStats({
+          totalMembers,
+          totalMatchdays,
+          totalGames,
+          totalGoals
+        });
       } catch (error: any) {
         console.error('Failed to load group data:', error);
         toast.error(error.message || 'Failed to load group data');
