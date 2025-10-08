@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, User, Clock, Plus, Play, Pause, RotateCcw, Edit, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Play, Pause, RotateCcw, Trash2 } from "lucide-react";
 import { useConfirmWithOptions, useConfirm } from "@/lib/hooks/use-dialogs";
 import type { Game } from "@/lib/hooks/use-games";
 
@@ -29,69 +29,74 @@ interface GameTimerProps {
 function GameTimer({ game, onTimeUpdate }: GameTimerProps) {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
-  const [timeAdjustment, setTimeAdjustment] = React.useState(0);
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
-  const pausedAtRef = React.useRef<number>(0);
+  const startTimeRef = React.useRef<number>(0);
+  const pausedTimeRef = React.useRef<number>(0);
   
   React.useEffect(() => {
-    if (game.status === 'active' && game.startedAt && !isPaused) {
-      const startTime = new Date(game.startedAt).getTime();
+    if (game.status === 'active' && game.startedAt) {
+      if (!startTimeRef.current) {
+        startTimeRef.current = new Date(game.startedAt).getTime();
+      }
       
-      const updateTimer = () => {
-        const now = new Date().getTime();
-        const elapsed = Math.floor((now - startTime) / 1000) + timeAdjustment;
-        setElapsedTime(elapsed);
+      if (!isPaused) {
+        const updateTimer = () => {
+          const now = new Date().getTime();
+          const baseElapsed = Math.floor((now - startTimeRef.current) / 1000);
+          setElapsedTime(baseElapsed);
+          
+          const minutes = Math.floor(baseElapsed / 60);
+          const seconds = baseElapsed % 60;
+          onTimeUpdate?.(minutes, seconds);
+        };
         
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        onTimeUpdate?.(minutes, seconds);
-      };
-      
-      updateTimer();
-      intervalRef.current = setInterval(updateTimer, 1000);
-      
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
+        updateTimer();
+        intervalRef.current = setInterval(updateTimer, 1000);
+        
+        return () => {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+          }
+        };
+      } else {
+        // Keep showing the paused time
+        if (pausedTimeRef.current > 0) {
+          setElapsedTime(pausedTimeRef.current);
         }
-      };
-    } else if (isPaused && pausedAtRef.current > 0) {
-      setElapsedTime(pausedAtRef.current + timeAdjustment);
+      }
     }
-  }, [game.status, game.startedAt, onTimeUpdate, isPaused, timeAdjustment]);
+  }, [game.status, game.startedAt, onTimeUpdate, isPaused]);
   
   const minutes = Math.floor(elapsedTime / 60);
   const seconds = elapsedTime % 60;
   
   const handlePlayPause = () => {
     if (isPaused) {
-      // Resuming: adjust startTime to account for paused duration
-      pausedAtRef.current = 0;
+      // Resuming: adjust startTime to continue from paused time
+      const now = new Date().getTime();
+      startTimeRef.current = now - (pausedTimeRef.current * 1000);
       setIsPaused(false);
     } else {
-      // Pausing: store current elapsed time
-      pausedAtRef.current = elapsedTime - timeAdjustment;
+      // Pausing: store current time
+      pausedTimeRef.current = elapsedTime;
       setIsPaused(true);
     }
   };
   
   const handleRestart = () => {
+    const now = new Date().getTime();
+    startTimeRef.current = now;
+    pausedTimeRef.current = 0;
     setElapsedTime(0);
-    setTimeAdjustment(0);
-    pausedAtRef.current = 0;
     setIsPaused(false);
   };
   
-  const handleAdjustTime = (seconds: number) => {
-    setTimeAdjustment(prev => prev + seconds);
-  };
-  
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between gap-4">
         {/* Time Display */}
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-green-600" />
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold text-green-700">Active Game</h3>
           <div className="text-2xl font-mono font-bold text-green-700">
             {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
           </div>
@@ -103,7 +108,7 @@ function GameTimer({ game, onTimeUpdate }: GameTimerProps) {
             size="sm"
             variant="outline"
             onClick={handlePlayPause}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 rounded-full"
           >
             {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
           </Button>
@@ -111,25 +116,9 @@ function GameTimer({ game, onTimeUpdate }: GameTimerProps) {
             size="sm"
             variant="outline"
             onClick={handleRestart}
-            className="h-8 w-8 p-0"
+            className="h-9 w-9 p-0 rounded-full"
           >
             <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleAdjustTime(-20)}
-            className="h-8 px-2"
-          >
-            -20
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleAdjustTime(20)}
-            className="h-8 px-2"
-          >
-            +20
           </Button>
         </div>
       </div>
@@ -156,9 +145,6 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const confirm = useConfirm();
   
   const [showPenalties, setShowPenalties] = React.useState(false);
-  const [editingGoalId, setEditingGoalId] = React.useState<string | null>(null);
-  const [editingPlayerId, setEditingPlayerId] = React.useState<string>('');
-  const [editingAssistId, setEditingAssistId] = React.useState<string>('');
   
   const players = playersData?.data || [];
   const teams = teamsData?.data || [];
@@ -191,14 +177,12 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     }
   };
   
-  const handleEditGoal = async (goalId: string, playerId: string, assistId?: string) => {
+  const handleEditGoal = async (goalId: string, playerId: string) => {
     try {
       await editGoalMutation.mutateAsync({
         goalId,
         playerId,
-        assistId,
       });
-      setEditingGoalId(null);
     } catch (error) {
       // Error handled by mutation
     }
@@ -251,232 +235,134 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
 
   return (
     <div className="space-y-6">
-      {/* Game Header with Timer */}
+      {/* Timer Card */}
+      <GameTimer game={game} />
+      
+      {/* Score Card with Goals */}
       <div className="bg-card border rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-green-700">
-            Active Game
-          </h3>
-        </div>
-        
-        {/* Timer Card */}
-        <GameTimer game={game} />
-        
         {/* Score Display */}
-        <div className="flex items-center justify-center space-x-8 mt-6">
+        <div className="flex items-center justify-center space-x-8 mb-6">
           <div className="text-center">
-            <div className="flex items-center gap-2 mb-2">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
-                style={{ backgroundColor: game.homeTeam?.colorHex }}
-              >
-                {goalsData?.homeTeamGoals.length || 0}
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={isLoading}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {homeTeamPlayers.map(player => (
-                    <DropdownMenuItem key={player.id} onClick={() => handleAddGoal(game.homeTeamId, player.id)}>
-                      {player.name}
-                    </DropdownMenuItem>
-                  ))}
-                  {homeTeamPlayers.length === 0 && (
-                    <DropdownMenuItem disabled>No players available</DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto"
+              style={{ backgroundColor: game.homeTeam?.colorHex }}
+            >
+              {goalsData?.homeTeamGoals.length || 0}
             </div>
-            <p className="text-sm font-medium">{game.homeTeam?.name}</p>
+            <p className="text-sm font-medium mb-2">{game.homeTeam?.name}</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={isLoading}>
+                  + Goal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {homeTeamPlayers.map(player => (
+                  <DropdownMenuItem key={player.id} onClick={() => handleAddGoal(game.homeTeamId, player.id)}>
+                    {player.name}
+                  </DropdownMenuItem>
+                ))}
+                {homeTeamPlayers.length === 0 && (
+                  <DropdownMenuItem disabled>No players available</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="text-4xl font-bold text-muted-foreground">VS</div>
           
           <div className="text-center">
-            <div className="flex items-center gap-2 mb-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={isLoading}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {awayTeamPlayers.map(player => (
-                    <DropdownMenuItem key={player.id} onClick={() => handleAddGoal(game.awayTeamId, player.id)}>
-                      {player.name}
-                    </DropdownMenuItem>
-                  ))}
-                  {awayTeamPlayers.length === 0 && (
-                    <DropdownMenuItem disabled>No players available</DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
-                style={{ backgroundColor: game.awayTeam?.colorHex }}
-              >
-                {goalsData?.awayTeamGoals.length || 0}
-              </div>
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto"
+              style={{ backgroundColor: game.awayTeam?.colorHex }}
+            >
+              {goalsData?.awayTeamGoals.length || 0}
             </div>
-            <p className="text-sm font-medium">{game.awayTeam?.name}</p>
+            <p className="text-sm font-medium mb-2">{game.awayTeam?.name}</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={isLoading}>
+                  + Goal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {awayTeamPlayers.map(player => (
+                  <DropdownMenuItem key={player.id} onClick={() => handleAddGoal(game.awayTeamId, player.id)}>
+                    {player.name}
+                  </DropdownMenuItem>
+                ))}
+                {awayTeamPlayers.length === 0 && (
+                  <DropdownMenuItem disabled>No players available</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </div>
-      
-      {/* Goals Section */}
-      <div className="bg-card border rounded-lg p-6">
-        <h4 className="text-md font-semibold mb-4">Goals</h4>
-        {allGoals.length > 0 ? (
-          <div className="space-y-2">
-            {allGoals.map((goal, index) => (
-              <div key={goal.id}>
-                {editingGoalId === goal.id ? (
-                  // Edit mode
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="grid gap-3 sm:grid-cols-2 mb-3">
-                      <div>
-                        <label className="block text-xs font-medium text-blue-600 mb-1">
-                          Scorer
-                        </label>
-                        <select
-                          value={editingPlayerId}
-                          onChange={(e) => setEditingPlayerId(e.target.value)}
-                          className="w-full p-2 text-sm border border-blue-300 rounded-md"
-                        >
-                          {(goal.teamId === game.homeTeamId ? homeTeamPlayers : awayTeamPlayers).map(player => (
-                            <option key={player.id} value={player.id}>
-                              {player.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-blue-600 mb-1">
-                          Assist (optional)
-                        </label>
-                        <select
-                          value={editingAssistId}
-                          onChange={(e) => setEditingAssistId(e.target.value)}
-                          className="w-full p-2 text-sm border border-blue-300 rounded-md"
-                        >
-                          <option value="">No assist</option>
-                          {(goal.teamId === game.homeTeamId ? homeTeamPlayers : awayTeamPlayers)
-                            .filter(p => p.id !== editingPlayerId)
-                            .map(player => (
-                              <option key={player.id} value={player.id}>
-                                {player.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleEditGoal(goal.id, editingPlayerId, editingAssistId || undefined)}
-                        disabled={isLoading}
-                        className="flex-1"
-                      >
-                        Save Changes
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingGoalId(null)}
-                        disabled={isLoading}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  // Display mode
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: goal.teamColor }}
-                      />
-                      <Badge variant="outline" className="font-mono text-xs">
-                        #{index + 1}
-                      </Badge>
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-4 w-4 text-gray-500" />
-                        <span className="font-medium">
+        
+        {/* Goals Section */}
+        {allGoals.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-muted-foreground mb-3">Goals</h4>
+              {allGoals.map((goal) => (
+                <div key={goal.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-4 h-4 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: goal.teamColor }}
+                    />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="font-medium" disabled={isLoading}>
                           {goal.playerName || 'Unknown Player'}
-                        </span>
-                        {goal.assistName && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-600">
-                              Assist: {goal.assistName}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Clock className="h-3 w-3" />
-                        <span>{goal.minute}'</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingGoalId(goal.id);
-                          setEditingPlayerId(goal.playerId);
-                          setEditingAssistId(goal.assistId || '');
-                        }}
-                        disabled={isLoading}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteGoal(goal.id)}
-                        disabled={isLoading}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {(goal.teamId === game.homeTeamId ? homeTeamPlayers : awayTeamPlayers).map(player => (
+                          <DropdownMenuItem 
+                            key={player.id} 
+                            onClick={() => handleEditGoal(goal.id, player.id)}
+                          >
+                            {player.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <span className="text-xs text-gray-500">{goal.minute}'</span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No goals scored yet
-          </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteGoal(goal.id)}
+                    disabled={isLoading}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
       
       {/* Penalty Section (if active) */}
       {showPenalties && (
-        <>
-          <Separator className="my-6" />
-          <PenaltySection 
-            game={game}
-            matchdayId={matchdayId}
-            homeTeamPlayers={homeTeamPlayers}
-            awayTeamPlayers={awayTeamPlayers}
-            onBack={() => setShowPenalties(false)}
-          />
-        </>
+        <PenaltySection 
+          game={game}
+          matchdayId={matchdayId}
+          homeTeamPlayers={homeTeamPlayers}
+          awayTeamPlayers={awayTeamPlayers}
+          onBack={() => setShowPenalties(false)}
+        />
       )}
       
       {/* Game Controls */}
       <div className="bg-card border rounded-lg p-6">
         <div className="flex justify-end space-x-2">
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <span>
                   <Button
@@ -488,7 +374,7 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
                   </Button>
                 </span>
               </TooltipTrigger>
-              {!isGameTied && (
+              {!isGameTied && !showPenalties && (
                 <TooltipContent>
                   <p>Only available when the game is tied</p>
                 </TooltipContent>
@@ -522,9 +408,6 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
   const startPenaltiesMutation = useStartPenalties();
   const logPenaltyKickMutation = useLogPenaltyKick();
   const endGameMutation = useEndGame();
-  const confirm = useConfirm();
-  
-  const [editingPenaltyId, setEditingPenaltyId] = React.useState<string | null>(null);
   
   const hasTriedToInitialize = React.useRef(false);
   
@@ -594,9 +477,11 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
   const isLoading = startPenaltiesMutation.isPending || logPenaltyKickMutation.isPending || endGameMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <>
+      <Separator className="my-6" />
+      
       <div className="bg-card border border-orange-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-orange-700">Penalty Shootout</h3>
           <Button
             variant="outline"
@@ -608,96 +493,89 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
         </div>
         
         {/* Penalty Score Display */}
-        <div className="flex items-center justify-center space-x-8">
+        <div className="flex items-center justify-center space-x-8 mb-6">
           <div className="text-center">
-            <div className="flex items-center gap-2 mb-2">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl border-2 border-orange-400"
-                style={{ backgroundColor: game.homeTeam?.colorHex }}
-              >
-                {penaltyData?.homeTeamScore || 0}
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={isLoading}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {homeTeamPlayers.map(player => (
-                    <DropdownMenuItem key={player.id} onClick={() => handleAddPenaltyGoal(game.homeTeamId, player.id)}>
-                      {player.name}
-                    </DropdownMenuItem>
-                  ))}
-                  {homeTeamPlayers.length === 0 && (
-                    <DropdownMenuItem disabled>No players available</DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
+              style={{ backgroundColor: game.homeTeam?.colorHex }}
+            >
+              {penaltyData?.homeTeamScore || 0}
             </div>
-            <p className="text-sm font-medium">{game.homeTeam?.name}</p>
+            <p className="text-sm font-medium mb-2">{game.homeTeam?.name}</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={isLoading}>
+                  + Goal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {homeTeamPlayers.map(player => (
+                  <DropdownMenuItem key={player.id} onClick={() => handleAddPenaltyGoal(game.homeTeamId, player.id)}>
+                    {player.name}
+                  </DropdownMenuItem>
+                ))}
+                {homeTeamPlayers.length === 0 && (
+                  <DropdownMenuItem disabled>No players available</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="text-2xl font-bold text-orange-600">PENALTIES</div>
           
           <div className="text-center">
-            <div className="flex items-center gap-2 mb-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={isLoading}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {awayTeamPlayers.map(player => (
-                    <DropdownMenuItem key={player.id} onClick={() => handleAddPenaltyGoal(game.awayTeamId, player.id)}>
-                      {player.name}
-                    </DropdownMenuItem>
-                  ))}
-                  {awayTeamPlayers.length === 0 && (
-                    <DropdownMenuItem disabled>No players available</DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl border-2 border-orange-400"
-                style={{ backgroundColor: game.awayTeam?.colorHex }}
-              >
-                {penaltyData?.awayTeamScore || 0}
-              </div>
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
+              style={{ backgroundColor: game.awayTeam?.colorHex }}
+            >
+              {penaltyData?.awayTeamScore || 0}
             </div>
-            <p className="text-sm font-medium">{game.awayTeam?.name}</p>
+            <p className="text-sm font-medium mb-2">{game.awayTeam?.name}</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={isLoading}>
+                  + Goal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {awayTeamPlayers.map(player => (
+                  <DropdownMenuItem key={player.id} onClick={() => handleAddPenaltyGoal(game.awayTeamId, player.id)}>
+                    {player.name}
+                  </DropdownMenuItem>
+                ))}
+                {awayTeamPlayers.length === 0 && (
+                  <DropdownMenuItem disabled>No players available</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </div>
-      
-      {/* Penalty Goals */}
-      <div className="bg-card border rounded-lg p-6">
-        <h4 className="text-md font-semibold mb-4 text-orange-600">Penalty Goals</h4>
-        {allPenalties.length > 0 ? (
-          <div className="space-y-2">
-            {allPenalties.map((penalty) => (
-              <div key={penalty.id} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
-                <div 
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: penalty.teamColor }}
-                />
-                <Badge variant="outline" className="font-mono text-xs bg-orange-100 text-orange-800">
-                  P{penalty.kickOrder}
-                </Badge>
-                <div className="flex items-center gap-2 text-sm flex-1">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">
-                    {penalty.playerName}
-                  </span>
+        
+        {/* Penalty Goals */}
+        {allPenalties.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-orange-600 mb-3">Penalty Goals</h4>
+              {allPenalties.map((penalty) => (
+                <div key={penalty.id} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+                  <div 
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: penalty.teamColor }}
+                  />
+                  <Badge variant="outline" className="font-mono text-xs bg-orange-100 text-orange-800">
+                    P{penalty.kickOrder}
+                  </Badge>
+                  <div className="flex items-center gap-2 text-sm flex-1">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="font-medium">
+                      {penalty.playerName}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No penalty goals recorded yet
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
       
@@ -713,7 +591,7 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -965,9 +843,6 @@ function ChronologicalGoalsList({
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">
-                      #{index + 1}
-                    </span>
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3 text-gray-500" />
                       <span className="font-medium truncate">
