@@ -13,9 +13,10 @@ interface TextFieldProps {
   multiline?: boolean;
   rows?: number;
   step?: string;
+  autoFocus?: boolean;
 }
 
-export function TextField({ name, label, type = "text", placeholder, required, multiline, rows = 3, step }: TextFieldProps) {
+export function TextField({ name, label, type = "text", placeholder, required, multiline, rows = 3, step, autoFocus }: TextFieldProps) {
   const { register, formState: { errors } } = useFormContext();
   const error = (errors as any)?.[name]?.message as string | undefined;
   
@@ -25,6 +26,7 @@ export function TextField({ name, label, type = "text", placeholder, required, m
     className: "w-full rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     "aria-invalid": !!error,
     "aria-describedby": error ? `${name}-error` : undefined,
+    autoFocus,
     ...register(name),
   };
   
