@@ -1,6 +1,6 @@
 /**
  * Generate a display name for a matchday based on date and optional location
- * Format: "29/9 Matchday" or "29/9 at The Yarkon"
+ * Format: "Wednesday 8/10" or "Wednesday 29/9"
  */
 export function getMatchdayDisplayName(scheduledAt: Date | string, location?: string | null): string {
   const date = typeof scheduledAt === 'string' ? new Date(scheduledAt) : scheduledAt;
@@ -11,12 +11,9 @@ export function getMatchdayDisplayName(scheduledAt: Date | string, location?: st
   
   const day = date.getDate();
   const month = date.getMonth() + 1;
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
   
-  if (location && location.trim()) {
-    return `${day}/${month} at ${location.trim()}`;
-  }
-  
-  return `${day}/${month} Matchday`;
+  return `${weekday} ${day}/${month}`;
 }
 
 /**

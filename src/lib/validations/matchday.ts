@@ -55,6 +55,7 @@ export const MatchdayUpdateSchema = z.object({
   teamSize: z.coerce.number().int().min(3).max(15).optional(),
   numberOfTeams: z.coerce.number().int().min(2).max(20).optional(),
   status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional(),
+  rules: RulesSnapshotSchema.optional(),
 });
 
 // Schema for query parameters
