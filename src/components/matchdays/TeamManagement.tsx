@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/lib/hooks/use-dialogs";
 import { useMatchdayTeams, useCreateTeam, useAssignPlayer, useUnassignPlayer, useUpdateTeam, useDeleteTeam } from "@/lib/hooks/use-teams";
-import { usePlayers } from "@/lib/hooks/use-players";
+import { usePlayers, useCreatePlayer } from "@/lib/hooks/use-players";
+import { Plus } from "lucide-react";
 import { TEAM_COLORS, type ColorToken } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/client";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
@@ -278,14 +279,8 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Team Management</h3>
-          <p className="text-sm text-muted-foreground">
-            Assign players to teams (max {maxPlayersPerTeam} per team)
-          </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            {unassignedPlayers.length} unassigned players
-          </div>
           {user && availableColors.length > 0 && (
             <Button 
               size="sm" 
@@ -368,7 +363,6 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const colorPickerRef = React.useRef<HTMLDivElement>(null);
   const colorInfo = TEAM_COLORS[team.colorToken];
-  const isTeamFull = team.playerCount >= maxPlayers;
   const updateTeamMutation = useUpdateTeam();
   const hasPlayers = (team.assignments || []).length > 0;
 
@@ -427,7 +421,7 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
     <div 
       ref={setNodeRef}
       className={`bg-card border rounded-lg p-4 transition-colors ${
-        isOver && !isTeamFull ? 'border-primary bg-primary/5' : ''
+        isOver ? 'border-primary bg-primary/5' : ''
       }`}
     >
       {/* Team Header */}
@@ -496,8 +490,8 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
           <h4 className="font-semibold">{team.name}</h4>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={isTeamFull ? "destructive" : "secondary"}>
-            {team.playerCount}/{maxPlayers}
+          <Badge variant="secondary">
+            {team.playerCount}
           </Badge>
           {canEdit && (
             <Button
@@ -533,15 +527,8 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
         )}
       </div>
 
-      {/* Team Full Warning */}
-      {isTeamFull && (
-        <div className="text-xs text-orange-600 bg-orange-50 dark:bg-orange-950 p-2 rounded">
-          Team is full ({maxPlayers} players)
-        </div>
-      )}
-
       {/* Fallback Assignment Controls */}
-      {canEdit && !isTeamFull && unassignedPlayers.length > 0 && (
+      {canEdit && unassignedPlayers.length > 0 && (
         <div className="border-t pt-4">
           <p className="text-xs text-muted-foreground mb-2">Quick assign:</p>
           <div className="flex flex-wrap gap-1">
@@ -638,12 +625,43 @@ interface UnassignedPlayersCardProps {
 }
 
 function UnassignedPlayersCard({ players, canEdit }: UnassignedPlayersCardProps) {
+  const [showAddForm, setShowAddForm] = React.useState(false);
+  const [newPlayerName, setNewPlayerName] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const createPlayerMutation = useCreatePlayer();
+
   const { setNodeRef, isOver } = useDroppable({
     id: 'unassigned-players',
     data: {
       type: 'unassigned',
     },
   });
+
+  // Auto-focus input when form is shown
+  React.useEffect(() => {
+    if (showAddForm && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showAddForm]);
+
+  const handleAddPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerName.trim() || createPlayerMutation.isPending) return;
+
+    try {
+      await createPlayerMutation.mutateAsync({ name: newPlayerName.trim() });
+      setNewPlayerName("");
+      // Keep form visible and re-focus for next player
+      inputRef.current?.focus();
+    } catch (error) {
+      // Error handling is done in the mutation hook
+    }
+  };
+
+  const handleToggleForm = () => {
+    setShowAddForm(!showAddForm);
+    setNewPlayerName("");
+  };
 
   return (
     <div 
@@ -666,12 +684,54 @@ function UnassignedPlayersCard({ players, canEdit }: UnassignedPlayersCardProps)
           />
         ))}
         
-        {players.length === 0 && (
+        {players.length === 0 && !showAddForm && (
           <p className="text-sm text-muted-foreground text-center py-4">
             All players assigned
           </p>
         )}
       </div>
+
+      {/* Quick Add Player Section */}
+      {canEdit && (
+        <div className="mt-4 pt-4 border-t space-y-2">
+          {showAddForm ? (
+            <form onSubmit={handleAddPlayer} className="flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Player name"
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    handleToggleForm();
+                  }
+                }}
+                className="flex-1 text-sm rounded-md border border-input bg-transparent px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                disabled={createPlayerMutation.isPending}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!newPlayerName.trim() || createPlayerMutation.isPending}
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </form>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleForm}
+              className="w-full text-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Player
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
