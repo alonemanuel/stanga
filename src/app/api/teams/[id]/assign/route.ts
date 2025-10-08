@@ -5,7 +5,7 @@ import { requireAuth } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { TeamAssignmentCreateSchema } from '@/lib/validations/team';
 import { createId } from '@paralleldrive/cuid2';
-import { eq, and, isNull, count } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 interface RouteParams {
@@ -35,7 +35,6 @@ export async function POST(
         matchdayId: teams.matchdayId,
         name: teams.name,
         colorToken: teams.colorToken,
-        rules: matchdays.rules,
       })
       .from(teams)
       .innerJoin(matchdays, eq(teams.matchdayId, matchdays.id))
@@ -54,8 +53,6 @@ export async function POST(
     }
     
     const teamInfo = team[0];
-    const rules = teamInfo.rules as any;
-    const maxTeamSize = rules?.team_size || 6; // Default to 6 if not specified
     
     // Verify player exists and is active
     const player = await db
@@ -89,24 +86,6 @@ export async function POST(
     if (existingAssignment.length > 0) {
       return NextResponse.json(
         { error: 'Player is already assigned to this team' },
-        { status: 409 }
-      );
-    }
-    
-    // Check team size limit
-    const [teamSizeResult] = await db
-      .select({ count: count() })
-      .from(teamAssignments)
-      .where(and(
-        eq(teamAssignments.teamId, teamId),
-        isNull(teamAssignments.deletedAt)
-      ));
-    
-    const currentTeamSize = teamSizeResult.count;
-    
-    if (currentTeamSize >= maxTeamSize) {
-      return NextResponse.json(
-        { error: `Team is full (maximum ${maxTeamSize} players)` },
         { status: 409 }
       );
     }
