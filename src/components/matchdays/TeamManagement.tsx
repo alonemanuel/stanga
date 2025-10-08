@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 import { useMatchdayTeams, useCreateTeam, useAssignPlayer, useUnassignPlayer, useUpdateTeam, useDeleteTeam } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { TEAM_COLORS, type ColorToken } from "@/lib/teams";
@@ -35,6 +36,7 @@ interface DragData {
 export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }: TeamManagementProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const supabase = createClient();
+  const confirm = useConfirm();
   
   // Get current user
   React.useEffect(() => {
@@ -199,10 +201,20 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     if (!user) return;
 
     if (hasPlayers) {
-      const confirmed = window.confirm(
-        'This team has players assigned. Are you sure you want to delete it? All player assignments will be removed.'
-      );
-      if (!confirmed) return;
+      try {
+        const confirmed = await confirm({
+          title: 'Delete Team',
+          message: 'This team has players assigned. Are you sure you want to delete it? All player assignments will be removed.',
+          confirmText: 'Delete Team',
+          cancelText: 'Cancel',
+          variant: 'default',
+        });
+        
+        if (!confirmed) return;
+      } catch (error) {
+        // User cancelled or closed dialog
+        return;
+      }
     }
 
     await deleteTeamMutation.mutateAsync(teamId);

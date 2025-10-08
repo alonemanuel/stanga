@@ -4,6 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Plus, User, Clock } from "lucide-react";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 
 interface Goal {
   id: string;
@@ -250,6 +251,7 @@ export function GoalList({
 }: GoalListProps) {
   const [isAddingGoal, setIsAddingGoal] = React.useState(false);
   const [editingGoalId, setEditingGoalId] = React.useState<string | null>(null);
+  const confirm = useConfirm();
 
   const handleAddGoal = async (playerId: string, assistId?: string) => {
     try {
@@ -270,12 +272,20 @@ export function GoalList({
   };
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (window.confirm('Are you sure you want to delete this goal?')) {
-      try {
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Goal',
+        message: 'Are you sure you want to delete this goal?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (confirmed) {
         await onDeleteGoal(goalId);
-      } catch (error) {
-        console.error('Failed to delete goal', error);
       }
+    } catch (error) {
+      console.error('Failed to delete goal', error);
     }
   };
 

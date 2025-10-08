@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { CalendarDays, Clock, MapPin, Users } from "lucide-react";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 
 interface Matchday {
   id: string;
@@ -28,6 +29,7 @@ export default function MatchdaysPage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'upcoming' | 'past'>('upcoming');
   const [showForm, setShowForm] = React.useState(false);
+  const confirm = useConfirm();
   const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
@@ -68,8 +70,21 @@ export default function MatchdaysPage() {
   const deleteMutation = useDeleteMatchday();
   
   const handleDeleteMatchday = async (id: string) => {
-    if (confirm('Are you sure you want to delete this matchday?')) {
-      await deleteMutation.mutateAsync(id);
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Matchday',
+        message: 'Are you sure you want to delete this matchday?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (confirmed) {
+        await deleteMutation.mutateAsync(id);
+      }
+    } catch (error) {
+      // User cancelled or closed dialog
+      console.log('Delete cancelled');
     }
   };
 
