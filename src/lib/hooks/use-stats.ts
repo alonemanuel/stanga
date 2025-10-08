@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from '@tanstack/react-query';
+import { useGroupContext } from './use-group-context';
 
 // Types for API responses
 interface PlayerStats {
@@ -74,8 +75,11 @@ interface MatchdayStatsResponse {
 }
 
 // API functions
-async function fetchOverallStats(): Promise<OverallStatsResponse> {
-  const response = await fetch('/api/stats/overall');
+async function fetchOverallStats(groupId?: string): Promise<OverallStatsResponse> {
+  const url = groupId 
+    ? `/api/stats/overall?groupId=${groupId}`
+    : '/api/stats/overall';
+  const response = await fetch(url);
   
   if (!response.ok) {
     throw new Error('Failed to fetch overall stats');
@@ -96,9 +100,12 @@ async function fetchMatchdayStats(matchdayId: string): Promise<MatchdayStatsResp
 
 // React Query hooks
 export function useOverallStats(options?: { enableRealTime?: boolean }) {
+  const { activeGroup } = useGroupContext();
+  
   return useQuery({
-    queryKey: ['stats', 'overall'],
-    queryFn: fetchOverallStats,
+    queryKey: ['stats', 'overall', activeGroup?.id],
+    queryFn: () => fetchOverallStats(activeGroup?.id),
+    enabled: !!activeGroup, // Only fetch when there's an active group
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: options?.enableRealTime ? 30 * 1000 : false, // 30 seconds if real-time enabled
     refetchIntervalInBackground: options?.enableRealTime ? true : false,

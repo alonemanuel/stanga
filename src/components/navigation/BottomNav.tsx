@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Users, BarChart3 } from "lucide-react";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 
 type NavItem = {
   href: string;
@@ -18,6 +19,13 @@ const items: NavItem[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { activeGroup, isLoading } = useGroupContext();
+  
+  // Don't render navigation if there's no active group
+  if (!activeGroup || isLoading) {
+    return null;
+  }
+  
   return (
     <nav
       aria-label="Primary"
@@ -27,6 +35,7 @@ export function BottomNav() {
         {items.map(({ href, label, icon: Icon }) => {
           // Home tab is active for both "/" and "/matchdays" since they show the same content
           const active = href === "/" ? (pathname === "/" || pathname === "/matchdays") : pathname === href;
+          
           return (
             <li key={href} className="flex">
               <Link

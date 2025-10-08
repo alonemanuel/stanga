@@ -24,66 +24,63 @@ interface GoalListProps {
   teamName: string;
   goals: Goal[];
   players: Player[];
-  onAddGoal: (playerId: string, assistId?: string) => void;
-  onEditGoal: (goalId: string, playerId: string, assistId?: string) => void;
-  onDeleteGoal: (goalId: string) => void;
+  onAddGoal: (playerId: string, assistId?: string) => void | Promise<void>;
+  onEditGoal: (goalId: string, playerId: string, assistId?: string) => void | Promise<void>;
+  onDeleteGoal: (goalId: string) => void | Promise<void>;
   isLoading?: boolean;
   isPenaltyMode?: boolean;
 }
 
 interface AddGoalFormProps {
   players: Player[];
-  onSubmit: (playerId: string, assistId?: string) => void;
+  onSubmit: (playerId: string, assistId?: string) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
   isPenaltyMode?: boolean;
 }
 
-function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: AddGoalFormProps) {
+function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode = false }: AddGoalFormProps) {
   const [selectedScorer, setSelectedScorer] = React.useState<string>('');
   const [selectedAssist, setSelectedAssist] = React.useState<string>('');
-  const scorerSelectRef = React.useRef<HTMLSelectElement>(null);
-
-  // Auto-focus the scorer selection when component mounts
-  React.useEffect(() => {
-    if (scorerSelectRef.current) {
-      scorerSelectRef.current.focus();
-      // Open the dropdown on desktop browsers
-      if ('showPicker' in scorerSelectRef.current) {
-        try {
-          (scorerSelectRef.current as any).showPicker();
-        } catch (e) {
-          // Ignore errors - not all browsers support showPicker
-        }
-      }
-    }
-  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Allow submitting without a scorer (scorer can be empty string)
-    // In penalty mode, don't pass assist
-    onSubmit(selectedScorer || '', isPenaltyMode ? undefined : (selectedAssist || undefined));
+    const scorer = selectedScorer || '';
+    const assist = isPenaltyMode ? undefined : selectedAssist || undefined;
+
+    // Prevent submission without a selected player in penalty mode
+    if (isPenaltyMode && !scorer) {
+      return;
+    }
+
+    onSubmit(scorer, assist);
     setSelectedScorer('');
-    setSelectedAssist('');
+    if (!isPenaltyMode) {
+      setSelectedAssist('');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-      <h5 className="font-medium text-sm text-gray-700">Add Goal</h5>
-      
-      <div className={`grid gap-3 ${isPenaltyMode ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+      <h5 className="font-medium text-sm text-gray-700">
+        {isPenaltyMode ? 'Record Penalty Goal' : 'Add Goal'}
+      </h5>
+
+      <div className={isPenaltyMode ? 'grid gap-3' : 'grid gap-3 sm:grid-cols-2'}>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            {isPenaltyMode ? 'Penalty Taker (optional)' : 'Scorer (optional)'}
+            {isPenaltyMode ? 'Penalty Taker' : 'Scorer (optional)'}
           </label>
           <select
-            ref={scorerSelectRef}
             value={selectedScorer}
             onChange={(e) => setSelectedScorer(e.target.value)}
             className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={isPenaltyMode}
           >
-            <option value="">{isPenaltyMode ? 'No penalty taker specified' : 'No scorer specified'}</option>
+            <option value="" disabled={isPenaltyMode}>
+              {isPenaltyMode ? 'Select player' : 'No scorer specified'}
+            </option>
             {players.map(player => (
               <option key={player.id} value={player.id}>
                 {player.name}
@@ -91,7 +88,7 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: 
             ))}
           </select>
         </div>
-        
+
         {!isPenaltyMode && (
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -114,16 +111,16 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: 
           </div>
         )}
       </div>
-      
+
       <div className="flex gap-2">
         <Button
           type="submit"
           size="sm"
-          disabled={isLoading}
+          disabled={isLoading || (isPenaltyMode && !selectedScorer)}
           loading={isLoading}
           className="flex-1"
         >
-          {isPenaltyMode ? 'Add Penalty Goal' : 'Add Goal'}
+          {isPenaltyMode ? 'Record Goal' : 'Add Goal'}
         </Button>
         <Button
           type="button"
@@ -142,38 +139,49 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode }: 
 interface EditGoalFormProps {
   goal: Goal;
   players: Player[];
-  onSubmit: (playerId: string, assistId?: string) => void;
+  onSubmit: (playerId: string, assistId?: string) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
   isPenaltyMode?: boolean;
 }
 
-function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading, isPenaltyMode }: EditGoalFormProps) {
+function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading, isPenaltyMode = false }: EditGoalFormProps) {
   const [selectedScorer, setSelectedScorer] = React.useState<string>(goal.playerId || '');
   const [selectedAssist, setSelectedAssist] = React.useState<string>(goal.assistId || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Allow submitting with or without a scorer
-    // In penalty mode, don't pass assist
-    onSubmit(selectedScorer || '', isPenaltyMode ? undefined : (selectedAssist || undefined));
+    const scorer = selectedScorer || '';
+    const assist = isPenaltyMode ? undefined : selectedAssist || undefined;
+
+    if (isPenaltyMode && !scorer) {
+      return;
+    }
+
+    onSubmit(scorer, assist);
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-      <h5 className="font-medium text-sm text-blue-700">Edit Goal</h5>
-      
-      <div className={`grid gap-3 ${isPenaltyMode ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+      <h5 className="font-medium text-sm text-blue-700">
+        {isPenaltyMode ? 'Edit Penalty Goal' : 'Edit Goal'}
+      </h5>
+
+      <div className={isPenaltyMode ? 'grid gap-3' : 'grid gap-3 sm:grid-cols-2'}>
         <div>
           <label className="block text-xs font-medium text-blue-600 mb-1">
-            {isPenaltyMode ? 'Penalty Taker (optional)' : 'Scorer (optional)'}
+            {isPenaltyMode ? 'Penalty Taker' : 'Scorer (optional)'}
           </label>
           <select
             value={selectedScorer}
             onChange={(e) => setSelectedScorer(e.target.value)}
             className="w-full p-2 text-sm border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required={isPenaltyMode}
           >
-            <option value="">{isPenaltyMode ? 'No penalty taker specified' : 'No scorer specified'}</option>
+            <option value="" disabled={isPenaltyMode}>
+              {isPenaltyMode ? 'Select player' : 'No scorer specified'}
+            </option>
             {players.map(player => (
               <option key={player.id} value={player.id}>
                 {player.name}
@@ -181,7 +189,7 @@ function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading, isPenaltyM
             ))}
           </select>
         </div>
-        
+
         {!isPenaltyMode && (
           <div>
             <label className="block text-xs font-medium text-blue-600 mb-1">
@@ -204,16 +212,16 @@ function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading, isPenaltyM
           </div>
         )}
       </div>
-      
+
       <div className="flex gap-2">
         <Button
           type="submit"
           size="sm"
-          disabled={isLoading}
+          disabled={isLoading || (isPenaltyMode && !selectedScorer)}
           loading={isLoading}
           className="flex-1"
         >
-{isPenaltyMode ? 'Save Penalty Changes' : 'Save Changes'}
+          {isPenaltyMode ? 'Save Penalty' : 'Save Changes'}
         </Button>
         <Button
           type="button"
@@ -238,24 +246,36 @@ export function GoalList({
   onEditGoal,
   onDeleteGoal,
   isLoading,
-  isPenaltyMode
+  isPenaltyMode = false
 }: GoalListProps) {
   const [isAddingGoal, setIsAddingGoal] = React.useState(false);
   const [editingGoalId, setEditingGoalId] = React.useState<string | null>(null);
 
-  const handleAddGoal = (playerId: string, assistId?: string) => {
-    onAddGoal(playerId, assistId);
-    setIsAddingGoal(false);
+  const handleAddGoal = async (playerId: string, assistId?: string) => {
+    try {
+      await onAddGoal(playerId, assistId);
+      setIsAddingGoal(false);
+    } catch (error) {
+      console.error('Failed to add goal', error);
+    }
   };
 
-  const handleEditGoal = (goalId: string, playerId: string, assistId?: string) => {
-    onEditGoal(goalId, playerId, assistId);
-    setEditingGoalId(null);
+  const handleEditGoal = async (goalId: string, playerId: string, assistId?: string) => {
+    try {
+      await onEditGoal(goalId, playerId, assistId);
+      setEditingGoalId(null);
+    } catch (error) {
+      console.error('Failed to edit goal', error);
+    }
   };
 
-  const handleDeleteGoal = (goalId: string) => {
+  const handleDeleteGoal = async (goalId: string) => {
     if (window.confirm('Are you sure you want to delete this goal?')) {
-      onDeleteGoal(goalId);
+      try {
+        await onDeleteGoal(goalId);
+      } catch (error) {
+        console.error('Failed to delete goal', error);
+      }
     }
   };
 
@@ -278,7 +298,7 @@ export function GoalList({
             className="flex items-center gap-1"
           >
             <Plus className="h-4 w-4" />
-{isPenaltyMode ? 'Add Penalty Goal' : 'Add Goal'}
+            {isPenaltyMode ? 'Add Penalty Goal' : 'Add Goal'}
           </Button>
         )}
       </div>
@@ -334,10 +354,10 @@ export function GoalList({
                 </div>
                 <div className="flex items-center gap-1 text-xs text-gray-500">
                   <Clock className="h-3 w-3" />
-                  <span>{goal.minute}'</span>
+                  <span>{isPenaltyMode ? `Kick ${goal.minute}` : `${goal.minute}'`}</span>
                 </div>
               </div>
-              
+
               {editingGoalId !== goal.id && (
                 <div className="flex items-center gap-1">
                   <Button
@@ -365,7 +385,21 @@ export function GoalList({
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg bg-gray-50">
-          <div className="text-sm">No goals scored yet</div>
+          <div className="text-sm">
+            {isPenaltyMode ? 'No penalty goals recorded yet' : 'No goals scored yet'}
+          </div>
+          {!isAddingGoal && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsAddingGoal(true)}
+              disabled={isLoading}
+              className="mt-2"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {isPenaltyMode ? 'Record Penalty Goal' : 'Add First Goal'}
+            </Button>
+          )}
         </div>
       )}
     </div>

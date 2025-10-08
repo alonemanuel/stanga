@@ -4,9 +4,13 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { useMatchdays, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { CalendarDays, Clock, MapPin, Users, UserPlus, PlusCircle } from "lucide-react";
+import { JoinGroupModal } from "@/components/groups/JoinGroupModal";
+import { CreateGroupModal } from "@/components/groups/CreateGroupModal";
 
 interface Matchday {
   id: string;
@@ -26,6 +30,9 @@ export default function HomePage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [statusFilter, setStatusFilter] = React.useState<'upcoming' | 'past'>('upcoming');
   const [showForm, setShowForm] = React.useState(false);
+  const [showJoinModal, setShowJoinModal] = React.useState(false);
+  const [showCreateModal, setShowCreateModal] = React.useState(false);
+  const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
   
@@ -94,6 +101,70 @@ export default function HomePage() {
     }
   };
 
+  // Show loading state while checking group
+  if (groupLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-2">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no active group
+  if (!activeGroup) {
+    return (
+      <>
+        <div className="flex items-center justify-center min-h-screen pb-20">
+          <div className="text-center space-y-6 max-w-md mx-auto p-6">
+            <Users className="h-20 w-20 text-muted-foreground mx-auto" />
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold">Welcome to Stanga</h2>
+              <p className="text-muted-foreground text-lg">
+                Join a group to start tracking your football matchdays, players, and stats
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-3 pt-4">
+              <Button 
+                size="lg" 
+                onClick={() => setShowJoinModal(true)}
+                className="w-full"
+              >
+                <UserPlus className="mr-2 h-5 w-5" />
+                Join a Group
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={() => setShowCreateModal(true)}
+                className="w-full"
+              >
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Create New Group
+              </Button>
+            </div>
+            
+            <p className="text-sm text-muted-foreground pt-4">
+              Already have an invite code? Click "Join a Group" to enter it.
+            </p>
+          </div>
+        </div>
+        
+        <JoinGroupModal 
+          isOpen={showJoinModal} 
+          onClose={() => setShowJoinModal(false)} 
+        />
+        <CreateGroupModal 
+          isOpen={showCreateModal} 
+          onClose={() => setShowCreateModal(false)} 
+        />
+      </>
+    );
+  }
+
   if (showForm) {
     return (
       <div className="p-4 max-w-4xl mx-auto">
@@ -125,7 +196,7 @@ export default function HomePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {user && (
+          {user && activeGroup && (
             <Button onClick={() => setShowForm(true)}>
               Create Matchday
             </Button>
@@ -174,7 +245,7 @@ export default function HomePage() {
           <p className="text-muted-foreground">
             {statusFilter === 'upcoming' ? 'No upcoming matchdays found' : 'No past matchdays found'}
           </p>
-          {statusFilter === 'upcoming' && user && (
+          {statusFilter === 'upcoming' && user && activeGroup && (
             <Button onClick={() => setShowForm(true)} className="mt-4">
               Create Your First Matchday
             </Button>
@@ -199,21 +270,21 @@ export default function HomePage() {
               
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">📅</span>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{formatDate(matchday.scheduledAt)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">⏰</span>
+                  <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{formatTime(matchday.scheduledAt)}</span>
                 </div>
                 {matchday.location && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">📍</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     <span>{matchday.location}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">👥</span>
+                  <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <span>{matchday.numberOfTeams} teams of {matchday.teamSize}</span>
                 </div>
               </div>

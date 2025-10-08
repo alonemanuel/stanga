@@ -26,18 +26,50 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
   avatarUrl: text('avatar_url'),
+  gender: text('gender'), // 'male', 'female', 'other', 'prefer_not_to_say'
+  dateOfBirth: timestamp('date_of_birth'),
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => ({
   emailIdx: index('users_email_idx').on(table.email),
   activeIdx: index('users_active_idx').on(table.isActive),
 }));
 
+// Groups table
+export const groups = pgTable('groups', {
+  ...auditFields,
+  name: text('name').notNull(),
+  inviteCode: text('invite_code').notNull().unique(), // 6-character code
+  description: text('description'),
+  avatarUrl: text('avatar_url'),
+  isActive: boolean('is_active').default(true).notNull(),
+}, (table) => ({
+  inviteCodeIdx: index('groups_invite_code_idx').on(table.inviteCode),
+  activeIdx: index('groups_active_idx').on(table.isActive),
+}));
+
+// Group members with roles
+export const groupMembers = pgTable('group_members', {
+  ...auditFields,
+  groupId: text('group_id').references(() => groups.id).notNull(),
+  userId: text('user_id').notNull(), // References auth.users
+  role: text('role').default('member').notNull(), // 'admin', 'member'
+  isActive: boolean('is_active').default(true).notNull(),
+}, (table) => ({
+  groupUserIdx: index('group_members_group_user_idx').on(table.groupId, table.userId),
+  userIdx: index('group_members_user_idx').on(table.userId),
+  activeIdx: index('group_members_active_idx').on(table.isActive),
+}));
+
 // Players table
 export const players = pgTable('players', {
   ...auditFields,
+  groupId: text('group_id').references(() => groups.id).notNull(),
+  userId: text('user_id'), // Nullable - links player to registered user
   name: text('name').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
 }, (table) => ({
+  groupIdx: index('players_group_idx').on(table.groupId),
+  userIdx: index('players_user_idx').on(table.userId),
   nameIdx: index('players_name_idx').on(table.name),
   activeIdx: index('players_active_idx').on(table.isActive),
 }));
@@ -45,6 +77,7 @@ export const players = pgTable('players', {
 // Matchdays table
 export const matchdays = pgTable('matchdays', {
   ...auditFields,
+  groupId: text('group_id').references(() => groups.id).notNull(),
   name: text('name'), // Optional - display names are computed from date/location
   description: text('description'),
   scheduledAt: timestamp('scheduled_at').notNull(),
@@ -55,6 +88,7 @@ export const matchdays = pgTable('matchdays', {
   rules: jsonb('rules').notNull(), // Snapshot of rules at creation time
   isPublic: boolean('is_public').default(true).notNull(),
 }, (table) => ({
+  groupIdx: index('matchdays_group_idx').on(table.groupId),
   scheduledIdx: index('matchdays_scheduled_idx').on(table.scheduledAt),
   statusIdx: index('matchdays_status_idx').on(table.status),
   publicIdx: index('matchdays_public_idx').on(table.isPublic),
@@ -179,6 +213,12 @@ export const activityLog = pgTable('activity_log', {
 // Export types for TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type Group = typeof groups.$inferSelect;
+export type NewGroup = typeof groups.$inferInsert;
+
+export type GroupMember = typeof groupMembers.$inferSelect;
+export type NewGroupMember = typeof groupMembers.$inferInsert;
 
 export type Player = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;

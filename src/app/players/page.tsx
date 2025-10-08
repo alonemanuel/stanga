@@ -4,8 +4,9 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { PlayerForm } from "@/components/players/PlayerForm";
 import { usePlayers, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, RotateCcw } from "lucide-react";
+import { Pencil, Trash2, RotateCcw, Users } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Player {
@@ -23,6 +24,7 @@ export default function PlayersPage() {
   const [editingPlayer, setEditingPlayer] = React.useState<Player | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showDeleted, setShowDeleted] = React.useState(false);
+  const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
   
@@ -79,6 +81,33 @@ export default function PlayersPage() {
     await restoreMutation.mutateAsync(id);
   };
   
+  // Show loading state while checking group
+  if (groupLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-2">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no active group
+  if (!activeGroup) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4 max-w-md mx-auto p-6">
+          <Users className="h-16 w-16 text-muted-foreground mx-auto" />
+          <h2 className="text-2xl font-semibold">No Group Selected</h2>
+          <p className="text-muted-foreground">
+            You need to join or create a group to view players. 
+            Click on "Select Group" in the header to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (showForm) {
     return (

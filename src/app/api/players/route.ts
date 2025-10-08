@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { players } from '@/lib/db/schema';
 import { PlayerCreateSchema, PlayerQuerySchema } from '@/lib/validations/player';
-import { requireAuth } from '@/lib/auth-guards';
+import { requireAuth, requireGroupAdmin } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { createId } from '@paralleldrive/cuid2';
-import { and, eq, ilike, isNull, desc } from 'drizzle-orm';
+import { and, eq, ilike, isNull, desc, count } from 'drizzle-orm';
 
 // GET /api/players - List players (auth required)
 export async function GET(request: NextRequest) {
@@ -17,10 +17,15 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     // Validate query parameters
-    const { query, isActive, page, limit } = PlayerQuerySchema.parse(queryParams);
+    const { query, isActive, page, limit, groupId } = PlayerQuerySchema.parse(queryParams);
     
     // Build where conditions
     const conditions = [];
+    
+    // Group filter (required for multi-group support)
+    if (groupId) {
+      conditions.push(eq(players.groupId, groupId));
+    }
     
     // Active/inactive filter
     if (isActive) {
@@ -56,12 +61,10 @@ export async function GET(request: NextRequest) {
       .offset(offset);
     
     // Get total count for pagination
-    const totalCount = await db
-      .select({ count: players.id })
+    const [{ count: total }] = await db
+      .select({ count: count() })
       .from(players)
       .where(and(...conditions));
-    
-    const total = totalCount.length;
     const totalPages = Math.ceil(total / limit);
     
     return NextResponse.json({
@@ -102,12 +105,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const playerData = PlayerCreateSchema.parse(body);
     
+    // Ensure groupId is provided
+    if (!playerData.groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate user is admin of the group
+    await requireGroupAdmin(user.id, playerData.groupId);
+    
     // Create player
     const newPlayer = await db
       .insert(players)
       .values({
         id: createId(),
-        ...playerData,
+        name: playerData.name,
+        groupId: playerData.groupId,
+        userId: playerData.userId || null,
         createdBy: user.id,
         updatedBy: user.id,
       })

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { matchdays } from '@/lib/db/schema';
 import { MatchdayCreateSchema, MatchdayQuerySchema } from '@/lib/validations/matchday';
-import { requireAuth } from '@/lib/auth-guards';
+import { requireAuth, requireGroupAdmin } from '@/lib/auth-guards';
 import { logActivity, generateDiff } from '@/lib/activity-log';
 import { createId } from '@paralleldrive/cuid2';
 import { and, eq, gte, lt, desc, isNull, or } from 'drizzle-orm';
@@ -18,10 +18,15 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     // Validate query parameters
-    const { status, isPublic, page, limit } = MatchdayQuerySchema.parse(queryParams);
+    const { status, isPublic, page, limit, groupId } = MatchdayQuerySchema.parse(queryParams);
     
     // Build where conditions
     const conditions = [];
+    
+    // Group filter (required for multi-group support)
+    if (groupId) {
+      conditions.push(eq(matchdays.groupId, groupId));
+    }
     
     // Public filter
     if (isPublic) {
@@ -125,11 +130,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const matchdayData = MatchdayCreateSchema.parse(body);
     
+    // Validate user is admin of the group
+    if (matchdayData.groupId) {
+      await requireGroupAdmin(user.id, matchdayData.groupId);
+    }
+    
+    // Ensure groupId is provided
+    if (!matchdayData.groupId) {
+      return NextResponse.json(
+        { error: 'Group ID is required' },
+        { status: 400 }
+      );
+    }
+    
     // Create matchday
     const newMatchday = await db
       .insert(matchdays)
       .values({
         id: createId(),
+        groupId: matchdayData.groupId, // Group ID from request
         scheduledAt: new Date(matchdayData.scheduledAt),
         location: matchdayData.location,
         teamSize: matchdayData.teamSize,

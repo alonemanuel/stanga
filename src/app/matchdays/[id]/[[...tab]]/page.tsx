@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
 import { useMatchdayStats } from "@/lib/hooks/use-stats";
 import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
@@ -17,10 +18,11 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 interface MatchdayDetailPageProps {
   params: Promise<{
     id: string;
+    tab?: string[];
   }>;
 }
 
-type TabType = 'overview' | 'teams' | 'games' | 'stats' | 'activity';
+type TabType = 'overview' | 'teams' | 'games' | 'stats';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -91,17 +93,25 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   
   const supabase = createClient();
   
-  // Await params and set matchdayId
+  // Await params and set matchdayId/tab state based on URL
   React.useEffect(() => {
     const getParams = async () => {
       const resolvedParams = await params;
       setMatchdayId(resolvedParams.id);
+
+      const [tabSegment] = resolvedParams.tab ?? [];
+      const normalizedTab: TabType =
+        tabSegment === 'teams' || tabSegment === 'games' || tabSegment === 'stats'
+          ? tabSegment
+          : 'overview';
+
+      setActiveTab((previousTab) => (previousTab === normalizedTab ? previousTab : normalizedTab));
     };
     getParams();
   }, [params]);
   
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
-  const { data: statsData, isLoading: statsLoading, error: statsError } = useMatchdayStats(matchdayId);
+  const { data: statsData, isLoading: statsLoading, error: statsError, isRefetching } = useMatchdayStats(matchdayId);
   const updateMutation = useUpdateMatchday();
   const deleteMutation = useDeleteMatchday();
   
@@ -239,8 +249,17 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     { id: 'teams', label: 'Teams' },
     { id: 'games', label: 'Games' },
     { id: 'stats', label: 'Stats' },
-    { id: 'activity', label: 'Activity', disabled: true },
   ];
+
+  const getTabHref = (tabId: TabType) => {
+    if (!matchdayId) {
+      return '#';
+    }
+
+    return tabId === 'overview'
+      ? `/matchdays/${matchdayId}`
+      : `/matchdays/${matchdayId}/${tabId}`;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -333,14 +352,15 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
         return (
           <TeamManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
+            numberOfTeams={matchday.numberOfTeams}
           />
         );
       case 'games':
         return (
           <GameManagement 
             matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.rules.team_size}
+            maxPlayersPerTeam={matchday.teamSize}
           />
         );
       case 'stats':
@@ -348,66 +368,70 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
           return (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-muted-foreground">Loading matchday stats...</p>
+              <p className="mt-2 text-muted-foreground">Loading stats...</p>
             </div>
           );
         }
 
-        if (statsError || !statsData) {
+        if (statsError) {
           return (
             <div className="text-center py-8">
-              <p className="text-red-600">Failed to load matchday stats</p>
+              <p className="text-red-600">Failed to load statistics</p>
             </div>
           );
         }
 
-        const { standings, topScorers } = statsData.data;
+        if (!statsData?.data) {
+          return (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No statistics available yet</p>
+            </div>
+          );
+        }
+
+        const { summary, standings, topScorers } = statsData.data;
 
         return (
           <div className="space-y-6">
-            {/* Summary Cards */}
+            {/* Summary Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Games</h3>
-                <p className="text-2xl font-bold">{statsData.data.summary.totalGames}</p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Games</h3>
+                <p className="text-2xl font-bold">{summary.totalGames}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {summary.completedGames} completed
+                </p>
               </div>
               <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Completed</h3>
-                <p className="text-2xl font-bold">{statsData.data.summary.completedGames}</p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Goals</h3>
+                <p className="text-2xl font-bold">{summary.totalGoals}</p>
               </div>
               <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Goals</h3>
-                <p className="text-2xl font-bold">{statsData.data.summary.totalGoals}</p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Avg Goals/Game</h3>
+                <p className="text-2xl font-bold">{summary.averageGoalsPerGame.toFixed(1)}</p>
               </div>
               <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Avg Goals/Game</h3>
-                <p className="text-2xl font-bold">{statsData.data.summary.averageGoalsPerGame.toFixed(1)}</p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Teams</h3>
+                <p className="text-2xl font-bold">{summary.totalTeams}</p>
               </div>
             </div>
 
-            {/* Standings and Top Scorers Grid */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Standings Table */}
-              <StandingsTable 
-                standings={standings}
-                isLoading={statsLoading}
-                error={statsError ? String(statsError) : null}
-              />
-              
-              {/* Top Scorers Table */}
-              <TopScorerTable 
-                topScorers={topScorers}
-                isLoading={statsLoading}
-                error={statsError ? String(statsError) : null}
-                limit={10}
-              />
-            </div>
-          </div>
-        );
-      case 'activity':
-        return (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Activity log coming soon...</p>
+            {/* Standings Table */}
+            <StandingsTable 
+              standings={standings} 
+              isLoading={statsLoading}
+              error={statsError ? String(statsError) : null}
+              isRefetching={isRefetching}
+            />
+
+            {/* Top Scorers */}
+            <TopScorerTable 
+              topScorers={topScorers}
+              isLoading={statsLoading}
+              error={statsError ? String(statsError) : null}
+              limit={5}
+              isRefetching={isRefetching}
+            />
           </div>
         );
       default:
@@ -463,22 +487,40 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
       {/* Tabs */}
       <div className="border-b">
         <nav className="flex space-x-8">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => !tab.disabled && setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
-                  ? 'border-primary text-primary'
-                  : tab.disabled
-                  ? 'border-transparent text-muted-foreground/50 cursor-not-allowed'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-              }`}
-              disabled={tab.disabled}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const isDisabled = tab.disabled || !matchdayId;
+            const className = `py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              isActive
+                ? 'border-primary text-primary'
+                : isDisabled
+                ? 'border-transparent text-muted-foreground/50 cursor-not-allowed'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+            }`;
+
+            if (isDisabled) {
+              return (
+                <span
+                  key={tab.id}
+                  className={className}
+                  aria-disabled="true"
+                >
+                  {tab.label}
+                </span>
+              );
+            }
+
+            return (
+              <Link
+                key={tab.id}
+                href={getTabHref(tab.id)}
+                className={className}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

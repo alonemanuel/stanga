@@ -3,14 +3,17 @@
 import * as React from "react";
 import { useOverallStats } from "@/lib/hooks/use-stats";
 import { useMatchdays } from "@/lib/hooks/use-matchdays";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { Button } from "@/components/ui/button";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
+import { BarChart3 } from "lucide-react";
 
 type TabType = 'overall' | 'matchday' | 'players' | 'teams';
 
 export default function StatsPage() {
   const [activeTab, setActiveTab] = React.useState<TabType>('overall');
   const [selectedMatchdayId, setSelectedMatchdayId] = React.useState<string>('');
+  const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const { data: overallStats, isLoading: overallLoading, error: overallError } = useOverallStats();
   const { data: matchdaysData } = useMatchdays({ 
@@ -262,6 +265,34 @@ export default function StatsPage() {
         return null;
     }
   };
+
+  // Show loading state while checking group
+  if (groupLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-2">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no active group
+  if (!activeGroup) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4 max-w-md mx-auto p-6">
+          <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto" />
+          <h2 className="text-2xl font-semibold">No Group Selected</h2>
+          <p className="text-muted-foreground">
+            You need to join or create a group to view statistics. 
+            Click on "Select Group" in the header to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6">

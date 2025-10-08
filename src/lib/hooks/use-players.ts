@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useGroupContext } from './use-group-context';
 import type { PlayerCreate, PlayerUpdate, PlayerQuery } from '@/lib/validations/player';
 
 // Types for API responses
@@ -122,9 +123,17 @@ async function restorePlayer(id: string): Promise<PlayerResponse> {
 
 // React Query hooks
 export function usePlayers(params: PlayerQuery = { page: 1, limit: 20, isActive: true }) {
+  const { activeGroup } = useGroupContext();
+  
+  // Add groupId to params if active group exists
+  const queryParams = activeGroup 
+    ? { ...params, groupId: activeGroup.id }
+    : params;
+  
   return useQuery({
-    queryKey: ['players', params],
-    queryFn: () => fetchPlayers(params),
+    queryKey: ['players', queryParams],
+    queryFn: () => fetchPlayers(queryParams),
+    enabled: !!activeGroup, // Only fetch when there's an active group
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -139,9 +148,16 @@ export function usePlayer(id: string) {
 
 export function useCreatePlayer() {
   const queryClient = useQueryClient();
+  const { activeGroup } = useGroupContext();
   
   return useMutation({
-    mutationFn: createPlayer,
+    mutationFn: (data: PlayerCreate) => {
+      // Inject groupId into the player data
+      const dataWithGroup = activeGroup 
+        ? { ...data, groupId: activeGroup.id }
+        : data;
+      return createPlayer(dataWithGroup);
+    },
     onSuccess: (data) => {
       // Invalidate and refetch players list
       queryClient.invalidateQueries({ queryKey: ['players'] });

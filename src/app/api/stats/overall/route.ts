@@ -17,6 +17,22 @@ export async function GET(request: NextRequest) {
     // Require authentication for all operations
     await requireAuth();
     
+    // Get groupId from query params
+    const { searchParams } = new URL(request.url);
+    const groupId = searchParams.get('groupId');
+    
+    // Build conditions
+    const matchdayConditions = [
+      eq(games.status, 'completed'),
+      isNull(games.deletedAt),
+      isNull(matchdays.deletedAt),
+    ];
+    
+    // Add group filter if provided
+    if (groupId) {
+      matchdayConditions.push(eq(matchdays.groupId, groupId));
+    }
+    
     // Fetch all completed games with their matchday rules
     const completedGames = await db
       .select({
@@ -33,11 +49,7 @@ export async function GET(request: NextRequest) {
       })
       .from(games)
       .innerJoin(matchdays, eq(games.matchdayId, matchdays.id))
-      .where(and(
-        eq(games.status, 'completed'),
-        isNull(games.deletedAt),
-        isNull(matchdays.deletedAt)
-      ));
+      .where(and(...matchdayConditions));
 
     // Fetch all active game events
     const allEvents = await db
@@ -49,15 +61,23 @@ export async function GET(request: NextRequest) {
       ));
 
     // Fetch all active players
+    const playerConditions = [
+      eq(players.isActive, true),
+      isNull(players.deletedAt),
+    ];
+    
+    // Add group filter if provided
+    if (groupId) {
+      playerConditions.push(eq(players.groupId, groupId));
+    }
+    
     const allPlayers = await db
       .select({
         id: players.id,
         name: players.name,
       })
       .from(players)
-      .where(and(
-        eq(players.isActive, true),
-        isNull(players.deletedAt)
+      .where(and(...playerConditions
       ));
 
     // Fetch all teams

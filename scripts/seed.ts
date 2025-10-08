@@ -33,6 +33,8 @@ async function main() {
     await db.delete(schema.teams);
     await db.delete(schema.matchdays);
     await db.delete(schema.players);
+    await db.delete(schema.groupMembers);
+    await db.delete(schema.groups);
     await db.delete(schema.users);
     await db.delete(schema.activityLog);
 
@@ -56,11 +58,49 @@ async function main() {
     const adminUser = users[0];
     const organizerUser = users[1];
 
+    // Seed Default Group
+    console.log('🏘️ Seeding default group...');
+    const defaultGroup = await db.insert(schema.groups).values({
+      id: createId(),
+      name: 'FC Yarkon',
+      description: 'Default football group',
+      inviteCode: 'FCY123',
+      isActive: true,
+      createdBy: adminUser.id,
+      updatedBy: adminUser.id,
+    }).returning();
+
+    const group = defaultGroup[0];
+
+    // Add users as group members
+    console.log('👥 Adding group members...');
+    await db.insert(schema.groupMembers).values([
+      {
+        id: createId(),
+        groupId: group.id,
+        userId: adminUser.id,
+        role: 'admin',
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      },
+      {
+        id: createId(),
+        groupId: group.id,
+        userId: organizerUser.id,
+        role: 'admin',
+        isActive: true,
+        createdBy: adminUser.id,
+        updatedBy: adminUser.id,
+      }
+    ]);
+
     // Seed Players
     console.log('⚽ Seeding players...');
     const players = await db.insert(schema.players).values([
       {
         id: createId(),
+        groupId: group.id,
         name: 'Lionel Messi',
         isActive: true,
         createdBy: adminUser.id,
@@ -68,6 +108,7 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Cristiano Ronaldo',
         isActive: true,
         createdBy: adminUser.id,
@@ -75,6 +116,7 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Kevin De Bruyne',
         isActive: true,
         createdBy: adminUser.id,
@@ -82,6 +124,7 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Virgil van Dijk',
         isActive: true,
         createdBy: adminUser.id,
@@ -89,6 +132,7 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Manuel Neuer',
         isActive: true,
         createdBy: adminUser.id,
@@ -96,70 +140,56 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Kylian Mbappé',
-        // nickname: 'Kyky',
-        // position: 'forward',
-        // skillLevel: 9,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Luka Modrić',
-        // nickname: 'Luka',
-        // position: 'midfielder',
-        // skillLevel: 9,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Sergio Ramos',
-        // nickname: 'Sergio',
-        // position: 'defender',
-        // skillLevel: 8,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Erling Haaland',
-        // nickname: 'The Machine',
-        // position: 'forward',
-        // skillLevel: 9,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Pedri González',
-        // nickname: 'Pedri',
-        // position: 'midfielder',
-        // skillLevel: 8,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Alphonso Davies',
-        // nickname: 'Phonzie',
-        // position: 'defender',
-        // skillLevel: 8,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Thibaut Courtois',
-        // nickname: 'Tibo',
-        // position: 'goalkeeper',
-        // skillLevel: 8,
         isActive: true,
         createdBy: adminUser.id,
         updatedBy: adminUser.id,
@@ -185,6 +215,7 @@ async function main() {
     const matchdays = await db.insert(schema.matchdays).values([
       {
         id: createId(),
+        groupId: group.id,
         name: 'Sunday League Championship',
         description: 'Weekly football tournament at the local park',
         scheduledAt: new Date('2024-01-21T14:00:00Z'),
@@ -199,6 +230,7 @@ async function main() {
       },
       {
         id: createId(),
+        groupId: group.id,
         name: 'Friday Night Lights',
         description: 'Evening matches under the floodlights',
         scheduledAt: new Date('2024-01-19T19:00:00Z'),
@@ -337,6 +369,8 @@ async function main() {
     console.log('✅ Database seeding completed successfully!');
     console.log(`📊 Seeded:`);
     console.log(`   - ${users.length} users`);
+    console.log(`   - ${defaultGroup.length} groups`);
+    console.log(`   - 2 group members`);
     console.log(`   - ${players.length} players`);
     console.log(`   - ${matchdays.length} matchdays`);
     console.log(`   - ${teams.length} teams`);

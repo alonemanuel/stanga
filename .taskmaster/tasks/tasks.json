@@ -956,7 +956,7 @@
         "description": "Change the games section interface from 'Home Team vs Away Team' to 'TEAM A vs TEAM B', removing the home/away concept for casual games.",
         "details": "To update the games section, first locate the UI components where the team labels are defined. Replace any instances of 'Home Team' and 'Away Team' with 'TEAM A' and 'TEAM B'. Ensure that any logic or data models that differentiate between home and away teams are updated to reflect the neutral team concept. This may involve modifying the backend data structures and API endpoints to no longer expect or process home/away team distinctions. Update any related documentation to reflect these changes. Consider using a feature toggle if this change needs to be rolled out gradually.",
         "testStrategy": "Verify that the games section displays 'TEAM A vs TEAM B' instead of 'Home Team vs Away Team'. Check that all references to home and away teams in the UI and backend are removed or updated. Test the game creation and viewing processes to ensure they function correctly with the new team labels. Conduct user testing to ensure that the change is intuitive and does not affect the user experience negatively.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           21,
           30
@@ -1129,7 +1129,7 @@
         "description": "Develop a stats section featuring a standings table and a top scorer table to enhance the app's competitive features.",
         "details": "To implement the comprehensive stats tab, first design the UI layout to accommodate both the standings table and the top scorer table. The standings table should display columns for games played, wins, draws (with penalty wins in parentheses), losses, and points for each team. The top scorer table should rank players by goals scored. Use a responsive design approach to ensure the tables are accessible on various devices. Fetch data from the backend API endpoints that provide team standings and player statistics. Ensure that the data is updated in real-time using WebSockets or a similar technology to reflect changes immediately. Consider using a library like React Table for efficient table rendering and sorting capabilities. Implement pagination or infinite scroll if the data set is large. Ensure the UI is accessible, with appropriate ARIA roles and keyboard navigation support.",
         "testStrategy": "Verify that the standings and top scorer tables display accurate data by cross-referencing with backend data sources. Test the responsiveness of the tables on different screen sizes and devices. Ensure real-time updates are reflected in the UI by simulating data changes in the backend. Use browser developer tools to check for accessibility compliance, including ARIA roles and keyboard navigation. Conduct user testing to ensure the tables are intuitive and easy to navigate. Perform load testing to ensure the tables handle large data sets efficiently.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           32
@@ -1142,7 +1142,7 @@
             "description": "Create a responsive UI layout to accommodate both the standings table and the top scorer table.",
             "dependencies": [],
             "details": "Use a design tool like Figma or Sketch to draft the layout. Ensure the design is responsive and accessible, with clear sections for the standings and top scorer tables. Consider mobile-first design principles and ensure the layout adapts well to different screen sizes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the design with stakeholders and conduct usability testing with mockups on various devices."
           },
           {
@@ -1153,7 +1153,7 @@
               "39.1"
             ],
             "details": "Use a library like React Table to create the standings table. Include columns for games played, wins, draws (with penalty wins in parentheses), losses, and points. Ensure the table is sortable and paginated if necessary. Implement ARIA roles for accessibility.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the table's responsiveness and sorting functionality. Verify accessibility features using screen readers."
           },
           {
@@ -1164,7 +1164,7 @@
               "39.1"
             ],
             "details": "Use React Table to create the top scorer table. Display player names and goals scored. Ensure the table is sortable and supports pagination or infinite scroll for large datasets. Implement ARIA roles for accessibility.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the table's responsiveness and sorting functionality. Verify accessibility features using screen readers."
           },
           {
@@ -1176,7 +1176,7 @@
               "39.3"
             ],
             "details": "Establish a WebSocket connection to listen for updates from the backend. Update the standings and top scorer tables dynamically as new data is received. Ensure efficient connection management to handle reconnections and data integrity.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Simulate data changes in the backend and verify that updates are reflected in real-time in the UI. Test connection stability under various network conditions."
           },
           {
@@ -1187,7 +1187,7 @@
               "39.4"
             ],
             "details": "Create a new page or component for the stats tab. Import and integrate the standings and top scorer table components. Ensure the layout matches the design and that both tables function correctly within the page. Implement navigation and ensure the page is accessible.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the page loads correctly and both tables display accurate data. Test navigation to and from the stats tab. Conduct cross-browser testing to ensure consistent behavior."
           }
         ]
@@ -1198,7 +1198,7 @@
         "description": "Update the team management interface to remove the 'team' suffix from team names, simplifying the display to show only the team name.",
         "details": "To implement this change, first identify all components and templates within the team management interface where team names are displayed. This may include lists, dropdowns, and detail views. Update the logic responsible for rendering team names to exclude the 'team' suffix. This can be achieved by modifying the string formatting or template logic to display only the base name (e.g., 'Blue' instead of 'Blue Team'). Ensure that any backend services or APIs that provide team names are also updated to reflect this change, if necessary. Review the codebase for any hardcoded instances of team names and update them accordingly. Consider potential impacts on related features such as search or filtering, and test these thoroughly.",
         "testStrategy": "Verify that all instances of team names in the team management interface no longer include the 'team' suffix by manually inspecting the UI. Check dropdowns, lists, and detail views to ensure consistency. Conduct regression testing on related features such as team search and filtering to confirm they function correctly with the updated team names. Use browser developer tools to inspect elements and ensure no residual 'team' suffixes remain in the rendered HTML or JavaScript.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           12
         ],
@@ -1211,7 +1211,7 @@
         "description": "Modify the system to automatically display the correct number of empty teams (2, 3, or 4) based on matchday settings, eliminating the need for users to click 'Initialize Teams'.",
         "details": "To implement this feature, first update the matchday settings logic to determine the number of teams required based on the current matchday configuration. Remove the 'Initialize Teams' button from the UI. Modify the team display component to automatically render the appropriate number of empty team slots when a matchday is accessed. Ensure that these slots are ready for player assignment immediately. Update any related state management logic to support this automatic initialization. Consider edge cases such as changes in matchday settings that might alter the number of teams required, and ensure the UI updates accordingly.",
         "testStrategy": "Verify that upon accessing a matchday, the correct number of empty team slots are displayed automatically without requiring user interaction. Test various matchday settings to ensure the number of teams adjusts correctly. Check that the UI updates dynamically if matchday settings are changed. Ensure that the system remains stable and responsive during these updates. Conduct user testing to confirm that the workflow is intuitive and meets user expectations.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           24
@@ -1225,7 +1225,7 @@
         "description": "Correct the player count display in the team view to show the current and target number of players in the format 'current/target'.",
         "details": "To fix the player count display issue, first locate the component responsible for rendering the team view. Identify where the player count is being calculated and displayed. Update the logic to fetch the target number of players from the matchday settings, ensuring that both the current and target numbers are available. Modify the display format to 'current/target', such as '1/5'. Ensure that the data source for the target number is accurate and reflects the matchday settings. Update any related API endpoints or data fetching logic if necessary to include the target player count. Consider edge cases where the target number might not be set and handle these gracefully in the UI.",
         "testStrategy": "Verify that the team view correctly displays the player count in the 'current/target' format for various scenarios, including different matchday settings. Test with different numbers of current players and ensure the display updates dynamically. Check that the target number is accurate and reflects the matchday settings. Conduct regression testing to ensure no other parts of the team view are affected by the changes. Use unit tests to validate any updated logic for fetching or calculating player counts.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           5,
           31
@@ -1253,10 +1253,24 @@
         "description": "Develop a feature allowing users to change team colors via a color picker, automatically updating the team name to match the selected color.",
         "details": "To implement this feature, first design a user-friendly color picker interface that can be integrated into the team settings page. Use a library like 'react-color' for the color picker component. When a user selects a new color, update the team's color attribute in the database and automatically change the team's name to reflect the new color (e.g., 'Red Team' for red). Ensure that the color picker is accessible and works across different devices. Update the backend API to handle color changes and name updates atomically to maintain data consistency. Consider edge cases such as duplicate team names and provide a fallback mechanism (e.g., appending a number to the name).",
         "testStrategy": "Verify that the color picker is displayed correctly and allows users to select a color. Test that selecting a color updates the team's color and name in the database and UI. Check for data consistency by ensuring that the color and name are updated atomically. Test the feature on various devices and browsers to ensure compatibility. Simulate edge cases such as selecting the same color for multiple teams and verify that the fallback mechanism works correctly.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           32,
           41
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 45,
+        "title": "Implement Tab-Based Routing for Matchday View",
+        "description": "Add URL routing for matchday tabs (Teams, Games, Stats, etc.) to preserve the current tab in the URL, enabling deep linking and improved navigation UX.",
+        "details": "To implement tab-based routing for the matchday view, first identify the existing tab components within the matchday detail page. Utilize a routing library such as React Router to define routes for each tab, e.g., '/matchdays/:id/teams', '/matchdays/:id/games', '/matchdays/:id/stats'. Update the tab navigation to use <Link> components instead of onClick handlers to change tabs. Ensure that the URL updates when a tab is selected and that the correct tab is displayed when navigating directly to a URL. Consider using dynamic imports or lazy loading for tab content to optimize performance. Ensure authentication checks are in place to protect these routes, leveraging the authentication middleware implemented in Task 17.",
+        "testStrategy": "Verify that navigating to each tab updates the URL correctly and that refreshing the page retains the current tab. Test direct navigation to each tab URL to ensure the correct content is displayed. Check that unauthenticated users are redirected to the login page when accessing protected routes. Use automated tests to simulate user navigation and URL changes, ensuring consistent behavior across different browsers and devices.",
+        "status": "pending",
+        "dependencies": [
+          5,
+          17
         ],
         "priority": "medium",
         "subtasks": []
@@ -1264,7 +1278,7 @@
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-21T16:47:05.556Z",
+      "updated": "2025-09-22T08:38:22.947Z",
       "description": "Tasks for master context"
     }
   }
