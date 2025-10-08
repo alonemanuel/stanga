@@ -235,8 +235,10 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
 
   return (
     <div className="space-y-6">
-      {/* Timer Card */}
-      <GameTimer game={game} />
+      {/* Timer Card - Sticky */}
+      <div className="sticky top-0 z-10 bg-background pb-4">
+        <GameTimer game={game} />
+      </div>
       
       {/* Game Controls */}
       <div className="bg-card border rounded-lg p-6">
