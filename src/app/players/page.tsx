@@ -7,6 +7,7 @@ import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2, RotateCcw, Users, Check, Plus } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 
 interface Player {
   id: string;
@@ -23,6 +24,7 @@ export default function PlayersPage() {
   const [editingName, setEditingName] = React.useState("");
   const [newPlayerName, setNewPlayerName] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const confirm = useConfirm();
   const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
@@ -95,8 +97,21 @@ export default function PlayersPage() {
   };
   
   const handleDeletePlayer = async (id: string) => {
-    if (confirm('Are you sure you want to delete this player?')) {
-      await deleteMutation.mutateAsync(id);
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Player',
+        message: 'Are you sure you want to delete this player?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (confirmed) {
+        await deleteMutation.mutateAsync(id);
+      }
+    } catch (error) {
+      // User cancelled or closed dialog
+      console.log('Delete cancelled');
     }
   };
   

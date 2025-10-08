@@ -1274,11 +1274,80 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 46,
+        "title": "Replace Browser Dialogs with In-App Dialog Components",
+        "description": "Replace all browser dialog boxes with native in-app dialog components using shadcn/ui for consistent styling and improved user experience.",
+        "details": "To replace browser dialogs with in-app dialog components, first identify all instances of window.confirm, confirm, and alert in the codebase, specifically in TeamManagement.tsx, GoalList.tsx, GameManagement.tsx, page.tsx files, and GroupSwitcher settings. Develop a reusable ConfirmDialog component for confirmation dialogs and an AlertDialog component for alert messages using the shadcn/ui Dialog component. Ensure these dialogs are styled according to the app's design system and include smooth animations and transitions. Implement focus management for accessibility, ensuring that dialogs are keyboard navigable (ESC to close, Enter to confirm). Reference existing modal components like JoinGroupModal and CreateGroupModal for implementation patterns. Ensure all existing functionality and user flows are maintained.",
+        "testStrategy": "Verify that all browser dialogs have been replaced with in-app dialogs by checking each identified file. Test the ConfirmDialog and AlertDialog components to ensure they display correctly and match the app's design system. Check that dialogs are accessible, with proper focus management and keyboard navigation. Test dialog interactions across different screen sizes to ensure responsiveness. Confirm that all existing user flows and functionalities are preserved after the replacement.",
+        "status": "done",
+        "dependencies": [
+          5,
+          29
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Identify Browser Dialog Instances",
+            "description": "Locate all instances of window.confirm, confirm, and alert in the specified codebase files.",
+            "dependencies": [],
+            "details": "Search through TeamManagement.tsx, GoalList.tsx, GameManagement.tsx, page.tsx, and GroupSwitcher settings to identify all browser dialog instances.",
+            "status": "done",
+            "testStrategy": "Verify that all instances of browser dialogs are identified and documented for replacement."
+          },
+          {
+            "id": 2,
+            "title": "Develop ConfirmDialog Component",
+            "description": "Create a reusable ConfirmDialog component using shadcn/ui for confirmation dialogs.",
+            "dependencies": [
+              "46.1"
+            ],
+            "details": "Use the shadcn/ui Dialog component to build a ConfirmDialog component that matches the app's design system and includes smooth animations.",
+            "status": "done",
+            "testStrategy": "Test the ConfirmDialog component to ensure it displays correctly and matches the app's design system."
+          },
+          {
+            "id": 3,
+            "title": "Develop AlertDialog Component",
+            "description": "Create a reusable AlertDialog component using shadcn/ui for alert messages.",
+            "dependencies": [
+              "46.1"
+            ],
+            "details": "Use the shadcn/ui Dialog component to build an AlertDialog component that matches the app's design system and includes smooth animations.",
+            "status": "done",
+            "testStrategy": "Test the AlertDialog component to ensure it displays correctly and matches the app's design system."
+          },
+          {
+            "id": 4,
+            "title": "Implement Dialog Components in Codebase",
+            "description": "Replace identified browser dialogs with the newly developed ConfirmDialog and AlertDialog components.",
+            "dependencies": [
+              "46.2",
+              "46.3"
+            ],
+            "details": "Replace all instances of window.confirm, confirm, and alert with ConfirmDialog and AlertDialog components in the identified files.",
+            "status": "done",
+            "testStrategy": "Verify that all browser dialogs have been replaced with in-app dialogs and that existing functionality is maintained."
+          },
+          {
+            "id": 5,
+            "title": "Ensure Accessibility and Focus Management",
+            "description": "Implement focus management and keyboard navigation for the dialog components.",
+            "dependencies": [
+              "46.4"
+            ],
+            "details": "Ensure that dialogs are keyboard navigable, with ESC to close and Enter to confirm, and that focus management is implemented for accessibility.",
+            "status": "done",
+            "testStrategy": "Test dialogs for accessibility, ensuring proper focus management and keyboard navigation are functional."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-20T12:23:50.420Z",
-      "updated": "2025-09-22T08:38:22.947Z",
+      "updated": "2025-10-08T07:49:41.048Z",
       "description": "Tasks for master context"
     }
   }
