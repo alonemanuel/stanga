@@ -130,6 +130,17 @@ async function endGame(gameId: string, endReason: string, winnerTeamId?: string)
   return endResult.data;
 }
 
+async function deleteGame(gameId: string): Promise<void> {
+  const response = await fetch(`/api/games/${gameId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete game');
+  }
+}
+
 
 async function startPenalties(gameId: string): Promise<PenaltyShootout> {
   const response = await fetch(`/api/games/${gameId}/penalties`, {
@@ -224,6 +235,23 @@ export function useEndGame() {
       queryClient.invalidateQueries({ queryKey: ['game', data.id] });
       queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
       toast.success('Game ended successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useDeleteGame() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ gameId, matchdayId }: { gameId: string; matchdayId: string }) =>
+      deleteGame(gameId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['game', variables.gameId] });
+      queryClient.invalidateQueries({ queryKey: ['games', variables.matchdayId] });
+      toast.success('Game deleted successfully!');
     },
     onError: (error: Error) => {
       toast.error(error.message);

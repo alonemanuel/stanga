@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useGames, useGame, useStartGame, useEndGame, usePenalties, useStartPenalties, useLogPenaltyKick } from "@/lib/hooks/use-games";
+import { useGames, useGame, useStartGame, useEndGame, useDeleteGame, usePenalties, useStartPenalties, useLogPenaltyKick } from "@/lib/hooks/use-games";
 import { useMatchdayTeams } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { useGameGoals, useAddGoal, useEditGoal, useDeleteGoal } from "@/lib/hooks/use-goal-management";
@@ -972,6 +972,7 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
   const { data: goalsData, isLoading } = useGameGoals(game.id);
   const { data: penaltyData } = usePenalties(game.id);
   const confirm = useConfirm();
+  const deleteGameMutation = useDeleteGame();
   
   const handleDeleteGame = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -985,8 +986,10 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
       });
 
       if (confirmed) {
-        // TODO: Implement delete game API
-        console.log('Delete game:', game.id);
+        await deleteGameMutation.mutateAsync({
+          gameId: game.id,
+          matchdayId: game.matchdayId,
+        });
       }
     } catch (error) {
       console.error('Failed to delete game', error);

@@ -168,3 +168,57 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+// DELETE /api/games/:id - Delete game (soft delete)
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { user } = await requireAuth();
+    const { id: gameId } = await params;
+    
+    const game = await db
+      .select()
+      .from(games)
+      .where(and(eq(games.id, gameId), isNull(games.deletedAt)))
+      .limit(1);
+    
+    if (!game.length) {
+      return NextResponse.json(
+        { error: 'Game not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Soft delete the game
+    await db
+      .update(games)
+      .set({ 
+        deletedAt: new Date(),
+        updatedBy: user.id 
+      })
+      .where(eq(games.id, gameId));
+    
+    // Log the activity
+    await logActivity({
+      entityType: 'game',
+      entityId: gameId,
+      action: 'delete',
+      actorId: user.id,
+      changes: {
+        from: { deletedAt: null },
+        to: { deletedAt: new Date() }
+      }
+    });
+    
+    return NextResponse.json({ 
+      success: true,
+      message: 'Game deleted successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error deleting game:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete game' },
+      { status: 500 }
+    );
+  }
+}
