@@ -590,19 +590,6 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
           </>
         )}
       </div>
-      
-      {/* End Game Button */}
-      <div className="bg-card border rounded-lg p-6">
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={handleEndGame}
-            disabled={endGameMutation.isPending}
-          >
-            End Game
-          </Button>
-        </div>
-      </div>
     </>
   );
 }
@@ -995,61 +982,61 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
   return (
     <div className="bg-muted/50 rounded-lg overflow-hidden">
       <div 
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/70 transition-colors"
+        className="cursor-pointer hover:bg-muted/70 transition-colors"
         onClick={onToggle}
       >
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div 
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: game.homeTeam?.colorHex }}
-            />
-            <div>
-              <div className="text-sm font-medium">{game.homeTeam?.name}</div>
-              {penaltyData && penaltyData.status === 'completed' && (
-                <div className="text-xs text-orange-600">
-                  ({penaltyData.homeTeamScore} pens)
-                </div>
-              )}
+        <div className="flex items-center justify-between p-3">
+          <div className="flex items-center justify-between flex-1 mr-2">
+            <div className="flex items-center space-x-2">
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: game.homeTeam?.colorHex }}
+              />
+              <span className="text-sm font-medium">{game.homeTeam?.name}</span>
+            </div>
+            
+            <div className="text-lg font-bold">
+              {game.homeScore} - {game.awayScore}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">{game.awayTeam?.name}</span>
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: game.awayTeam?.colorHex }}
+              />
             </div>
           </div>
           
-          <div className="text-lg font-bold">
-            {game.homeScore} - {game.awayScore}
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div>
-              <div className="text-sm font-medium text-right">{game.awayTeam?.name}</div>
-              {penaltyData && penaltyData.status === 'completed' && (
-                <div className="text-xs text-orange-600 text-right">
-                  ({penaltyData.awayTeamScore} pens)
-                </div>
-              )}
-            </div>
-            <div 
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: game.awayTeam?.colorHex }}
-            />
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleDeleteGame}
+              className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+              title="Delete game"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-gray-500" />
+            )}
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleDeleteGame}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
-            title="Delete game"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          )}
-        </div>
+        {/* Penalty Score Row */}
+        {penaltyData && penaltyData.status === 'completed' && (
+          <div className="px-3 pb-2">
+            <div className="h-px bg-orange-300 mb-2" />
+            <div className="flex items-center justify-center space-x-4 text-xs text-orange-600">
+              <span>{penaltyData.homeTeamScore}</span>
+              <span className="font-medium">PENALTIES</span>
+              <span>{penaltyData.awayTeamScore}</span>
+            </div>
+          </div>
+        )}
       </div>
       
       {isExpanded && (
