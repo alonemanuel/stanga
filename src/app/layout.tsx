@@ -4,7 +4,6 @@ import { interSans } from "@/lib/fonts";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AppShell } from "@/components/layout/AppShell";
-import { BottomNav } from "@/components/navigation/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +27,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${interSans.variable} antialiased pb-16`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${interSans.variable} antialiased`}>
         <Providers>
           <AppShell>
             {children}
           </AppShell>
-          <BottomNav />
         </Providers>
       </body>
     </html>
