@@ -1,9 +1,18 @@
+"use client";
+
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/UserMenu";
-import { ModeToggle } from "@/components/mode-toggle";
 import { GroupSwitcher } from "@/components/groups/GroupSwitcher";
+import { Button } from "@/components/ui/button";
+import { Users, BarChart3, Calendar } from "lucide-react";
+import { useGroupContext } from "@/lib/hooks/use-group-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { activeGroup, isLoading } = useGroupContext();
+
   return (
     <div className="min-h-dvh flex flex-col">
       <a
@@ -20,8 +29,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center space-x-2">
             <GroupSwitcher />
           </div>
-          <nav className="flex items-center space-x-2" role="navigation" aria-label="Header navigation">
-            <ModeToggle />
+          
+          {/* Navigation Buttons - Only show if user has an active group */}
+          {activeGroup && !isLoading && (
+            <nav className="flex items-center space-x-1" role="navigation" aria-label="Main navigation">
+              <Link href="/matchdays">
+                <Button
+                  variant={pathname === "/matchdays" || pathname === "/" ? "default" : "ghost"}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  aria-current={pathname === "/matchdays" || pathname === "/" ? "page" : undefined}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">Matchdays</span>
+                </Button>
+              </Link>
+              <Link href="/stats">
+                <Button
+                  variant={pathname === "/stats" ? "default" : "ghost"}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  aria-current={pathname === "/stats" ? "page" : undefined}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Stats</span>
+                </Button>
+              </Link>
+            </nav>
+          )}
+          
+          <nav className="flex items-center space-x-2" role="navigation" aria-label="User navigation">
             <UserMenu />
           </nav>
         </div>

@@ -4,10 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthGuard";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { ChevronDown, User, Settings, LogOut, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export function UserMenu() {
   const { user, loading, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -40,6 +42,10 @@ export function UserMenu() {
     console.log('UserMenu: Sign out clicked');
     setIsDropdownOpen(false);
     await signOut();
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const toggleDropdown = () => {
@@ -97,6 +103,18 @@ export function UserMenu() {
               <Settings className="h-4 w-4" />
               Settings
             </Link>
+            
+            <div className="border-t my-1" />
+            
+            <button
+              onClick={toggleTheme}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground outline-none"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
+            
+            <div className="border-t my-1" />
             
             <button
               onClick={handleSignOut}
