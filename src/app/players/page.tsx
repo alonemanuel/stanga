@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { PlayerForm } from "@/components/players/PlayerForm";
-import { usePlayers, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
+import { usePlayers, useCreatePlayer, useUpdatePlayer, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
 import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, RotateCcw, Users } from "lucide-react";
+import { Pencil, Trash2, RotateCcw, Users, Check, Plus } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface Player {
@@ -21,6 +20,8 @@ interface Player {
 export default function PlayersPage() {
   const [user, setUser] = React.useState<User | null>(null);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingName, setEditingName] = React.useState("");
+  const [newPlayerName, setNewPlayerName] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
@@ -51,8 +52,47 @@ export default function PlayersPage() {
     limit: 50,
   });
   
+  const createMutation = useCreatePlayer();
+  const updateMutation = useUpdatePlayer();
   const deleteMutation = useDeletePlayer();
   const restoreMutation = useRestorePlayer();
+  
+  const handleAddPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerName.trim()) return;
+    
+    try {
+      await createMutation.mutateAsync({ name: newPlayerName.trim() });
+      setNewPlayerName("");
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+  
+  const handleStartEdit = (player: Player) => {
+    setEditingId(player.id);
+    setEditingName(player.name);
+  };
+  
+  const handleSaveEdit = async (id: string) => {
+    if (!editingName.trim()) return;
+    
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        data: { name: editingName.trim() },
+      });
+      setEditingId(null);
+      setEditingName("");
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
   
   const handleDeletePlayer = async (id: string) => {
     if (confirm('Are you sure you want to delete this player?')) {
@@ -115,10 +155,24 @@ export default function PlayersPage() {
 
       {/* Quick Add Player Form */}
       {user && (
-        <div className="bg-muted/50 border-2 border-dashed rounded-lg p-4">
-          <h3 className="text-sm font-medium mb-3">Add New Player</h3>
-          <PlayerForm quickAdd />
-        </div>
+        <form onSubmit={handleAddPlayer} className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter player's full name"
+            value={newPlayerName}
+            onChange={(e) => setNewPlayerName(e.target.value)}
+            className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            autoFocus
+          />
+          <Button
+            type="submit"
+            disabled={!newPlayerName.trim() || createMutation.isPending}
+            className="px-4"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Player
+          </Button>
+        </form>
       )}
 
       {/* Players List */}
@@ -142,41 +196,65 @@ export default function PlayersPage() {
               key={player.id}
               className="rounded-lg border p-4 bg-card"
             >
-              {editingId === player.id ? (
-                <PlayerForm
-                  player={player}
-                  onSuccess={() => setEditingId(null)}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
+                {editingId === player.id ? (
+                  <input
+                    type="text"
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveEdit(player.id);
+                      } else if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="flex-1 font-semibold rounded border border-input bg-transparent px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                  />
+                ) : (
                   <h3 className="font-semibold">{player.name}</h3>
-                  {user && (
-                    <div className="flex gap-1 ml-2">
+                )}
+                {user && (
+                  <div className="flex gap-1 shrink-0">
+                    {editingId === player.id ? (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditingId(player.id)}
+                        onClick={() => handleSaveEdit(player.id)}
+                        disabled={!editingName.trim() || updateMutation.isPending}
+                        aria-label={`Save ${player.name}`}
+                        title="Save (Enter)"
+                        className="h-9 w-9 p-0 text-green-600 hover:text-green-700"
+                      >
+                        <Check className="h-5 w-5" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStartEdit(player)}
                         aria-label={`Edit ${player.name}`}
                         title={`Edit ${player.name}`}
-                        className="h-8 w-8 p-0"
+                        className="h-9 w-9 p-0"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-5 w-5" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeletePlayer(player.id)}
-                        aria-label={`Delete ${player.name}`}
-                        title={`Delete ${player.name}`}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeletePlayer(player.id)}
+                      aria-label={`Delete ${player.name}`}
+                      title={`Delete ${player.name}`}
+                      className="h-9 w-9 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
