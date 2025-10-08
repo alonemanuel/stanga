@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 import { useMatchdayStats } from "@/lib/hooks/use-stats";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
@@ -116,6 +117,7 @@ function CollapsibleSection({
 }
 
 export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
   const [matchdayId, setMatchdayId] = React.useState<string>('');
   const [isRulesExpanded, setIsRulesExpanded] = React.useState(false);
@@ -139,6 +141,16 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
     };
     getParams();
   }, [params]);
+  
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    const newTab = value as TabType;
+    setActiveTab(newTab);
+    const newPath = newTab === 'overview' 
+      ? `/matchdays/${matchdayId}`
+      : `/matchdays/${matchdayId}/${newTab}`;
+    router.push(newPath);
+  };
   
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const { data: statsData, isLoading: statsLoading, error: statsError, isRefetching } = useMatchdayStats(matchdayId);
@@ -526,7 +538,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
       </div>
 
       {/* Floating Bottom Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
           <TabsList className="bg-background/40 backdrop-blur-md supports-[backdrop-filter]:bg-background/30 border border-primary/20 shadow-lg rounded-full p-1.5 h-14 w-full max-w-md">
             <TabsTrigger value="overview" className="rounded-full px-6 h-11 text-base flex-1 data-[state=active]:bg-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:backdrop-blur-sm">

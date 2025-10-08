@@ -238,6 +238,39 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
       {/* Timer Card */}
       <GameTimer game={game} />
       
+      {/* Game Controls */}
+      <div className="bg-card border rounded-lg p-6">
+        <div className="flex justify-center space-x-2">
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    onClick={handleGoToPenalties}
+                    disabled={endGameMutation.isPending || !isGameTied || showPenalties}
+                  >
+                    Go to Penalties
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {(!isGameTied || showPenalties) && (
+                <TooltipContent>
+                  <p>{showPenalties ? 'Already in penalty mode' : 'Only available when the game is tied'}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            variant="outline"
+            onClick={() => handleEndGame('regulation')}
+            disabled={endGameMutation.isPending}
+          >
+            End Game
+          </Button>
+        </div>
+      </div>
+      
       {/* Score Card with Goals */}
       <div className="bg-card border-2 border-green-200 rounded-lg p-6">
         {/* Score Display */}
@@ -272,7 +305,7 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
             </DropdownMenu>
           </div>
           
-          <div className="text-4xl font-bold text-muted-foreground">VS</div>
+          <div className="text-4xl font-bold text-muted-foreground self-start mt-4">VS</div>
           
           <div className="text-center">
             <div 
@@ -352,41 +385,6 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
           </>
         )}
       </div>
-      
-      {/* Game Controls */}
-      {!showPenalties && (
-        <div className="bg-card border rounded-lg p-6">
-          <div className="flex justify-center space-x-2">
-            <TooltipProvider>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      variant="outline"
-                      onClick={handleGoToPenalties}
-                      disabled={endGameMutation.isPending || !isGameTied}
-                    >
-                      Go to Penalties
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!isGameTied && (
-                  <TooltipContent>
-                    <p>Only available when the game is tied</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            <Button
-              variant="outline"
-              onClick={() => handleEndGame('regulation')}
-              disabled={endGameMutation.isPending}
-            >
-              End Game
-            </Button>
-          </div>
-        </div>
-      )}
       
       {/* Penalty Section (if active) */}
       {showPenalties && (
@@ -535,7 +533,7 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
             </DropdownMenu>
           </div>
           
-          <div className="text-4xl font-bold text-muted-foreground">VS</div>
+          <div className="text-4xl font-bold text-muted-foreground self-start mt-4">VS</div>
           
           <div className="text-center">
             <div 
@@ -583,12 +581,9 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
                   <Badge variant="outline" className="font-mono text-xs bg-orange-100 text-orange-800">
                     P{penalty.kickOrder}
                   </Badge>
-                  <div className="flex items-center gap-2 text-sm flex-1">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium">
-                      {penalty.playerName}
-                    </span>
-                  </div>
+                  <span className="text-sm font-medium flex-1">
+                    {penalty.playerName}
+                  </span>
                 </div>
               ))}
             </div>
@@ -1009,20 +1004,29 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
               className="w-4 h-4 rounded-full"
               style={{ backgroundColor: game.homeTeam?.colorHex }}
             />
-            <span className="text-sm font-medium">{game.homeTeam?.name}</span>
+            <div>
+              <div className="text-sm font-medium">{game.homeTeam?.name}</div>
+              {penaltyData && penaltyData.status === 'completed' && (
+                <div className="text-xs text-orange-600">
+                  ({penaltyData.homeTeamScore} pens)
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="text-lg font-bold">
             {game.homeScore} - {game.awayScore}
-            {penaltyData && penaltyData.status === 'completed' && (
-              <span className="text-sm text-orange-600 ml-2">
-                ({penaltyData.homeTeamScore}-{penaltyData.awayTeamScore} pens)
-              </span>
-            )}
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{game.awayTeam?.name}</span>
+            <div>
+              <div className="text-sm font-medium text-right">{game.awayTeam?.name}</div>
+              {penaltyData && penaltyData.status === 'completed' && (
+                <div className="text-xs text-orange-600 text-right">
+                  ({penaltyData.awayTeamScore} pens)
+                </div>
+              )}
+            </div>
             <div 
               className="w-4 h-4 rounded-full"
               style={{ backgroundColor: game.awayTeam?.colorHex }}
