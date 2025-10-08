@@ -6,7 +6,7 @@ import { useGroupContext } from '@/lib/hooks/use-group-context';
 import { useGroups } from '@/lib/hooks/use-groups';
 import { Group } from '@/lib/db/schema';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Plus, LogIn, Settings, ArrowUpDown, Home, Users, BarChart3 } from 'lucide-react';
+import { ChevronDown, Plus, LogIn, Settings, ArrowUpDown, Home, Users, BarChart3, Calendar } from 'lucide-react';
 import { JoinGroupModal } from './JoinGroupModal';
 import { CreateGroupModal } from './CreateGroupModal';
 
@@ -202,7 +202,19 @@ export function GroupSwitcher() {
                       }`}
                     >
                       <Home className="h-4 w-4" />
-                      <span>Group Overview</span>
+                      <span>Overview</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        router.push('/matchdays');
+                      }}
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm ${
+                        pathname === '/matchdays' || pathname === '/' ? 'bg-muted font-medium' : ''
+                      }`}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      <span>Matchdays</span>
                     </button>
                     <button
                       onClick={() => {

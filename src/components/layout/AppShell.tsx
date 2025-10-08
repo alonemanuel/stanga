@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { GroupSwitcher } from "@/components/groups/GroupSwitcher";
 import { Button } from "@/components/ui/button";
-import { Users, BarChart3 } from "lucide-react";
+import { Users, BarChart3, Calendar } from "lucide-react";
 import { useGroupContext } from "@/lib/hooks/use-group-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -33,15 +33,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Navigation Buttons - Only show if user has an active group */}
           {activeGroup && !isLoading && (
             <nav className="hidden sm:flex items-center space-x-1" role="navigation" aria-label="Main navigation">
-              <Link href="/players">
+              <Link href="/matchdays">
                 <Button
-                  variant={pathname === "/players" ? "default" : "ghost"}
+                  variant={pathname === "/matchdays" || pathname === "/" ? "default" : "ghost"}
                   size="sm"
                   className="flex items-center gap-2"
-                  aria-current={pathname === "/players" ? "page" : undefined}
+                  aria-current={pathname === "/matchdays" || pathname === "/" ? "page" : undefined}
                 >
-                  <Users className="h-4 w-4" />
-                  <span className="hidden md:inline">Players</span>
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden md:inline">Matchdays</span>
                 </Button>
               </Link>
               <Link href="/stats">
