@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { PlayerForm } from "@/components/players/PlayerForm";
-import { usePlayers, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
+import { usePlayers, useCreatePlayer, useUpdatePlayer, useDeletePlayer, useRestorePlayer } from "@/lib/hooks/use-players";
 import { useGroupContext } from "@/lib/hooks/use-group-context";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, RotateCcw, Users } from "lucide-react";
+import { Pencil, Trash2, RotateCcw, Users, Check, Plus } from "lucide-react";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useConfirm } from "@/lib/hooks/use-dialogs";
 
@@ -21,10 +20,10 @@ interface Player {
 
 export default function PlayersPage() {
   const [user, setUser] = React.useState<User | null>(null);
-  const [showForm, setShowForm] = React.useState(false);
-  const [editingPlayer, setEditingPlayer] = React.useState<Player | null>(null);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingName, setEditingName] = React.useState("");
+  const [newPlayerName, setNewPlayerName] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [showDeleted, setShowDeleted] = React.useState(false);
   const confirm = useConfirm();
   const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
@@ -50,27 +49,51 @@ export default function PlayersPage() {
   // Fetch players with filters
   const { data: playersData, isLoading, error } = usePlayers({
     query: searchQuery,
-    isActive: !showDeleted,
+    isActive: true,
     page: 1,
     limit: 50,
   });
   
+  const createMutation = useCreatePlayer();
+  const updateMutation = useUpdatePlayer();
   const deleteMutation = useDeletePlayer();
   const restoreMutation = useRestorePlayer();
   
-  const handleAddPlayer = () => {
-    setEditingPlayer(null);
-    setShowForm(true);
+  const handleAddPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerName.trim()) return;
+    
+    try {
+      await createMutation.mutateAsync({ name: newPlayerName.trim() });
+      setNewPlayerName("");
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
   };
   
-  const handleEditPlayer = (player: Player) => {
-    setEditingPlayer(player);
-    setShowForm(true);
+  const handleStartEdit = (player: Player) => {
+    setEditingId(player.id);
+    setEditingName(player.name);
   };
   
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    setEditingPlayer(null);
+  const handleSaveEdit = async (id: string) => {
+    if (!editingName.trim()) return;
+    
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        data: { name: editingName.trim() },
+      });
+      setEditingId(null);
+      setEditingName("");
+    } catch (error) {
+      // Error is handled by the mutation hook
+    }
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName("");
   };
   
   const handleDeletePlayer = async (id: string) => {
@@ -124,70 +147,48 @@ export default function PlayersPage() {
     );
   }
 
-  if (showForm) {
-    return (
-      <div className="p-4 max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">
-            {editingPlayer ? 'Edit Player' : 'Add New Player'}
-          </h1>
-          <p className="text-muted-foreground">
-            {editingPlayer ? 'Update player information' : 'Create a new player profile'}
-          </p>
-        </div>
-        
-        <div className="bg-card border rounded-lg p-6">
-          <PlayerForm
-            player={editingPlayer || undefined}
-            onSuccess={handleFormSuccess}
-            onCancel={() => setShowForm(false)}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Players</h1>
-          <p className="text-muted-foreground">
-            Manage your football players
-          </p>
-        </div>
-        {user && (
-          <Button onClick={handleAddPlayer}>
-            Add Player
-          </Button>
-        )}
+      <div>
+        <h1 className="text-2xl font-semibold">Players</h1>
+        <p className="text-muted-foreground">
+          Manage your football players
+        </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+      {/* Search */}
+      <div className="flex-1">
+        <input
+          type="text"
+          placeholder="Search players..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
+
+      {/* Quick Add Player Form */}
+      {user && (
+        <form onSubmit={handleAddPlayer} className="flex gap-2 items-center">
           <input
             type="text"
-            placeholder="Search players..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="Enter player's full name"
+            value={newPlayerName}
+            onChange={(e) => setNewPlayerName(e.target.value)}
+            className="flex-1 h-10 rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            autoFocus
           />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={showDeleted}
-              onChange={(e) => setShowDeleted(e.target.checked)}
-              className="rounded border-input"
-            />
-            Show deleted
-          </label>
-        </div>
-      </div>
+          <Button
+            type="submit"
+            disabled={!newPlayerName.trim() || createMutation.isPending}
+            className="h-10 px-4"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Player
+          </Button>
+        </form>
+      )}
 
       {/* Players List */}
       {isLoading ? (
@@ -201,63 +202,71 @@ export default function PlayersPage() {
         </div>
       ) : !playersData?.data.length ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">
-            {showDeleted ? 'No deleted players found' : 'No players found'}
-          </p>
-          {!showDeleted && user && (
-            <Button onClick={handleAddPlayer} className="mt-4">
-              Add Your First Player
-            </Button>
-          )}
+          <p className="text-muted-foreground">No players found</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {playersData.data.map((player) => (
             <div
               key={player.id}
-              className={`rounded-lg border p-4 ${
-                player.deletedAt ? 'bg-muted/50 opacity-75' : 'bg-card'
-              }`}
+              className="rounded-lg border p-4 bg-card"
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{player.name}</h3>
+              <div className="flex items-center justify-between gap-2">
+                {editingId === player.id ? (
+                  <input
+                    type="text"
+                    value={editingName}
+                    onChange={(e) => setEditingName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveEdit(player.id);
+                      } else if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                    className="flex-1 font-semibold rounded border border-input bg-transparent px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
+                  />
+                ) : (
+                  <h3 className="font-semibold">{player.name}</h3>
+                )}
                 {user && (
-                  <div className="flex gap-1 ml-2">
-                    {!player.deletedAt ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditPlayer(player)}
-                          aria-label={`Edit ${player.name}`}
-                          title={`Edit ${player.name}`}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Pencil className="h-5 w-5" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeletePlayer(player.id)}
-                          aria-label={`Delete ${player.name}`}
-                          title={`Delete ${player.name}`}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </>
+                  <div className="flex gap-1 shrink-0">
+                    {editingId === player.id ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSaveEdit(player.id)}
+                        disabled={!editingName.trim() || updateMutation.isPending}
+                        aria-label={`Save ${player.name}`}
+                        title="Save (Enter)"
+                        className="h-9 w-9 p-0 text-green-600 hover:text-green-700"
+                      >
+                        <Check className="h-5 w-5" />
+                      </Button>
                     ) : (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRestorePlayer(player.id)}
-                        aria-label={`Restore ${player.name}`}
-                        title={`Restore ${player.name}`}
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                        onClick={() => handleStartEdit(player)}
+                        aria-label={`Edit ${player.name}`}
+                        title={`Edit ${player.name}`}
+                        className="h-9 w-9 p-0"
                       >
-                        <RotateCcw className="h-5 w-5" />
+                        <Pencil className="h-5 w-5" />
                       </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeletePlayer(player.id)}
+                      aria-label={`Delete ${player.name}`}
+                      title={`Delete ${player.name}`}
+                      className="h-9 w-9 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
                   </div>
                 )}
               </div>
@@ -266,10 +275,10 @@ export default function PlayersPage() {
         </div>
       )}
       
-      {/* Pagination info */}
+      {/* Player count */}
       {playersData && (
         <div className="text-center text-sm text-muted-foreground">
-          Showing {playersData.data.length} of {playersData.pagination.total} players
+          {playersData.pagination.total} players
         </div>
       )}
     </div>

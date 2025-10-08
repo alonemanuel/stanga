@@ -14,10 +14,11 @@ interface PlayerFormProps {
   };
   onSuccess?: () => void;
   onCancel?: () => void;
+  quickAdd?: boolean;
 }
 
 
-export function PlayerForm({ player, onSuccess, onCancel }: PlayerFormProps) {
+export function PlayerForm({ player, onSuccess, onCancel, quickAdd }: PlayerFormProps) {
   const isEditing = !!player;
   const createMutation = useCreatePlayer();
   const updateMutation = useUpdatePlayer();
@@ -38,11 +39,18 @@ export function PlayerForm({ player, onSuccess, onCancel }: PlayerFormProps) {
           id: player.id,
           data: data as PlayerUpdate,
         });
+        onSuccess?.();
       } else {
         await createMutation.mutateAsync(data as PlayerCreate);
+        
+        if (quickAdd) {
+          // In quick-add mode, reset form and keep it visible
+          methods.reset();
+        } else {
+          // In normal mode, call onSuccess callback
+          onSuccess?.();
+        }
       }
-      
-      onSuccess?.();
     } catch (error) {
       // Error handling is done in the mutation hooks
     }
@@ -57,6 +65,7 @@ export function PlayerForm({ player, onSuccess, onCancel }: PlayerFormProps) {
         label="Full Name"
         placeholder="Enter player's full name"
         required
+        autoFocus={quickAdd}
       />
       
       <div className="flex gap-2 justify-end">
