@@ -234,14 +234,16 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const isGameTied = (goalsData?.homeTeamGoals.length || 0) === (goalsData?.awayTeamGoals.length || 0);
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Timer Card - Sticky */}
-      <div className="sticky top-0 z-10 bg-background pb-4">
+      <div className="sticky top-0 z-10 bg-background pt-4 pb-4 mb-6">
         <GameTimer game={game} />
       </div>
       
-      {/* Game Controls */}
-      <div className="bg-card border rounded-lg p-6">
+      {/* Content below timer */}
+      <div className="space-y-6">
+        {/* Game Controls */}
+        <div className="bg-card border rounded-lg p-6">
         <div className="flex justify-center space-x-2">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
@@ -393,17 +395,18 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
         )}
       </div>
       
-      {/* Penalty Section (if active) */}
-      {showPenalties && (
-        <PenaltySection 
-          game={game}
-          matchdayId={matchdayId}
-          homeTeamPlayers={homeTeamPlayers}
-          awayTeamPlayers={awayTeamPlayers}
-          onBack={() => setShowPenalties(false)}
-          onEndGame={onGameEnd}
-        />
-      )}
+        {/* Penalty Section (if active) */}
+        {showPenalties && (
+          <PenaltySection 
+            game={game}
+            matchdayId={matchdayId}
+            homeTeamPlayers={homeTeamPlayers}
+            awayTeamPlayers={awayTeamPlayers}
+            onBack={() => setShowPenalties(false)}
+            onEndGame={onGameEnd}
+          />
+        )}
+      </div>
     </div>
   );
 }
