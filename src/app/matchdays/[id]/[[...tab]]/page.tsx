@@ -484,7 +484,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               variant="outline" 
               size="icon"
               onClick={handleDeleteMatchday}
-              loading={deleteMutation.isPending}
+              disabled={deleteMutation.isPending}
               aria-label="Delete matchday"
               title="Delete matchday"
               className="text-red-600 hover:text-red-700 hover:border-red-300"

@@ -112,7 +112,6 @@ function PenaltyKickForm({ game, shootout, onKickLogged }: PenaltyKickFormProps)
           <Button
             onClick={handleLogKick}
             disabled={!selectedPlayer || !selectedTeam || logKickMutation.isPending}
-            loading={logKickMutation.isPending}
             className="w-full"
           >
             Log Kick
@@ -249,7 +248,6 @@ export function PenaltyShootout({ game, onShootoutEnd }: PenaltyShootoutProps) {
           <Button
             onClick={handleStartPenalties}
             disabled={startPenaltiesMutation.isPending}
-            loading={startPenaltiesMutation.isPending}
           >
             Start Penalty Shootout
           </Button>

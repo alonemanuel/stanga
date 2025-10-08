@@ -66,7 +66,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       />
 
       <div className="flex justify-end pt-4">
-        <Button type="submit" loading={isLoading}>
+        <Button type="submit" disabled={isLoading}>
           Save Changes
         </Button>
       </div>

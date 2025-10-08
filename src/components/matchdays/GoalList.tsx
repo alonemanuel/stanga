@@ -118,7 +118,6 @@ function AddGoalForm({ players, onSubmit, onCancel, isLoading, isPenaltyMode = f
           type="submit"
           size="sm"
           disabled={isLoading || (isPenaltyMode && !selectedScorer)}
-          loading={isLoading}
           className="flex-1"
         >
           {isPenaltyMode ? 'Record Goal' : 'Add Goal'}
@@ -219,7 +218,6 @@ function EditGoalForm({ goal, players, onSubmit, onCancel, isLoading, isPenaltyM
           type="submit"
           size="sm"
           disabled={isLoading || (isPenaltyMode && !selectedScorer)}
-          loading={isLoading}
           className="flex-1"
         >
           {isPenaltyMode ? 'Save Penalty' : 'Save Changes'}

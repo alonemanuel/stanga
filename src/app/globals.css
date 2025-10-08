@@ -133,7 +133,7 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Pointer cursor for all clickable elements */
   button,
   [role="button"],
@@ -166,7 +166,7 @@
   .cursor-pointer {
     cursor: pointer;
   }
-  
+
   /* Ensure disabled elements don't show pointer cursor */
   button:disabled,
   [role="button"]:disabled,
@@ -188,12 +188,12 @@
   .cursor-not-allowed {
     cursor: not-allowed;
   }
-  
+
   /* Special cursor states for drag and drop */
   [draggable="true"] {
     cursor: grab;
   }
-  
+
   [draggable="true"]:active {
     cursor: grabbing;
   }
