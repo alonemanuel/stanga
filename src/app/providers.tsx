@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { GroupProvider } from "@/lib/hooks/use-group-context";
+import { DialogProvider } from "@/lib/hooks/use-dialogs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +24,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <AuthGuard>
           <GroupProvider>
-            {children}
+            <DialogProvider>
+              {children}
+            </DialogProvider>
           </GroupProvider>
         </AuthGuard>
       </ThemeProvider>

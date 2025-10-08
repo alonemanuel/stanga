@@ -11,6 +11,7 @@ import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { CalendarDays, Clock, MapPin, Users, UserPlus, PlusCircle } from "lucide-react";
 import { JoinGroupModal } from "@/components/groups/JoinGroupModal";
 import { CreateGroupModal } from "@/components/groups/CreateGroupModal";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 
 interface Matchday {
   id: string;
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [showForm, setShowForm] = React.useState(false);
   const [showJoinModal, setShowJoinModal] = React.useState(false);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
+  const confirm = useConfirm();
   const { activeGroup, isLoading: groupLoading } = useGroupContext();
   
   const supabase = createClient();
@@ -64,8 +66,21 @@ export default function HomePage() {
   const deleteMutation = useDeleteMatchday();
   
   const handleDeleteMatchday = async (id: string) => {
-    if (confirm('Are you sure you want to delete this matchday?')) {
-      await deleteMutation.mutateAsync(id);
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Matchday',
+        message: 'Are you sure you want to delete this matchday?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (confirmed) {
+        await deleteMutation.mutateAsync(id);
+      }
+    } catch (error) {
+      // User cancelled or closed dialog
+      console.log('Delete cancelled');
     }
   };
 

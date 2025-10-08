@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2 } from "lucide-react";
 import { getMatchdayDisplayName } from "@/lib/matchday-display";
+import { useConfirm } from "@/lib/hooks/use-dialogs";
 import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 interface MatchdayDetailPageProps {
@@ -89,6 +90,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const [isEditing, setIsEditing] = React.useState(false);
   const [matchdayId, setMatchdayId] = React.useState<string>('');
   const [isRulesExpanded, setIsRulesExpanded] = React.useState(false);
+  const confirm = useConfirm();
   const [isInfoExpanded, setIsInfoExpanded] = React.useState(false);
   
   const supabase = createClient();
@@ -140,18 +142,27 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const handleDeleteMatchday = async () => {
     if (!matchdayData) return;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${matchdayData.data.name}"? This action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      try {
-        await deleteMutation.mutateAsync(matchdayId);
-        // Redirect to matchdays list after successful deletion
-        window.location.href = '/matchdays';
-      } catch (error) {
-        // Error handling is done in the mutation hook
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Matchday',
+        message: `Are you sure you want to delete "${matchdayData.data.name}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+      
+      if (confirmed) {
+        try {
+          await deleteMutation.mutateAsync(matchdayId);
+          // Redirect to matchdays list after successful deletion
+          window.location.href = '/matchdays';
+        } catch (error) {
+          // Error handling is done in the mutation hook
+        }
       }
+    } catch (error) {
+      // User cancelled or closed dialog
+      console.log('Delete cancelled');
     }
   };
   

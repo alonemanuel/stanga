@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PenaltyShootout } from "./PenaltyShootout";
 import { GoalList } from "./GoalList";
 import { ChevronDown, ChevronUp, User, Clock } from "lucide-react";
+import { useConfirmWithOptions } from "@/lib/hooks/use-dialogs";
 import type { Game } from "@/lib/hooks/use-games";
 
 interface GameManagementProps {
@@ -288,6 +289,7 @@ interface GameQueueProps {
 function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
   const { data: teamsData } = useMatchdayTeams(matchdayId);
   const startGameMutation = useStartGame();
+  const confirmWithOptions = useConfirmWithOptions();
   
   const [selectedHomeTeam, setSelectedHomeTeam] = React.useState<string>('');
   const [selectedAwayTeam, setSelectedAwayTeam] = React.useState<string>('');
@@ -323,16 +325,27 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
         const details = error.details;
         const message = `Teams don't have enough players assigned:\n\n• ${details.homeTeamName}: ${details.homeTeamPlayers}/${details.required} players\n• ${details.awayTeamName}: ${details.awayTeamPlayers}/${details.required} players\n\nStart the game anyway?`;
         
-        const confirmed = window.confirm(message);
-        if (confirmed) {
-          // Ask about "don't show again"
-          const dontShowAgain = window.confirm("Don't show this warning again?");
-          if (dontShowAgain) {
-            localStorage.setItem('stanga-skip-roster-warning', 'true');
+        try {
+          const result = await confirmWithOptions({
+            title: 'Insufficient Players',
+            message,
+            confirmText: 'Start Game',
+            cancelText: 'Cancel',
+            variant: 'default',
+            showDontShowAgain: true,
+          });
+
+          if (result.confirmed) {
+            if (result.dontShowAgain) {
+              localStorage.setItem('stanga-skip-roster-warning', 'true');
+            }
+            
+            // Start game with force
+            handleStartGame(true);
           }
-          
-          // Start game with force
-          handleStartGame(true);
+        } catch (error) {
+          // User cancelled or closed dialog
+          console.log('Dialog cancelled');
         }
       }
       // Other errors are handled by the mutation's onError
@@ -738,6 +751,7 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
 export function GameManagement({ matchdayId, maxPlayersPerTeam }: GameManagementProps) {
   const { data: gamesData } = useGames(matchdayId);
   const [activeGameId, setActiveGameId] = React.useState<string | null>(null);
+  const confirmWithOptions = useConfirmWithOptions();
   
   const games = gamesData || [];
   const activeGame = games.find(g => g.status === 'active');

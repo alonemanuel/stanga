@@ -9,6 +9,7 @@ import { useGroups } from '@/lib/hooks/use-groups';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import type { Group, GroupMember } from '@/lib/db/schema';
+import { useConfirm } from '@/lib/hooks/use-dialogs';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -19,6 +20,7 @@ export default function GroupSettingsPage({ params }: PageProps) {
   const router = useRouter();
   const { activeGroup, setActiveGroup } = useGroupContext();
   const { updateGroup, regenerateInviteCode, fetchGroupMembers, updateMemberRole, removeMember } = useGroups();
+  const confirm = useConfirm();
   
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<Array<{
@@ -147,11 +149,19 @@ export default function GroupSettingsPage({ params }: PageProps) {
   const handleRemoveMember = async (userId: string, userName: string) => {
     if (!group) return;
     
-    if (!confirm(`Remove ${userName} from ${group.name}?`)) {
-      return;
-    }
-    
     try {
+      const confirmed = await confirm({
+        title: 'Remove Member',
+        message: `Remove ${userName} from ${group.name}?`,
+        confirmText: 'Remove',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (!confirmed) {
+        return;
+      }
+      
       await removeMember(group.id, userId);
       await loadData(currentUserId); // Reload members
       toast.success(`${userName} removed from group`);
