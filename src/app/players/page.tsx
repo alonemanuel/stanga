@@ -155,19 +155,19 @@ export default function PlayersPage() {
 
       {/* Quick Add Player Form */}
       {user && (
-        <form onSubmit={handleAddPlayer} className="flex gap-2">
+        <form onSubmit={handleAddPlayer} className="flex gap-2 items-center">
           <input
             type="text"
             placeholder="Enter player's full name"
             value={newPlayerName}
             onChange={(e) => setNewPlayerName(e.target.value)}
-            className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex-1 h-10 rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             autoFocus
           />
           <Button
             type="submit"
             disabled={!newPlayerName.trim() || createMutation.isPending}
-            className="px-4"
+            className="h-10 px-4"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Player
