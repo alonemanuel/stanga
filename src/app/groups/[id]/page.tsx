@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Calendar, Trophy, Settings, Copy, Check } from 'lucide-react';
+import { Users, Calendar, Trophy, Settings, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useGroupContext } from '@/lib/hooks/use-group-context';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ export default function GroupOverviewPage({ params }: PageProps) {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
+  const [isRulesExpanded, setIsRulesExpanded] = useState(false);
 
   const supabase = createClient();
 
@@ -126,22 +127,11 @@ export default function GroupOverviewPage({ params }: PageProps) {
     <div className="container max-w-4xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{group.name}</h1>
-            {group.description && (
-              <p className="text-muted-foreground mt-1">{group.description}</p>
-            )}
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold">{group.name}</h1>
+          {group.description && (
+            <p className="text-muted-foreground mt-1">{group.description}</p>
+          )}
         </div>
         
         {currentUserRole === 'admin' && (
@@ -156,29 +146,29 @@ export default function GroupOverviewPage({ params }: PageProps) {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="border rounded-lg p-4 text-center">
-          <Users className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-          <div className="text-2xl font-bold">{stats?.totalMembers || 0}</div>
-          <div className="text-sm text-muted-foreground">Members</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="border rounded-lg p-3 text-center">
+          <Users className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+          <div className="text-xl font-bold">{stats?.totalMembers || 0}</div>
+          <div className="text-xs text-muted-foreground">Members</div>
         </div>
         
-        <div className="border rounded-lg p-4 text-center">
-          <Calendar className="h-8 w-8 mx-auto mb-2 text-green-500" />
-          <div className="text-2xl font-bold">{stats?.totalMatchdays || 0}</div>
-          <div className="text-sm text-muted-foreground">Matchdays</div>
+        <div className="border rounded-lg p-3 text-center">
+          <Calendar className="h-5 w-5 mx-auto mb-1 text-green-500" />
+          <div className="text-xl font-bold">{stats?.totalMatchdays || 0}</div>
+          <div className="text-xs text-muted-foreground">Matchdays</div>
         </div>
         
-        <div className="border rounded-lg p-4 text-center">
-          <Trophy className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-          <div className="text-2xl font-bold">{stats?.totalGames || 0}</div>
-          <div className="text-sm text-muted-foreground">Games Played</div>
+        <div className="border rounded-lg p-3 text-center">
+          <Trophy className="h-5 w-5 mx-auto mb-1 text-purple-500" />
+          <div className="text-xl font-bold">{stats?.totalGames || 0}</div>
+          <div className="text-xs text-muted-foreground">Games</div>
         </div>
         
-        <div className="border rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold mx-auto mb-2 text-orange-500">⚽</div>
-          <div className="text-2xl font-bold">{stats?.totalGoals || 0}</div>
-          <div className="text-sm text-muted-foreground">Goals Scored</div>
+        <div className="border rounded-lg p-3 text-center">
+          <div className="text-lg mx-auto mb-1 text-orange-500">⚽</div>
+          <div className="text-xl font-bold">{stats?.totalGoals || 0}</div>
+          <div className="text-xs text-muted-foreground">Goals</div>
         </div>
       </div>
 
@@ -186,29 +176,42 @@ export default function GroupOverviewPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Group Rules */}
         <div className="border rounded-lg p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Group Rules</h2>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-2">
-              <span className="font-medium text-primary">1.</span>
-              <span>All players must be assigned to teams before each matchday</span>
+          <button
+            onClick={() => setIsRulesExpanded(!isRulesExpanded)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h2 className="text-xl font-semibold">Group Rules</h2>
+            {isRulesExpanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
+          
+          {isRulesExpanded && (
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="font-medium text-primary">1.</span>
+                <span>All players must be assigned to teams before each matchday</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-medium text-primary">2.</span>
+                <span>Games are played with the assigned teams for that matchday</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-medium text-primary">3.</span>
+                <span>Goals and penalties are tracked for each game</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-medium text-primary">4.</span>
+                <span>Statistics are calculated based on all completed games</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-medium text-primary">5.</span>
+                <span>Only group admins can manage group settings and members</span>
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              <span className="font-medium text-primary">2.</span>
-              <span>Games are played with the assigned teams for that matchday</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="font-medium text-primary">3.</span>
-              <span>Goals and penalties are tracked for each game</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="font-medium text-primary">4.</span>
-              <span>Statistics are calculated based on all completed games</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="font-medium text-primary">5.</span>
-              <span>Only group admins can manage group settings and members</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Invite Section */}

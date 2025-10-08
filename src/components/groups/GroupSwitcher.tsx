@@ -72,31 +72,16 @@ export function GroupSwitcher() {
   return (
     <>
       <div className="relative">
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center space-x-2 font-semibold text-lg"
-            aria-label="Group menu"
-            aria-expanded={isOpen}
-          >
-            <span>{activeGroup?.name || 'Select Group'}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </Button>
-          
-          {activeGroup && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-              title="Switch Group"
-            >
-              <ArrowUpDown className="h-3 w-3" />
-              <span className="hidden sm:inline">Switch</span>
-            </Button>
-          )}
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center space-x-2 font-semibold text-lg"
+          aria-label="Group menu"
+          aria-expanded={isOpen}
+        >
+          <span>{activeGroup?.name || 'Select Group'}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </Button>
 
         {isOpen && (
           <>

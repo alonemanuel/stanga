@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           
           {/* Navigation Buttons - Only show if user has an active group */}
           {activeGroup && !isLoading && (
-            <nav className="hidden sm:flex items-center space-x-1" role="navigation" aria-label="Main navigation">
+            <nav className="flex items-center space-x-1" role="navigation" aria-label="Main navigation">
               <Link href="/matchdays">
                 <Button
                   variant={pathname === "/matchdays" || pathname === "/" ? "default" : "ghost"}
@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-current={pathname === "/matchdays" || pathname === "/" ? "page" : undefined}
                 >
                   <Calendar className="h-4 w-4" />
-                  <span className="hidden md:inline">Matchdays</span>
+                  <span className="hidden sm:inline">Matchdays</span>
                 </Button>
               </Link>
               <Link href="/stats">
@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-current={pathname === "/stats" ? "page" : undefined}
                 >
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden md:inline">Stats</span>
+                  <span className="hidden sm:inline">Stats</span>
                 </Button>
               </Link>
             </nav>
