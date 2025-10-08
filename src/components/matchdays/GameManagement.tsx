@@ -277,10 +277,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
         <div className="flex items-center justify-center space-x-8 mb-6">
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-gray-300"
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2"
               style={{ 
                 backgroundColor: game.homeTeam?.colorHex,
-                color: game.homeTeam?.colorHex ? '#ffffff' : '#000000'
+                borderColor: game.homeTeam?.colorHex?.toLowerCase() === '#ffffff' || game.homeTeam?.colorHex?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent',
+                color: game.homeTeam?.colorHex?.toLowerCase() === '#ffffff' || game.homeTeam?.colorHex?.toLowerCase() === '#fff' ? '#000000' : '#ffffff'
               }}
             >
               {goalsData?.homeTeamGoals.length || 0}
@@ -309,10 +310,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
           
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-gray-300"
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2"
               style={{ 
                 backgroundColor: game.awayTeam?.colorHex,
-                color: game.awayTeam?.colorHex ? '#ffffff' : '#000000'
+                borderColor: game.awayTeam?.colorHex?.toLowerCase() === '#ffffff' || game.awayTeam?.colorHex?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent',
+                color: game.awayTeam?.colorHex?.toLowerCase() === '#ffffff' || game.awayTeam?.colorHex?.toLowerCase() === '#fff' ? '#000000' : '#ffffff'
               }}
             >
               {goalsData?.awayTeamGoals.length || 0}
@@ -348,8 +350,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
                 <div key={goal.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-4 h-4 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: goal.teamColor }}
+                      className="w-4 h-4 rounded-full flex-shrink-0 border"
+                      style={{ 
+                        backgroundColor: goal.teamColor,
+                        borderColor: goal.teamColor?.toLowerCase() === '#ffffff' || goal.teamColor?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                      }}
                     />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -508,7 +513,7 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
               className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
               style={{ 
                 backgroundColor: game.homeTeam?.colorHex,
-                color: game.homeTeam?.colorHex ? '#ffffff' : '#000000'
+                color: game.homeTeam?.colorHex?.toLowerCase() === '#ffffff' || game.homeTeam?.colorHex?.toLowerCase() === '#fff' ? '#000000' : '#ffffff'
               }}
             >
               {penaltyData?.homeTeamScore || 0}
@@ -540,7 +545,7 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
               className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
               style={{ 
                 backgroundColor: game.awayTeam?.colorHex,
-                color: game.awayTeam?.colorHex ? '#ffffff' : '#000000'
+                color: game.awayTeam?.colorHex?.toLowerCase() === '#ffffff' || game.awayTeam?.colorHex?.toLowerCase() === '#fff' ? '#000000' : '#ffffff'
               }}
             >
               {penaltyData?.awayTeamScore || 0}
@@ -575,8 +580,11 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
               {allPenalties.map((penalty) => (
                 <div key={penalty.id} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
                   <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: penalty.teamColor }}
+                    className="w-4 h-4 rounded-full flex-shrink-0 border"
+                    style={{ 
+                      backgroundColor: penalty.teamColor,
+                      borderColor: penalty.teamColor?.toLowerCase() === '#ffffff' || penalty.teamColor?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                    }}
                   />
                   <Badge variant="outline" className="font-mono text-xs bg-orange-100 text-orange-800">
                     P{penalty.kickOrder}
@@ -831,8 +839,11 @@ function ChronologicalGoalsList({
           {sortedGoals.map((goal, index) => (
             <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
               <div 
-                className="w-4 h-4 rounded-full flex-shrink-0"
-                style={{ backgroundColor: goal.teamColor }}
+                className="w-4 h-4 rounded-full flex-shrink-0 border"
+                style={{ 
+                  backgroundColor: goal.teamColor,
+                  borderColor: goal.teamColor?.toLowerCase() === '#ffffff' || goal.teamColor?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                }}
               />
               
               <div className="flex-1 min-w-0">
@@ -873,8 +884,11 @@ function ChronologicalGoalsList({
             {penaltyGoals.map((penalty, index) => (
               <div key={penalty.id} className="flex items-center gap-3 p-2 bg-orange-50 rounded-md">
                 <div 
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: penalty.teamColor }}
+                  className="w-4 h-4 rounded-full flex-shrink-0 border"
+                  style={{ 
+                    backgroundColor: penalty.teamColor,
+                    borderColor: penalty.teamColor?.toLowerCase() === '#ffffff' || penalty.teamColor?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                  }}
                 />
                 
                 <div className="flex-1 min-w-0">
@@ -989,8 +1003,11 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
           <div className="flex items-center justify-between flex-1 mr-2">
             <div className="flex items-center space-x-2">
               <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: game.homeTeam?.colorHex }}
+                className="w-4 h-4 rounded-full border"
+                style={{ 
+                  backgroundColor: game.homeTeam?.colorHex,
+                  borderColor: game.homeTeam?.colorHex?.toLowerCase() === '#ffffff' || game.homeTeam?.colorHex?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                }}
               />
               <span className="text-sm font-medium">{game.homeTeam?.name}</span>
             </div>
@@ -1002,8 +1019,11 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">{game.awayTeam?.name}</span>
               <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: game.awayTeam?.colorHex }}
+                className="w-4 h-4 rounded-full border"
+                style={{ 
+                  backgroundColor: game.awayTeam?.colorHex,
+                  borderColor: game.awayTeam?.colorHex?.toLowerCase() === '#ffffff' || game.awayTeam?.colorHex?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
+                }}
               />
             </div>
           </div>
