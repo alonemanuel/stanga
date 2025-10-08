@@ -88,7 +88,7 @@ function GameTimer({ game, onTimeUpdate }: GameTimerProps) {
     startTimeRef.current = now;
     pausedTimeRef.current = 0;
     setElapsedTime(0);
-    setIsPaused(false);
+    // Keep the paused state as is - don't change it
   };
   
   return (
@@ -239,13 +239,16 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
       <GameTimer game={game} />
       
       {/* Score Card with Goals */}
-      <div className="bg-card border rounded-lg p-6">
+      <div className="bg-card border-2 border-green-200 rounded-lg p-6">
         {/* Score Display */}
         <div className="flex items-center justify-center space-x-8 mb-6">
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto"
-              style={{ backgroundColor: game.homeTeam?.colorHex }}
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-gray-300"
+              style={{ 
+                backgroundColor: game.homeTeam?.colorHex,
+                color: game.homeTeam?.colorHex ? '#ffffff' : '#000000'
+              }}
             >
               {goalsData?.homeTeamGoals.length || 0}
             </div>
@@ -273,8 +276,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
           
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto"
-              style={{ backgroundColor: game.awayTeam?.colorHex }}
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-gray-300"
+              style={{ 
+                backgroundColor: game.awayTeam?.colorHex,
+                color: game.awayTeam?.colorHex ? '#ffffff' : '#000000'
+              }}
             >
               {goalsData?.awayTeamGoals.length || 0}
             </div>
@@ -347,6 +353,41 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
         )}
       </div>
       
+      {/* Game Controls */}
+      {!showPenalties && (
+        <div className="bg-card border rounded-lg p-6">
+          <div className="flex justify-center space-x-2">
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="outline"
+                      onClick={handleGoToPenalties}
+                      disabled={endGameMutation.isPending || !isGameTied}
+                    >
+                      Go to Penalties
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!isGameTied && (
+                  <TooltipContent>
+                    <p>Only available when the game is tied</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <Button
+              variant="outline"
+              onClick={() => handleEndGame('regulation')}
+              disabled={endGameMutation.isPending}
+            >
+              End Game
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Penalty Section (if active) */}
       {showPenalties && (
         <PenaltySection 
@@ -355,41 +396,9 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
           homeTeamPlayers={homeTeamPlayers}
           awayTeamPlayers={awayTeamPlayers}
           onBack={() => setShowPenalties(false)}
+          onEndGame={onGameEnd}
         />
       )}
-      
-      {/* Game Controls */}
-      <div className="bg-card border rounded-lg p-6">
-        <div className="flex justify-end space-x-2">
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    variant="outline"
-                    onClick={handleGoToPenalties}
-                    disabled={endGameMutation.isPending || !isGameTied || showPenalties}
-                  >
-                    Go to Penalties
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!isGameTied && !showPenalties && (
-                <TooltipContent>
-                  <p>Only available when the game is tied</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-          <Button
-            variant="outline"
-            onClick={() => handleEndGame('regulation')}
-            disabled={endGameMutation.isPending}
-          >
-            End Game
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -401,9 +410,10 @@ interface PenaltySectionProps {
   homeTeamPlayers: Array<{ id: string; name: string; isActive: boolean }>;
   awayTeamPlayers: Array<{ id: string; name: string; isActive: boolean }>;
   onBack: () => void;
+  onEndGame: () => void;
 }
 
-function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, onBack }: PenaltySectionProps) {
+function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, onBack, onEndGame }: PenaltySectionProps) {
   const { data: penaltyData, refetch: refetchPenalties } = usePenalties(game.id);
   const startPenaltiesMutation = useStartPenalties();
   const logPenaltyKickMutation = useLogPenaltyKick();
@@ -446,6 +456,7 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
         endReason: 'penalties',
         winnerTeamId: winnerId,
       });
+      onEndGame();
     } catch (error) {
       // Error handled by mutation
     }
@@ -496,15 +507,18 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
         <div className="flex items-center justify-center space-x-8 mb-6">
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
-              style={{ backgroundColor: game.homeTeam?.colorHex }}
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
+              style={{ 
+                backgroundColor: game.homeTeam?.colorHex,
+                color: game.homeTeam?.colorHex ? '#ffffff' : '#000000'
+              }}
             >
               {penaltyData?.homeTeamScore || 0}
             </div>
             <p className="text-sm font-medium mb-2">{game.homeTeam?.name}</p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" disabled={isLoading}>
+                <Button size="sm" variant="outline">
                   + Goal
                 </Button>
               </DropdownMenuTrigger>
@@ -521,19 +535,22 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
             </DropdownMenu>
           </div>
           
-          <div className="text-2xl font-bold text-orange-600">PENALTIES</div>
+          <div className="text-4xl font-bold text-muted-foreground">VS</div>
           
           <div className="text-center">
             <div 
-              className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
-              style={{ backgroundColor: game.awayTeam?.colorHex }}
+              className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl mb-2 mx-auto border-2 border-orange-400"
+              style={{ 
+                backgroundColor: game.awayTeam?.colorHex,
+                color: game.awayTeam?.colorHex ? '#ffffff' : '#000000'
+              }}
             >
               {penaltyData?.awayTeamScore || 0}
             </div>
             <p className="text-sm font-medium mb-2">{game.awayTeam?.name}</p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" disabled={isLoading}>
+                <Button size="sm" variant="outline">
                   + Goal
                 </Button>
               </DropdownMenuTrigger>
@@ -828,41 +845,35 @@ function ChronologicalGoalsList({
   return (
     <div className="space-y-4">
       {hasRegularGoals && (
-        <div className="space-y-3">
-          <div className="text-sm font-medium text-gray-700">
-            Goals in chronological order ({sortedGoals.length})
-          </div>
-          
-          <div className="space-y-2">
-            {sortedGoals.map((goal, index) => (
-              <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
-                <div 
-                  className="w-4 h-4 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: goal.teamColor }}
-                />
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3 text-gray-500" />
-                      <span className="font-medium truncate">
-                        {goal.playerName || 'Unknown Player'}
-                      </span>
-                    </div>
-                    <span className="text-xs text-gray-500">{goal.minute}'</span>
-                    {goal.assistName && (
-                      <>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-xs text-gray-600 truncate">
-                          Assist: {goal.assistName}
-                        </span>
-                      </>
-                    )}
+        <div className="space-y-2">
+          {sortedGoals.map((goal, index) => (
+            <div key={goal.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-md">
+              <div 
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ backgroundColor: goal.teamColor }}
+              />
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3 text-gray-500" />
+                    <span className="font-medium truncate">
+                      {goal.playerName || 'Unknown Player'}
+                    </span>
                   </div>
+                  <span className="text-xs text-gray-500">{goal.minute}'</span>
+                  {goal.assistName && (
+                    <>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-xs text-gray-600 truncate">
+                        Assist: {goal.assistName}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -964,6 +975,27 @@ interface RecentGameItemProps {
 function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
   const { data: goalsData, isLoading } = useGameGoals(game.id);
   const { data: penaltyData } = usePenalties(game.id);
+  const confirm = useConfirm();
+  
+  const handleDeleteGame = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const confirmed = await confirm({
+        title: 'Delete Game',
+        message: 'Are you sure you want to delete this game? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'default',
+      });
+
+      if (confirmed) {
+        // TODO: Implement delete game API
+        console.log('Delete game:', game.id);
+      }
+    } catch (error) {
+      console.error('Failed to delete game', error);
+    }
+  };
   
   return (
     <div className="bg-muted/50 rounded-lg overflow-hidden">
@@ -999,6 +1031,15 @@ function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleDeleteGame}
+            className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+            title="Delete game"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
           {isExpanded ? (
             <ChevronUp className="h-4 w-4 text-gray-500" />
           ) : (
