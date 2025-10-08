@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMatchdayTeams, useInitializeTeams, useAssignPlayer, useUnassignPlayer, useUpdateTeam } from "@/lib/hooks/use-teams";
+import { useMatchdayTeams, useCreateTeam, useAssignPlayer, useUnassignPlayer, useUpdateTeam, useDeleteTeam } from "@/lib/hooks/use-teams";
 import { usePlayers } from "@/lib/hooks/use-players";
 import { TEAM_COLORS, type ColorToken } from "@/lib/teams";
 import { createClient } from "@/lib/supabase/client";
@@ -61,9 +61,10 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     isActive: true 
   });
   
-  const initializeTeamsMutation = useInitializeTeams();
+  const createTeamMutation = useCreateTeam();
   const assignPlayerMutation = useAssignPlayer();
   const unassignPlayerMutation = useUnassignPlayer();
+  const deleteTeamMutation = useDeleteTeam();
 
   // DnD sensors
   const sensors = useSensors(
@@ -83,14 +84,6 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     console.log('🔄 TeamManagement re-rendered with teams:', teams.length, 'teams');
     console.log('📊 Teams data:', teams);
   }, [teams]);
-
-  // Auto-initialize teams when none exist
-  React.useEffect(() => {
-    if (user && teams.length === 0 && !teamsLoading && !initializeTeamsMutation.isPending) {
-      console.log('🚀 Auto-initializing teams based on numberOfTeams:', numberOfTeams);
-      handleInitializeTeams();
-    }
-  }, [user, teams.length, teamsLoading, initializeTeamsMutation.isPending, numberOfTeams]);
   
   // Get unassigned players
   const assignedPlayerIds = new Set(
@@ -98,9 +91,27 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
   );
   const unassignedPlayers = players.filter(player => !assignedPlayerIds.has(player.id));
 
-  const handleInitializeTeams = async () => {
-    if (!user) return;
-    await initializeTeamsMutation.mutateAsync(matchdayId);
+  // Get colors that are already in use
+  const usedColors = new Set(teams.map(t => t.colorToken));
+
+  // Get available colors (not used by any team)
+  const availableColors = Object.keys(TEAM_COLORS).filter(
+    (token) => !usedColors.has(token as ColorToken)
+  ) as ColorToken[];
+
+  const handleCreateTeam = async () => {
+    if (!user || availableColors.length === 0) return;
+    
+    // Use the first available color (or could randomize)
+    const colorToUse = availableColors[0];
+    
+    await createTeamMutation.mutateAsync({
+      matchdayId,
+      data: {
+        colorToken: colorToUse,
+        name: TEAM_COLORS[colorToUse].name,
+      }
+    });
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -184,6 +195,19 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     }
   };
 
+  const handleDeleteTeam = async (teamId: string, hasPlayers: boolean) => {
+    if (!user) return;
+
+    if (hasPlayers) {
+      const confirmed = window.confirm(
+        'This team has players assigned. Are you sure you want to delete it? All player assignments will be removed.'
+      );
+      if (!confirmed) return;
+    }
+
+    await deleteTeamMutation.mutateAsync(teamId);
+  };
+
   if (teamsLoading || playersLoading) {
     return (
       <div className="text-center py-8">
@@ -204,7 +228,7 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     );
   }
 
-  // If no teams exist, show loading or sign in message
+  // If no teams exist, show empty state with create button
   if (teams.length === 0) {
     if (!user) {
       return (
@@ -216,12 +240,22 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
     }
     
     return (
-      <div className="text-center py-8">
-        <h3 className="text-lg font-semibold mb-2">Setting Up Teams</h3>
-        <p className="text-muted-foreground mb-4">
-          Initializing {numberOfTeams} teams for this matchday...
+      <div className="text-center py-12">
+        <h3 className="text-lg font-semibold mb-2">No Teams Yet</h3>
+        <p className="text-muted-foreground mb-6">
+          Create your first team to get started. You can change the color by clicking on it after creation.
         </p>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        
+        <Button 
+          onClick={handleCreateTeam}
+          disabled={createTeamMutation.isPending || availableColors.length === 0}
+        >
+          {createTeamMutation.isPending ? 'Creating...' : 'Create Team'}
+        </Button>
+        
+        {availableColors.length === 0 && (
+          <p className="text-sm text-muted-foreground mt-4">No colors available</p>
+        )}
       </div>
     );
   }
@@ -236,8 +270,19 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
             Assign players to teams (max {maxPlayersPerTeam} per team)
           </p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {unassignedPlayers.length} unassigned players
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">
+            {unassignedPlayers.length} unassigned players
+          </div>
+          {user && availableColors.length > 0 && (
+            <Button 
+              size="sm" 
+              onClick={handleCreateTeam}
+              disabled={createTeamMutation.isPending}
+            >
+              {createTeamMutation.isPending ? 'Creating...' : '+ Add Team'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -254,6 +299,7 @@ export function TeamManagement({ matchdayId, maxPlayersPerTeam, numberOfTeams }:
                   canEdit={!!user}
                   onUnassignPlayer={handleUnassignPlayer}
                   onAssignPlayer={handleAssignPlayer}
+                  onDeleteTeam={handleDeleteTeam}
                   unassignedPlayers={unassignedPlayers}
                   allTeams={teams}
                 />
@@ -295,6 +341,7 @@ interface TeamCardProps {
   canEdit: boolean;
   onUnassignPlayer: (assignmentId: string) => void;
   onAssignPlayer: (teamId: string, playerId: string) => void;
+  onDeleteTeam: (teamId: string, hasPlayers: boolean) => void;
   unassignedPlayers: Array<{
     id: string;
     name: string;
@@ -305,12 +352,13 @@ interface TeamCardProps {
   }>;
 }
 
-function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, unassignedPlayers, allTeams }: TeamCardProps) {
+function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer, onDeleteTeam, unassignedPlayers, allTeams }: TeamCardProps) {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const colorPickerRef = React.useRef<HTMLDivElement>(null);
   const colorInfo = TEAM_COLORS[team.colorToken];
   const isTeamFull = team.playerCount >= maxPlayers;
   const updateTeamMutation = useUpdateTeam();
+  const hasPlayers = (team.assignments || []).length > 0;
 
   // Close color picker when clicking outside
   React.useEffect(() => {
@@ -372,11 +420,14 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
     >
       {/* Team Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <div className="relative">
             <div 
-              className={`w-4 h-4 rounded-full ${canEdit ? 'cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all' : ''}`}
-              style={{ backgroundColor: team.colorHex }}
+              className={`w-4 h-4 rounded-full border ${canEdit ? 'cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all' : ''}`}
+              style={{ 
+                backgroundColor: team.colorHex,
+                borderColor: team.colorToken === 'white' ? '#e5e7eb' : team.colorHex
+              }}
               onClick={() => canEdit && setShowColorPicker(!showColorPicker)}
               title={canEdit ? "Click to change team color" : "Team color"}
             />
@@ -397,7 +448,10 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
                           ? 'border-primary ring-2 ring-primary ring-offset-1' 
                           : 'border-gray-300 hover:border-gray-400'
                       }`}
-                      style={{ backgroundColor: colorInfo.hex }}
+                      style={{ 
+                        backgroundColor: colorInfo.hex,
+                        borderColor: team.colorToken === token ? undefined : (token === 'white' ? '#e5e7eb' : '#d1d5db')
+                      }}
                       onClick={() => handleColorChange(token as ColorToken)}
                       title={colorInfo.name}
                       disabled={updateTeamMutation.isPending}
@@ -429,9 +483,22 @@ function TeamCard({ team, maxPlayers, canEdit, onUnassignPlayer, onAssignPlayer,
           </div>
           <h4 className="font-semibold">{team.name}</h4>
         </div>
-        <Badge variant={isTeamFull ? "destructive" : "secondary"}>
-          {team.playerCount}/{maxPlayers}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={isTeamFull ? "destructive" : "secondary"}>
+            {team.playerCount}/{maxPlayers}
+          </Badge>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onDeleteTeam(team.id, hasPlayers)}
+              title="Delete team"
+            >
+              ×
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Assigned Players */}

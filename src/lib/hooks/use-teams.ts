@@ -8,13 +8,14 @@ import type {
   TeamAssignmentCreateInput,
   TeamQueryInput 
 } from '@/lib/validations/team';
+import type { ColorToken } from '@/lib/teams';
 
 // Types for API responses
 interface Team {
   id: string;
   matchdayId: string;
   name: string;
-  colorToken: 'blue' | 'amber' | 'rose';
+  colorToken: ColorToken;
   colorHex: string;
   formationJson?: Record<string, any> | null;
   createdAt: string;
@@ -90,6 +91,26 @@ async function initializeTeams(matchdayId: string): Promise<TeamsResponse> {
   return response.json();
 }
 
+async function createTeam(matchdayId: string, data: TeamCreateInput): Promise<TeamResponse> {
+  const response = await fetch('/api/teams', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ...data,
+      matchdayId,
+    }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create team');
+  }
+  
+  return response.json();
+}
+
 async function updateTeam(teamId: string, data: TeamUpdateInput): Promise<TeamResponse> {
   const response = await fetch(`/api/teams/${teamId}`, {
     method: 'PATCH',
@@ -137,6 +158,19 @@ async function unassignPlayer(assignmentId: string): Promise<AssignmentResponse>
   return response.json();
 }
 
+async function deleteTeam(teamId: string): Promise<TeamResponse> {
+  const response = await fetch(`/api/teams/${teamId}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete team');
+  }
+  
+  return response.json();
+}
+
 // React Query hooks
 export function useMatchdayTeams(matchdayId: string) {
   return useQuery({
@@ -163,6 +197,78 @@ export function useInitializeTeams() {
       toast.success(data.message || 'Teams initialized successfully');
     },
     onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCreateTeam() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ matchdayId, data }: { matchdayId: string; data: TeamCreateInput }) => 
+      createTeam(matchdayId, data),
+    onMutate: async ({ matchdayId, data }) => {
+      console.log('🔄 Creating team - onMutate called', { matchdayId, data });
+      
+      // Cancel any outgoing refetches to prevent conflicts
+      await queryClient.cancelQueries({ queryKey: ['teams', 'matchday', matchdayId] });
+      
+      // Snapshot the previous value for rollback
+      const previousTeams = queryClient.getQueryData(['teams', 'matchday', matchdayId]);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(['teams', 'matchday', matchdayId], (oldData: any) => {
+        if (!oldData) return oldData;
+        
+        console.log('🔄 Optimistically adding team to cache');
+        
+        // Get TEAM_COLORS for proper hex resolution
+        const TEAM_COLORS_MAP: Record<string, { hex: string }> = {
+          black: { hex: '#000000' },
+          white: { hex: '#ffffff' },
+          red: { hex: '#ef4444' },
+          green: { hex: '#10b981' },
+          orange: { hex: '#f97316' },
+          yellow: { hex: '#eab308' },
+          blue: { hex: '#3b82f6' },
+        };
+        
+        // Create a temporary team object
+        const tempTeam = {
+          id: `temp-${Date.now()}`,
+          matchdayId,
+          name: data.name,
+          colorToken: data.colorToken,
+          colorHex: TEAM_COLORS_MAP[data.colorToken]?.hex || '#64748b',
+          formationJson: null,
+          assignments: [],
+          playerCount: 0,
+          createdAt: new Date().toISOString(),
+        };
+        
+        return {
+          ...oldData,
+          data: [...(oldData.data || []), tempTeam],
+        };
+      });
+      
+      return { previousTeams };
+    },
+    onSuccess: (response, { matchdayId }) => {
+      console.log('✅ Create team - onSuccess called', { response });
+      // Invalidate to get the real data from server
+      queryClient.invalidateQueries({ queryKey: ['teams', 'matchday', matchdayId] });
+      toast.success(response.message || 'Team created successfully');
+    },
+    onError: (error: Error, variables, context) => {
+      // Rollback to previous state on error
+      if (context?.previousTeams) {
+        queryClient.setQueryData(
+          ['teams', 'matchday', variables.matchdayId], 
+          context.previousTeams
+        );
+      }
       toast.error(error.message);
     },
   });
@@ -366,6 +472,60 @@ export function useUnassignPlayer() {
     },
     onSettled: (data, error) => {
       // Only refetch on error to ensure consistency, let optimistic updates persist on success
+      if (error) {
+        console.log('🔄 Refetching due to error');
+        queryClient.refetchQueries({ 
+          queryKey: ['teams', 'matchday'], 
+          exact: false 
+        });
+      }
+    },
+  });
+}
+
+export function useDeleteTeam() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: deleteTeam,
+    onMutate: async (teamId) => {
+      console.log('🔄 Deleting team - onMutate called', { teamId });
+      
+      // Cancel any outgoing refetches to prevent conflicts
+      await queryClient.cancelQueries({ queryKey: ['teams'] });
+      
+      // Snapshot the previous value for rollback
+      const previousTeams = queryClient.getQueriesData({ queryKey: ['teams'] });
+      
+      // Optimistically update the cache
+      queryClient.setQueriesData({ queryKey: ['teams'] }, (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        
+        console.log('🔄 Optimistically removing team from cache');
+        
+        return {
+          ...oldData,
+          data: oldData.data.filter((team: any) => team.id !== teamId),
+        };
+      });
+      
+      return { previousTeams };
+    },
+    onSuccess: (data) => {
+      console.log('✅ Delete team - onSuccess called', { data });
+      toast.success(data.message || 'Team deleted successfully');
+    },
+    onError: (error: Error, variables, context) => {
+      // Rollback to previous state on error
+      if (context?.previousTeams) {
+        context.previousTeams.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      toast.error(error.message);
+    },
+    onSettled: (data, error) => {
+      // Only refetch on error to ensure consistency
       if (error) {
         console.log('🔄 Refetching due to error');
         queryClient.refetchQueries({ 
