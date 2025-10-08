@@ -1,20 +1,19 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useMatchday, useUpdateMatchday, useDeleteMatchday } from "@/lib/hooks/use-matchdays";
+import { useMatchday, useUpdateMatchday } from "@/lib/hooks/use-matchdays";
 import { useMatchdayStats } from "@/lib/hooks/use-stats";
-import { MatchdayForm } from "@/components/matchdays/MatchdayForm";
 import { TeamManagement } from "@/components/matchdays/TeamManagement";
 import { GameManagement } from "@/components/matchdays/GameManagement";
 import { StandingsTable } from "@/components/stats/StandingsTable";
 import { TopScorerTable } from "@/components/stats/TopScorerTable";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2 } from "lucide-react";
-import { getMatchdayDisplayName } from "@/lib/matchday-display";
-import { useConfirm } from "@/lib/hooks/use-dialogs";
-import type { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, MapPin, Users, Hash, Pencil, Check } from "lucide-react";
+import { useZodForm, Form } from "@/components/forms/Form";
+import { TextField, NumberField } from "@/components/forms/fields";
+import { MatchdayUpdateSchema } from "@/lib/validations/matchday";
+import type { MatchdayUpdate } from "@/lib/validations/matchday";
 
 interface MatchdayDetailPageProps {
   params: Promise<{
@@ -23,7 +22,7 @@ interface MatchdayDetailPageProps {
   }>;
 }
 
-type TabType = 'overview' | 'teams' | 'games' | 'stats';
+type TabType = 'overview' | 'teams' | 'games';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -31,9 +30,21 @@ interface CollapsibleSectionProps {
   onToggle: () => void;
   contentId: string;
   children: React.ReactNode;
+  onEdit?: () => void;
+  isEditing?: boolean;
+  onSave?: () => void;
 }
 
-function CollapsibleSection({ title, isExpanded, onToggle, contentId, children }: CollapsibleSectionProps) {
+function CollapsibleSection({ 
+  title, 
+  isExpanded, 
+  onToggle, 
+  contentId, 
+  children,
+  onEdit,
+  isEditing = false,
+  onSave
+}: CollapsibleSectionProps) {
   return (
     <div className="bg-card border rounded-lg overflow-hidden">
       <div 
@@ -51,28 +62,48 @@ function CollapsibleSection({ title, isExpanded, onToggle, contentId, children }
         }}
       >
         <h3 className="text-lg font-semibold">{title}</h3>
-        <svg
-          className={`w-5 h-5 transition-transform duration-200 ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        <div className="flex items-center gap-2">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isEditing && onSave) {
+                  onSave();
+                } else {
+                  onEdit();
+                }
+              }}
+              aria-label={isEditing ? "Save changes" : "Edit section"}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+            </Button>
+          )}
+          <svg
+            className={`w-5 h-5 transition-transform duration-200 ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
       </div>
       
       <div
         id={contentId}
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
         aria-hidden={!isExpanded}
       >
@@ -85,15 +116,12 @@ function CollapsibleSection({ title, isExpanded, onToggle, contentId, children }
 }
 
 export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) {
-  const [user, setUser] = React.useState<User | null>(null);
   const [activeTab, setActiveTab] = React.useState<TabType>('overview');
-  const [isEditing, setIsEditing] = React.useState(false);
   const [matchdayId, setMatchdayId] = React.useState<string>('');
   const [isRulesExpanded, setIsRulesExpanded] = React.useState(false);
-  const confirm = useConfirm();
   const [isInfoExpanded, setIsInfoExpanded] = React.useState(false);
-  
-  const supabase = createClient();
+  const [isEditingInfo, setIsEditingInfo] = React.useState(false);
+  const [isEditingRules, setIsEditingRules] = React.useState(false);
   
   // Await params and set matchdayId/tab state based on URL
   React.useEffect(() => {
@@ -103,7 +131,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
 
       const [tabSegment] = resolvedParams.tab ?? [];
       const normalizedTab: TabType =
-        tabSegment === 'teams' || tabSegment === 'games' || tabSegment === 'stats'
+        tabSegment === 'teams' || tabSegment === 'games'
           ? tabSegment
           : 'overview';
 
@@ -115,54 +143,66 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   const { data: matchdayData, isLoading, error } = useMatchday(matchdayId);
   const { data: statsData, isLoading: statsLoading, error: statsError, isRefetching } = useMatchdayStats(matchdayId);
   const updateMutation = useUpdateMatchday();
-  const deleteMutation = useDeleteMatchday();
   
-  // Get current user
-  React.useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null);
-      }
-    );
-    
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  // Form for inline editing
+  const infoMethods = useZodForm(MatchdayUpdateSchema, {
+    defaultValues: matchdayData ? {
+      scheduledAt: matchdayData.data.scheduledAt.slice(0, 16),
+      location: matchdayData.data.location || "",
+      teamSize: matchdayData.data.teamSize,
+      numberOfTeams: matchdayData.data.numberOfTeams,
+      rules: matchdayData.data.rules,
+    } : undefined,
+  });
 
-  const handleEditSuccess = () => {
-    setIsEditing(false);
+  const rulesMethods = useZodForm(MatchdayUpdateSchema, {
+    defaultValues: matchdayData ? {
+      scheduledAt: matchdayData.data.scheduledAt.slice(0, 16),
+      location: matchdayData.data.location || "",
+      teamSize: matchdayData.data.teamSize,
+      numberOfTeams: matchdayData.data.numberOfTeams,
+      rules: matchdayData.data.rules,
+    } : undefined,
+  });
+
+  // Update form values when matchday data loads
+  React.useEffect(() => {
+    if (matchdayData) {
+      const values = {
+        scheduledAt: matchdayData.data.scheduledAt.slice(0, 16),
+        location: matchdayData.data.location || "",
+        teamSize: matchdayData.data.teamSize,
+        numberOfTeams: matchdayData.data.numberOfTeams,
+        rules: matchdayData.data.rules,
+      };
+      infoMethods.reset(values);
+      rulesMethods.reset(values);
+    }
+  }, [matchdayData, infoMethods, rulesMethods]);
+
+  const handleSaveInfo = async () => {
+    const values = infoMethods.getValues();
+    try {
+      await updateMutation.mutateAsync({
+        id: matchdayId,
+        data: values,
+      });
+      setIsEditingInfo(false);
+    } catch (error) {
+      console.error('Failed to update info:', error);
+    }
   };
 
-
-  const handleDeleteMatchday = async () => {
-    if (!matchdayData) return;
-    
+  const handleSaveRules = async () => {
+    const values = rulesMethods.getValues();
     try {
-      const confirmed = await confirm({
-        title: 'Delete Matchday',
-        message: `Are you sure you want to delete "${matchdayData.data.name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        cancelText: 'Cancel',
-        variant: 'default',
+      await updateMutation.mutateAsync({
+        id: matchdayId,
+        data: values,
       });
-      
-      if (confirmed) {
-        try {
-          await deleteMutation.mutateAsync(matchdayId);
-          // Redirect to matchdays list after successful deletion
-          window.location.href = '/matchdays';
-        } catch (error) {
-          // Error handling is done in the mutation hook
-        }
-      }
+      setIsEditingRules(false);
     } catch (error) {
-      // User cancelled or closed dialog
-      console.log('Delete cancelled');
+      console.error('Failed to update rules:', error);
     }
   };
   
@@ -177,20 +217,10 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
       minute: '2-digit',
     });
   };
-  
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'upcoming': return 'bg-blue-100 text-blue-800';
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (isLoading) {
     return (
-      <div className="p-4">
+      <div className="pb-20">
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="mt-2 text-muted-foreground">Loading matchday...</p>
@@ -201,7 +231,7 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
 
   if (error || !matchdayData) {
     return (
-      <div className="p-4">
+      <div className="pb-20">
         <div className="text-center py-8">
           <p className="text-red-600">Failed to load matchday</p>
           <Button 
@@ -217,99 +247,82 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
 
   const matchday = matchdayData.data;
 
-  // Show edit form if editing
-  if (isEditing) {
-    return (
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setIsEditing(false)}
-            >
-              ← Back
-            </Button>
-          </div>
-          <h1 className="text-2xl font-semibold">Edit Matchday</h1>
-          <p className="text-muted-foreground">
-            Update matchday information and rules
-          </p>
-        </div>
-        
-        <div className="bg-card border rounded-lg p-6">
-          <MatchdayForm
-            matchday={{
-              id: matchday.id,
-              scheduledAt: matchday.scheduledAt,
-              location: matchday.location,
-              teamSize: matchday.teamSize,
-              numberOfTeams: matchday.numberOfTeams,
-              rules: matchday.rules,
-            }}
-            onSuccess={handleEditSuccess}
-            onCancel={() => setIsEditing(false)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  const tabs: { id: TabType; label: string; disabled?: boolean }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'teams', label: 'Teams' },
-    { id: 'games', label: 'Games' },
-    { id: 'stats', label: 'Stats' },
-  ];
-
-  const getTabHref = (tabId: TabType) => {
-    if (!matchdayId) {
-      return '#';
-    }
-
-    return tabId === 'overview'
-      ? `/matchdays/${matchdayId}`
-      : `/matchdays/${matchdayId}/${tabId}`;
-  };
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20">
             {/* Basic Info */}
             <CollapsibleSection
               title="Matchday Information"
               isExpanded={isInfoExpanded}
               onToggle={() => setIsInfoExpanded(!isInfoExpanded)}
               contentId="matchday-info-content"
+              onEdit={() => setIsEditingInfo(true)}
+              isEditing={isEditingInfo}
+              onSave={handleSaveInfo}
             >
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
-                  <p className="text-sm">{formatDate(matchday.scheduledAt)}</p>
-                </div>
-                {matchday.location && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Location</label>
-                    <p className="text-sm">{matchday.location}</p>
+              {isEditingInfo ? (
+                <Form methods={infoMethods}>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <TextField
+                      name="scheduledAt"
+                      label="Date & Time"
+                      type="datetime-local"
+                      required
+                    />
+                    <TextField
+                      name="location"
+                      label="Location"
+                    />
+                    <NumberField
+                      name="teamSize"
+                      label="Team Size"
+                      required
+                      min={1}
+                    />
+                    <NumberField
+                      name="numberOfTeams"
+                      label="Number of Teams"
+                      required
+                      min={2}
+                    />
                   </div>
-                )}
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Team Size</label>
-                  <p className="text-sm">{matchday.teamSize} players per team</p>
+                </Form>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                      <p className="text-sm">{formatDate(matchday.scheduledAt)}</p>
+                    </div>
+                  </div>
+                  {matchday.location && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Location</label>
+                        <p className="text-sm">{matchday.location}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-3">
+                    <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Team Size</label>
+                      <p className="text-sm">{matchday.teamSize} players per team</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Hash className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Number of Teams</label>
+                      <p className="text-sm">{matchday.numberOfTeams} teams</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Number of Teams</label>
-                  <p className="text-sm">{matchday.numberOfTeams} teams</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(matchday.status)}`}>
-                    {matchday.status.charAt(0).toUpperCase() + matchday.status.slice(1)}
-                  </span>
-                </div>
-              </div>
+              )}
             </CollapsibleSection>
 
             {/* Rules Snapshot */}
@@ -318,130 +331,185 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
               isExpanded={isRulesExpanded}
               onToggle={() => setIsRulesExpanded(!isRulesExpanded)}
               contentId="game-rules-content"
+              onEdit={() => setIsEditingRules(true)}
+              isEditing={isEditingRules}
+              onSave={handleSaveRules}
             >
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Game Duration</label>
-                  <p className="text-sm">{matchday.rules.game_minutes} minutes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Extra Time</label>
-                  <p className="text-sm">{matchday.rules.extra_minutes} minutes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Max Goals to Win</label>
-                  <p className="text-sm">{matchday.rules.max_goals_to_win} goals</p>
-                </div>
-              </div>
-              
-              {/* Points System */}
-              <div className="mt-6">
-                <h4 className="text-md font-medium mb-3">Points System</h4>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Loss</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.loss}</p>
+              {isEditingRules ? (
+                <Form methods={rulesMethods}>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <NumberField
+                      name="rules.game_minutes"
+                      label="Game Duration (minutes)"
+                      required
+                      min={1}
+                    />
+                    <NumberField
+                      name="rules.extra_minutes"
+                      label="Extra Time (minutes)"
+                      required
+                      min={0}
+                    />
+                    <NumberField
+                      name="rules.max_goals_to_win"
+                      label="Max Goals to Win"
+                      required
+                      min={1}
+                    />
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Draw</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.draw}</p>
+                  
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium mb-3">Points System</h4>
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                      <NumberField
+                        name="rules.points.loss"
+                        label="Loss Points"
+                        required
+                        min={0}
+                      />
+                      <NumberField
+                        name="rules.points.draw"
+                        label="Draw Points"
+                        required
+                        min={0}
+                      />
+                      <NumberField
+                        name="rules.points.penalty_bonus_win"
+                        label="Penalty Win Points"
+                        required
+                        min={0}
+                      />
+                      <NumberField
+                        name="rules.points.regulation_win"
+                        label="Regulation Win Points"
+                        required
+                        min={0}
+                      />
+                    </div>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Penalty Win</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.penalty_bonus_win}</p>
+                </Form>
+              ) : (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Game Duration</label>
+                      <p className="text-sm">{matchday.rules.game_minutes} minutes</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Extra Time</label>
+                      <p className="text-sm">{matchday.rules.extra_minutes} minutes</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Max Goals to Win</label>
+                      <p className="text-sm">{matchday.rules.max_goals_to_win} goals</p>
+                    </div>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs font-medium text-muted-foreground">Regulation Win</label>
-                    <p className="text-lg font-semibold">{matchday.rules.points.regulation_win}</p>
+                  
+                  {/* Points System */}
+                  <div className="mt-6">
+                    <h4 className="text-md font-medium mb-3">Points System</h4>
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <label className="text-xs font-medium text-muted-foreground">Loss</label>
+                        <p className="text-lg font-semibold">{matchday.rules.points.loss}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <label className="text-xs font-medium text-muted-foreground">Draw</label>
+                        <p className="text-lg font-semibold">{matchday.rules.points.draw}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <label className="text-xs font-medium text-muted-foreground">Penalty Win</label>
+                        <p className="text-lg font-semibold">{matchday.rules.points.penalty_bonus_win}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <label className="text-xs font-medium text-muted-foreground">Regulation Win</label>
+                        <p className="text-lg font-semibold">{matchday.rules.points.regulation_win}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </CollapsibleSection>
+
+            {/* Stats Section - moved from stats tab */}
+            {statsLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-2 text-muted-foreground">Loading stats...</p>
+              </div>
+            ) : statsError ? (
+              <div className="text-center py-8">
+                <p className="text-red-600">Failed to load statistics</p>
+              </div>
+            ) : statsData?.data ? (
+              <>
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold mb-4">Matchday Statistics</h2>
+                </div>
+                
+                {/* Summary Stats */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Games</h3>
+                    <p className="text-2xl font-bold">{statsData.data.summary.totalGames}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {statsData.data.summary.completedGames} completed
+                    </p>
+                  </div>
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Goals</h3>
+                    <p className="text-2xl font-bold">{statsData.data.summary.totalGoals}</p>
+                  </div>
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Avg Goals/Game</h3>
+                    <p className="text-2xl font-bold">{statsData.data.summary.averageGoalsPerGame.toFixed(1)}</p>
+                  </div>
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1">Teams</h3>
+                    <p className="text-2xl font-bold">{statsData.data.summary.totalTeams}</p>
+                  </div>
+                </div>
+
+                {/* Standings Table */}
+                <StandingsTable 
+                  standings={statsData.data.standings} 
+                  isLoading={statsLoading}
+                  error={statsError ? String(statsError) : null}
+                  isRefetching={isRefetching}
+                />
+
+                {/* Top Scorers */}
+                <TopScorerTable 
+                  topScorers={statsData.data.topScorers}
+                  isLoading={statsLoading}
+                  error={statsError ? String(statsError) : null}
+                  limit={5}
+                  isRefetching={isRefetching}
+                />
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No statistics available yet</p>
+              </div>
+            )}
           </div>
         );
       case 'teams':
         return (
-          <TeamManagement 
-            matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.teamSize}
-            numberOfTeams={matchday.numberOfTeams}
-          />
+          <div className="pb-20">
+            <TeamManagement 
+              matchdayId={matchdayId}
+              maxPlayersPerTeam={matchday.teamSize}
+              numberOfTeams={matchday.numberOfTeams}
+            />
+          </div>
         );
       case 'games':
         return (
-          <GameManagement 
-            matchdayId={matchdayId}
-            maxPlayersPerTeam={matchday.teamSize}
-          />
-        );
-      case 'stats':
-        if (statsLoading) {
-          return (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-muted-foreground">Loading stats...</p>
-            </div>
-          );
-        }
-
-        if (statsError) {
-          return (
-            <div className="text-center py-8">
-              <p className="text-red-600">Failed to load statistics</p>
-            </div>
-          );
-        }
-
-        if (!statsData?.data) {
-          return (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No statistics available yet</p>
-            </div>
-          );
-        }
-
-        const { summary, standings, topScorers } = statsData.data;
-
-        return (
-          <div className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Games</h3>
-                <p className="text-2xl font-bold">{summary.totalGames}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {summary.completedGames} completed
-                </p>
-              </div>
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Total Goals</h3>
-                <p className="text-2xl font-bold">{summary.totalGoals}</p>
-              </div>
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Avg Goals/Game</h3>
-                <p className="text-2xl font-bold">{summary.averageGoalsPerGame.toFixed(1)}</p>
-              </div>
-              <div className="bg-card border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1">Teams</h3>
-                <p className="text-2xl font-bold">{summary.totalTeams}</p>
-              </div>
-            </div>
-
-            {/* Standings Table */}
-            <StandingsTable 
-              standings={standings} 
-              isLoading={statsLoading}
-              error={statsError ? String(statsError) : null}
-              isRefetching={isRefetching}
-            />
-
-            {/* Top Scorers */}
-            <TopScorerTable 
-              topScorers={topScorers}
-              isLoading={statsLoading}
-              error={statsError ? String(statsError) : null}
-              limit={5}
-              isRefetching={isRefetching}
+          <div className="pb-20">
+            <GameManagement 
+              matchdayId={matchdayId}
+              maxPlayersPerTeam={matchday.teamSize}
             />
           </div>
         );
@@ -451,94 +519,28 @@ export default function MatchdayDetailPage({ params }: MatchdayDetailPageProps) 
   };
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => window.location.href = '/matchdays'}
-            >
-              ← Back
-            </Button>
-          </div>
-          <h1 className="text-2xl font-semibold">{getMatchdayDisplayName(matchday.scheduledAt, matchday.location)}</h1>
-          <p className="text-muted-foreground">
-            {formatDate(matchday.scheduledAt)}
-          </p>
-        </div>
-        {user && (
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => setIsEditing(true)}
-              aria-label="Edit matchday"
-              title="Edit matchday"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={handleDeleteMatchday}
-              disabled={deleteMutation.isPending}
-              aria-label="Delete matchday"
-              title="Delete matchday"
-              className="text-red-600 hover:text-red-700 hover:border-red-300"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b">
-        <nav className="flex space-x-8">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            const isDisabled = tab.disabled || !matchdayId;
-            const className = `py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              isActive
-                ? 'border-primary text-primary'
-                : isDisabled
-                ? 'border-transparent text-muted-foreground/50 cursor-not-allowed'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
-            }`;
-
-            if (isDisabled) {
-              return (
-                <span
-                  key={tab.id}
-                  className={className}
-                  aria-disabled="true"
-                >
-                  {tab.label}
-                </span>
-              );
-            }
-
-            return (
-              <Link
-                key={tab.id}
-                href={getTabHref(tab.id)}
-                className={className}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
+    <div className="space-y-6">
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {renderTabContent()}
       </div>
+
+      {/* Floating Bottom Tabs */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
+        <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
+          <TabsList className="bg-background/40 backdrop-blur-md supports-[backdrop-filter]:bg-background/30 border border-primary/20 shadow-lg rounded-full p-1.5 h-14 w-full max-w-md">
+            <TabsTrigger value="overview" className="rounded-full px-6 h-11 text-base flex-1 data-[state=active]:bg-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:backdrop-blur-sm">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="games" className="rounded-full px-6 h-11 text-base flex-1 data-[state=active]:bg-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:backdrop-blur-sm">
+              Games
+            </TabsTrigger>
+            <TabsTrigger value="teams" className="rounded-full px-6 h-11 text-base flex-1 data-[state=active]:bg-primary/90 data-[state=active]:text-primary-foreground data-[state=active]:backdrop-blur-sm">
+              Teams
+            </TabsTrigger>
+          </TabsList>
+        </div>
+      </Tabs>
     </div>
   );
 }

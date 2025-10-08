@@ -109,6 +109,45 @@ export function SelectField({ name, label, placeholder, required, options, child
   );
 }
 
+interface NumberFieldProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export function NumberField({ name, label, placeholder, required, min, max, step }: NumberFieldProps) {
+  const { register, formState: { errors } } = useFormContext();
+  const error = (errors as any)?.[name]?.message as string | undefined;
+  
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-medium" htmlFor={name}>
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <input
+        id={name}
+        type="number"
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        step={step}
+        className="w-full rounded-md border border-input bg-transparent px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
+        {...register(name, { valueAsNumber: true })}
+      />
+      {error ? (
+        <p id={`${name}-error`} className="text-sm text-red-600">{error}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function SubmitButton({ pendingLabel = "Submitting...", children, ...props }: React.ComponentProps<typeof Button> & { pendingLabel?: string }) {
   const { formState } = useFormContext();
   return (
