@@ -235,9 +235,13 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
 
   return (
     <div>
-      {/* Timer Card - Sticky */}
-      <div className="sticky top-0 z-10 bg-background pt-4 pb-4 mb-6">
-        <GameTimer game={game} />
+      {/* Timer Card - Sticky with Fade */}
+      <div className="sticky top-0 z-10 pt-4 mb-6 bg-background">
+        <div className="relative pb-4">
+          <GameTimer game={game} />
+          {/* Gradient fade at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-background pointer-events-none" />
+        </div>
       </div>
       
       {/* Content below timer */}
