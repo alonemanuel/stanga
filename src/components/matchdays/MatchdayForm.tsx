@@ -201,7 +201,7 @@ export function MatchdayForm({ matchday, onSuccess, onCancel }: MatchdayFormProp
         
         <Button
           type="submit"
-          loading={isLoading}
+          disabled={isLoading}
         >
           {isEditing ? 'Update Matchday' : 'Create Matchday'}
         </Button>

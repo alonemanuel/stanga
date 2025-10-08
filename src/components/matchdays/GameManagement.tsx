@@ -404,7 +404,6 @@ function GameQueue({ matchdayId, onGameStart }: GameQueueProps) {
           <Button
             onClick={() => handleStartGame()}
             disabled={!selectedHomeTeam || !selectedAwayTeam || startGameMutation.isPending}
-            loading={startGameMutation.isPending}
             size="lg"
           >
             Start Game

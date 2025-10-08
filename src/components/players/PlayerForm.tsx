@@ -82,7 +82,7 @@ export function PlayerForm({ player, onSuccess, onCancel, quickAdd }: PlayerForm
         
         <Button
           type="submit"
-          loading={isLoading}
+          disabled={isLoading}
         >
           {isEditing ? 'Update Player' : 'Create Player'}
         </Button>
