@@ -234,18 +234,12 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const isGameTied = (goalsData?.homeTeamGoals.length || 0) === (goalsData?.awayTeamGoals.length || 0);
 
   return (
-    <div className="relative">
-      {/* Timer Card - Sticky */}
-      <div className="sticky top-0 z-10 pt-4 pb-8 bg-background">
-        <GameTimer game={game} />
-        {/* Gradient fade overlay */}
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent via-background/40 to-background pointer-events-none" />
-      </div>
+    <div className="space-y-6">
+      {/* Timer Card */}
+      <GameTimer game={game} />
       
-      {/* Content below timer - will scroll under */}
-      <div className="space-y-6 -mt-8">
-        {/* Game Controls */}
-        <div className="bg-card border rounded-lg p-6">
+      {/* Game Controls */}
+      <div className="bg-card border-2 border-green-200 rounded-lg p-6">
         <div className="flex justify-center space-x-2">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
@@ -397,18 +391,17 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
         )}
       </div>
       
-        {/* Penalty Section (if active) */}
-        {showPenalties && (
-          <PenaltySection 
-            game={game}
-            matchdayId={matchdayId}
-            homeTeamPlayers={homeTeamPlayers}
-            awayTeamPlayers={awayTeamPlayers}
-            onBack={() => setShowPenalties(false)}
-            onEndGame={onGameEnd}
-          />
-        )}
-      </div>
+      {/* Penalty Section (if active) */}
+      {showPenalties && (
+        <PenaltySection 
+          game={game}
+          matchdayId={matchdayId}
+          homeTeamPlayers={homeTeamPlayers}
+          awayTeamPlayers={awayTeamPlayers}
+          onBack={() => setShowPenalties(false)}
+          onEndGame={onGameEnd}
+        />
+      )}
     </div>
   );
 }
