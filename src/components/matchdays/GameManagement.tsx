@@ -234,18 +234,18 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const isGameTied = (goalsData?.homeTeamGoals.length || 0) === (goalsData?.awayTeamGoals.length || 0);
 
   return (
-    <div>
-      {/* Timer Card - Sticky with Fade */}
-      <div className="sticky top-0 z-10 pt-4 mb-6 bg-background">
-        <div className="relative pb-4">
+    <div className="relative">
+      {/* Timer Card - Sticky */}
+      <div className="sticky top-0 z-10 pt-4 pb-8">
+        <div className="bg-background pb-4">
           <GameTimer game={game} />
-          {/* Gradient fade at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-background pointer-events-none" />
         </div>
+        {/* Gradient fade overlay */}
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-b from-background via-background/60 to-transparent pointer-events-none" />
       </div>
       
-      {/* Content below timer */}
-      <div className="space-y-6">
+      {/* Content below timer - will scroll under */}
+      <div className="space-y-6 -mt-8">
         {/* Game Controls */}
         <div className="bg-card border rounded-lg p-6">
         <div className="flex justify-center space-x-2">
