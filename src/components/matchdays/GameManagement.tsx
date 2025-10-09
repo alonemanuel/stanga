@@ -628,9 +628,6 @@ function PenaltySection({ game, matchdayId, homeTeamPlayers, awayTeamPlayers, on
                       borderColor: penalty.teamColor?.toLowerCase() === '#ffffff' || penalty.teamColor?.toLowerCase() === '#fff' ? '#d1d5db' : 'transparent'
                     }}
                   />
-                  <Badge variant="outline" className="font-mono text-xs bg-orange-100 text-orange-800">
-                    P{penalty.kickOrder}
-                  </Badge>
                   <span className="text-sm font-medium flex-1">
                     {penalty.playerName}
                   </span>
@@ -944,7 +941,6 @@ function ChronologicalGoalsList({
                         {penalty.playerName}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500">Penalty</span>
                   </div>
                 </div>
               </div>
