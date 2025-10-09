@@ -365,11 +365,11 @@ export function useStartPenalties() {
   });
 }
 
-export function usePenalties(gameId: string, options?: { enabled?: boolean }) {
+export function usePenalties(gameId: string) {
   return useQuery({
     queryKey: ['penalties', gameId],
     queryFn: () => fetchPenalties(gameId),
-    enabled: options?.enabled !== undefined ? options.enabled : !!gameId,
+    enabled: !!gameId,
     retry: false,
   });
 }
