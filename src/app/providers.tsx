@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5_000, // Reduced from 30s to 5s to allow more frequent updates
+      staleTime: 60_000, // 60 seconds - data is fresh for 1 minute (optimized for performance)
       refetchOnWindowFocus: false,
     },
   },

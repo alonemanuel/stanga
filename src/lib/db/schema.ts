@@ -72,6 +72,7 @@ export const players = pgTable('players', {
   userIdx: index('players_user_idx').on(table.userId),
   nameIdx: index('players_name_idx').on(table.name),
   activeIdx: index('players_active_idx').on(table.isActive),
+  groupActiveIdx: index('players_group_active_idx').on(table.groupId, table.isActive), // NEW: Compound index
 }));
 
 // Matchdays table
@@ -147,7 +148,10 @@ export const games = pgTable('games', {
   matchdayIdx: index('games_matchday_idx').on(table.matchdayId),
   statusIdx: index('games_status_idx').on(table.status),
   teamsIdx: index('games_teams_idx').on(table.homeTeamId, table.awayTeamId),
+  awayTeamIdx: index('games_away_team_id_idx').on(table.awayTeamId), // NEW: Foreign key index
+  winnerTeamIdx: index('games_winner_team_id_idx').on(table.winnerTeamId), // NEW: Foreign key index
   queueIdx: index('games_queue_idx').on(table.queuePosition),
+  matchdayStatusIdx: index('games_matchday_status_idx').on(table.matchdayId, table.status), // NEW: Compound index
 }));
 
 // Game events (goals, assists, penalties, etc.)
@@ -164,8 +168,10 @@ export const gameEvents = pgTable('game_events', {
 }, (table) => ({
   gameIdx: index('game_events_game_idx').on(table.gameId),
   playerIdx: index('game_events_player_idx').on(table.playerId),
+  teamIdx: index('game_events_team_id_idx').on(table.teamId), // NEW: Foreign key index
   typeIdx: index('game_events_type_idx').on(table.eventType),
   activeIdx: index('game_events_active_idx').on(table.isActive),
+  gameActiveIdx: index('game_events_game_active_idx').on(table.gameId, table.isActive), // NEW: Compound index
 }));
 
 // Penalty shootouts
@@ -178,6 +184,7 @@ export const penaltyShootouts = pgTable('penalty_shootouts', {
   status: text('status').default('active').notNull(), // 'active', 'completed'
 }, (table) => ({
   gameIdx: index('penalty_shootouts_game_idx').on(table.gameId),
+  winnerTeamIdx: index('penalty_shootouts_winner_team_id_idx').on(table.winnerTeamId), // NEW: Foreign key index
 }));
 
 // Individual penalty kicks
@@ -191,6 +198,8 @@ export const penaltyKicks = pgTable('penalty_kicks', {
   description: text('description'),
 }, (table) => ({
   shootoutIdx: index('penalty_kicks_shootout_idx').on(table.shootoutId),
+  playerIdx: index('penalty_kicks_player_id_idx').on(table.playerId), // NEW: Foreign key index
+  teamIdx: index('penalty_kicks_team_id_idx').on(table.teamId), // NEW: Foreign key index
   orderIdx: index('penalty_kicks_order_idx').on(table.shootoutId, table.kickOrder),
 }));
 

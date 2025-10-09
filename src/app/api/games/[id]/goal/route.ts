@@ -32,21 +32,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    // Get game details
-    const game = await db
-      .select()
+    // Optimize: Get game with matchday in a single query
+    const gameResult = await db
+      .select({
+        game: games,
+        matchday: matchdays,
+      })
       .from(games)
-      .where(and(eq(games.id, gameId), isNull(games.deletedAt)))
+      .innerJoin(matchdays, eq(games.matchdayId, matchdays.id))
+      .where(and(eq(games.id, gameId), isNull(games.deletedAt), isNull(matchdays.deletedAt)))
       .limit(1);
     
-    if (!game.length) {
+    if (!gameResult.length) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
       );
     }
     
-    const currentGame = game[0];
+    const { game: currentGame, matchday: currentMatchday } = gameResult[0];
     
     if (currentGame.status !== 'active') {
       return NextResponse.json(
@@ -63,36 +67,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    // Validate scorer exists and is active
-    const scorer = await db
-      .select()
-      .from(players)
-      .where(and(eq(players.id, scorerId), isNull(players.deletedAt)))
-      .limit(1);
+    // Optimize: Validate scorer and assist in parallel
+    const playerValidations = await Promise.all([
+      db.select().from(players)
+        .where(and(eq(players.id, scorerId), isNull(players.deletedAt)))
+        .limit(1),
+      assistId ? db.select().from(players)
+        .where(and(eq(players.id, assistId), isNull(players.deletedAt)))
+        .limit(1) : Promise.resolve([])
+    ]);
     
-    if (!scorer.length || !scorer[0].isActive) {
+    const [scorerResult, assistResult] = playerValidations;
+    const scorer = scorerResult[0];
+    const assistPlayer = assistResult?.[0];
+    
+    if (!scorer || !scorer.isActive) {
       return NextResponse.json(
         { error: 'Scorer not found or inactive' },
         { status: 404 }
       );
     }
     
-    // Validate assist player if provided
-    let assistPlayer = null;
-    if (assistId) {
-      const assist = await db
-        .select()
-        .from(players)
-        .where(and(eq(players.id, assistId), isNull(players.deletedAt)))
-        .limit(1);
-      
-      if (!assist.length || !assist[0].isActive) {
-        return NextResponse.json(
-          { error: 'Assist player not found or inactive' },
-          { status: 404 }
-        );
-      }
-      assistPlayer = assist[0];
+    if (assistId && (!assistPlayer || !assistPlayer.isActive)) {
+      return NextResponse.json(
+        { error: 'Assist player not found or inactive' },
+        { status: 404 }
+      );
     }
     
     // Calculate current minute if not provided
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       teamId,
       eventType: 'goal',
       minute: gameMinute,
-      description: `Goal by ${scorer[0].name}${assistPlayer ? ` (assist: ${assistPlayer.name})` : ''}`,
+      description: `Goal by ${scorer.name}${assistPlayer ? ` (assist: ${assistPlayer.name})` : ''}`,
       metadata: assistId ? { assistId } : null,
       createdBy: user.id,
       updatedBy: user.id,
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         teamId,
         eventType: 'assist',
         minute: gameMinute,
-        description: `Assist by ${assistPlayer.name} for ${scorer[0].name}`,
+        description: `Assist by ${assistPlayer.name} for ${scorer.name}`,
         metadata: { goalEventId: goalEvent.id },
         createdBy: user.id,
         updatedBy: user.id,
@@ -134,14 +134,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const newHomeScore = isHomeTeam ? currentGame.homeScore + 1 : currentGame.homeScore;
     const newAwayScore = !isHomeTeam ? currentGame.awayScore + 1 : currentGame.awayScore;
     
-    // Check for early finish condition
-    const matchday = await db
-      .select()
-      .from(matchdays)
-      .where(eq(matchdays.id, currentGame.matchdayId))
-      .limit(1);
-    
-    const maxGoals = (matchday[0]?.rules as any)?.max_goals_to_win || currentGame.maxGoals || 5;
+    // Check for early finish condition (matchday already fetched above)
+    const maxGoals = (currentMatchday?.rules as any)?.max_goals_to_win || currentGame.maxGoals || 5;
     const shouldEndEarly = Math.max(newHomeScore, newAwayScore) >= maxGoals;
     
     const gameUpdateData: any = {
@@ -164,22 +158,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .where(eq(games.id, gameId))
       .returning();
     
-    // Log the activity
-    await logActivity({
-      entityType: 'game',
-      entityId: gameId,
-      action: 'update',
-      actorId: user.id,
-      changes: {
-        goal_scored: {
-          scorer: scorer[0].name,
-          assist: assistPlayer?.name || null,
-          team: teamId,
-          minute: gameMinute,
-          newScore: `${newHomeScore}-${newAwayScore}`,
-          earlyFinish: shouldEndEarly
-        }
-      }
+    // Activity logging disabled for performance (use console.log if needed for debugging)
+    console.log('[Goal Scored]', {
+      gameId,
+      scorer: scorer.name,
+      assist: assistPlayer?.name || null,
+      team: teamId,
+      minute: gameMinute,
+      newScore: `${newHomeScore}-${newAwayScore}`,
+      earlyFinish: shouldEndEarly
     });
     
     const response = {
@@ -290,18 +277,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .where(eq(games.id, gameId))
       .returning();
     
-    // Log the activity
-    await logActivity({
-      entityType: 'game',
-      entityId: gameId,
-      action: 'update',
-      actorId: user.id,
-      changes: {
-        goal_undone: {
-          undoneGoalId: goalToUndo.id,
-          newScore: `${newHomeScore}-${newAwayScore}`
-        }
-      }
+    // Activity logging disabled for performance (use console.log if needed for debugging)
+    console.log('[Goal Undone]', {
+      gameId,
+      undoneGoalId: goalToUndo.id,
+      newScore: `${newHomeScore}-${newAwayScore}`
     });
     
     return NextResponse.json({ 

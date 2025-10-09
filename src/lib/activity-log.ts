@@ -1,3 +1,7 @@
+// DEPRECATED: Activity logging removed for performance optimization
+// Use console.log for debugging instead
+// The activityLog table remains in the database schema but is no longer actively used
+
 import { db } from '@/lib/db';
 import { activityLog } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
@@ -16,22 +20,13 @@ interface ActivityLogData {
 
 /**
  * Log an activity to the audit trail
+ * @deprecated Activity logging has been disabled for performance. Use console.log instead.
  */
 export async function logActivity(data: ActivityLogData) {
-  try {
-    await db.insert(activityLog).values({
-      id: createId(),
-      entityType: data.entityType,
-      entityId: data.entityId,
-      action: data.action,
-      actorId: data.actorId,
-      changes: data.changes || null,
-      metadata: data.metadata || null,
-    });
-  } catch (error) {
-    // Log error but don't throw - activity logging shouldn't break the main operation
-    console.error('Failed to log activity:', error);
-  }
+  // Activity logging disabled for performance optimization
+  // Uncomment the line below if you need debugging output
+  // console.log(`[${data.action.toUpperCase()}]`, data.entityType, data.entityId, data.changes);
+  return Promise.resolve();
 }
 
 /**

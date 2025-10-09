@@ -128,7 +128,7 @@ export function useMatchdays(params: MatchdayQuery = { page: 1, limit: 20, isPub
     queryKey: ['matchdays', queryParams],
     queryFn: () => fetchMatchdays(queryParams),
     enabled: !!activeGroup, // Only fetch when there's an active group
-    staleTime: 30 * 1000, // 30 seconds - shorter for better UX
+    staleTime: 60_000, // 1 minute for matchday list (optimized for performance)
   });
 }
 
@@ -154,10 +154,13 @@ export function useCreateMatchday() {
       return createMatchday(dataWithGroup);
     },
     onSuccess: (data) => {
-      // Invalidate and refetch matchdays list
-      queryClient.invalidateQueries({ queryKey: ['matchdays'] });
-      // Also remove all cached data to force fresh fetch
-      queryClient.removeQueries({ queryKey: ['matchdays'] });
+      // Only invalidate matchdays for the specific group
+      const groupId = activeGroup?.id;
+      if (groupId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['matchdays', { groupId }],
+        });
+      }
       toast.success(data.message || 'Matchday created successfully');
     },
     onError: (error: Error) => {
@@ -187,27 +190,24 @@ export function useUpdateMatchday() {
 
 export function useDeleteMatchday() {
   const queryClient = useQueryClient();
+  const { activeGroup } = useGroupContext();
   
   return useMutation({
     mutationFn: deleteMatchday,
     onSuccess: (data, deletedId) => {
-      // Remove all matchdays queries from cache and refetch
-      queryClient.removeQueries({ 
-        queryKey: ['matchdays'],
-        exact: false 
-      });
-      
-      // Remove the specific matchday from cache
+      // Remove specific matchday
       queryClient.removeQueries({ 
         queryKey: ['matchday', deletedId],
         exact: true 
       });
       
-      // Force refetch of all matchdays queries
-      queryClient.refetchQueries({ 
-        queryKey: ['matchdays'],
-        exact: false 
-      });
+      // Only invalidate matchdays list for current group
+      const groupId = activeGroup?.id;
+      if (groupId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['matchdays', { groupId }],
+        });
+      }
       
       toast.success(data.message || 'Matchday deleted successfully');
     },

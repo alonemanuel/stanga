@@ -177,8 +177,8 @@ export function useMatchdayTeams(matchdayId: string) {
     queryKey: ['teams', 'matchday', matchdayId],
     queryFn: () => fetchMatchdayTeams(matchdayId),
     enabled: !!matchdayId,
-    staleTime: 0, // Always consider data stale to allow immediate refetching after mutations
-    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes but always refetch when needed
+    staleTime: 30_000, // 30 seconds - reasonable for team data that doesn't change frequently
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary requests
     refetchOnMount: true, // Always refetch when component mounts
   });
