@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, User, Play, Pause, RotateCcw, Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ChevronDown, ChevronUp, User, Play, Pause, RotateCcw, Trash2, X } from "lucide-react";
 import { useConfirmWithOptions, useConfirm } from "@/lib/hooks/use-dialogs";
 import type { Game } from "@/lib/hooks/use-games";
 
@@ -142,9 +143,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
   const editGoalMutation = useEditGoal();
   const deleteGoalMutation = useDeleteGoal();
   const endGameMutation = useEndGame();
+  const deleteGameMutation = useDeleteGame();
   const confirm = useConfirm();
   
   const [showPenalties, setShowPenalties] = React.useState(false);
+  const [showCancelDialog, setShowCancelDialog] = React.useState(false);
   
   const players = playersData?.data || [];
   const teams = teamsData?.data || [];
@@ -223,6 +226,23 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
     setShowPenalties(true);
   };
 
+  const handleCancelGame = () => {
+    setShowCancelDialog(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      await deleteGameMutation.mutateAsync({
+        gameId: game.id,
+        matchdayId: matchdayId
+      });
+      setShowCancelDialog(false);
+      onGameEnd();
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
   const isLoading = goalsLoading || addGoalMutation.isPending || editGoalMutation.isPending || deleteGoalMutation.isPending;
   
   // Combine and sort goals chronologically
@@ -267,6 +287,14 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
             disabled={endGameMutation.isPending}
           >
             End Game
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleCancelGame}
+            disabled={deleteGameMutation.isPending || endGameMutation.isPending}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -402,6 +430,18 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
           onEndGame={onGameEnd}
         />
       )}
+
+      {/* Cancel Game Confirmation Dialog */}
+      <ConfirmDialog
+        open={showCancelDialog}
+        title="Cancel Game"
+        message="Are you sure you want to cancel this game? This action cannot be undone and will permanently delete the game and all its data."
+        confirmText="Delete Game"
+        cancelText="Keep Game"
+        variant="default"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowCancelDialog(false)}
+      />
     </div>
   );
 }
