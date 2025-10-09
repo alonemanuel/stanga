@@ -1012,7 +1012,10 @@ interface RecentGameItemProps {
 
 function RecentGameItem({ game, isExpanded, onToggle }: RecentGameItemProps) {
   const { data: goalsData, isLoading } = useGameGoals(game.id);
-  const { data: penaltyData } = usePenalties(game.id);
+  // Only fetch penalty data if the game actually ended in penalties
+  const { data: penaltyData } = usePenalties(game.id, { 
+    enabled: game.endReason === 'penalties' 
+  });
   const confirm = useConfirm();
   const deleteGameMutation = useDeleteGame();
   
