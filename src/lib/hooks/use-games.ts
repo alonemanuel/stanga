@@ -365,7 +365,7 @@ export function useStartPenalties() {
   });
 }
 
-export function usePenalties(gameId: string, options?: { enabled?: boolean }) {
+export function usePenalties(gameId: string) {
   return useQuery({
     queryKey: ['penalties', gameId],
     queryFn: async () => {
@@ -381,7 +381,7 @@ export function usePenalties(gameId: string, options?: { enabled?: boolean }) {
         throw error;
       }
     },
-    enabled: !!gameId && (options?.enabled !== false),
+    enabled: !!gameId,
     retry: (failureCount, error: any) => {
       // Don't retry if no penalty shootout exists (404) - this is expected for most games
       if (error?.message?.includes('404') || error?.status === 404 || 
