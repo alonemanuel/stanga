@@ -310,19 +310,21 @@ export function useDeleteGame() {
     mutationFn: ({ gameId, matchdayId }: { gameId: string; matchdayId: string }) =>
       deleteGame(gameId),
     onSuccess: (_, variables) => {
+      // Invalidate the specific game query
       queryClient.invalidateQueries({ 
         queryKey: ['game', variables.gameId],
         exact: true 
       });
+      // Invalidate all games queries for this matchday (with and without status filter)
       queryClient.invalidateQueries({ 
         queryKey: ['games', variables.matchdayId],
-        exact: true 
+        exact: false 
       });
+      // Invalidate stats queries
       queryClient.invalidateQueries({ 
         queryKey: ['stats', 'matchday', variables.matchdayId],
         exact: true 
       });
-      // Only invalidate overall stats (allow all group variations)
       queryClient.invalidateQueries({ 
         queryKey: ['stats', 'overall'],
         exact: false 

@@ -237,9 +237,11 @@ function ActiveGame({ game, matchdayId, onGameEnd }: ActiveGameProps) {
         matchdayId: matchdayId
       });
       setShowCancelDialog(false);
+      // Call onGameEnd immediately to update the UI
       onGameEnd();
     } catch (error) {
       // Error handled by mutation
+      setShowCancelDialog(false);
     }
   };
 
