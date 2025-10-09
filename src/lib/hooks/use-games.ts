@@ -368,29 +368,9 @@ export function useStartPenalties() {
 export function usePenalties(gameId: string) {
   return useQuery({
     queryKey: ['penalties', gameId],
-    queryFn: async () => {
-      try {
-        return await fetchPenalties(gameId);
-      } catch (error: any) {
-        // If no penalty shootout exists (404), return null instead of throwing
-        if (error?.message?.includes('404') || error?.status === 404 || 
-            (error?.message && error.message.includes('No penalty shootout found'))) {
-          return null;
-        }
-        // Re-throw other errors
-        throw error;
-      }
-    },
+    queryFn: () => fetchPenalties(gameId),
     enabled: !!gameId,
-    retry: (failureCount, error: any) => {
-      // Don't retry if no penalty shootout exists (404) - this is expected for most games
-      if (error?.message?.includes('404') || error?.status === 404 || 
-          (error?.message && error.message.includes('No penalty shootout found'))) {
-        return false;
-      }
-      // Default retry logic for other errors
-      return failureCount < 3;
-    },
+    retry: false, // Don't retry at all since fetchPenalties handles 404s gracefully
   });
 }
 
