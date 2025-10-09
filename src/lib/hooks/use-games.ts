@@ -320,6 +320,16 @@ export function useDeleteGame() {
         queryKey: ['games', variables.matchdayId],
         exact: false 
       });
+      // Invalidate penalty queries for this game
+      queryClient.invalidateQueries({ 
+        queryKey: ['penalties', variables.gameId],
+        exact: true 
+      });
+      // Invalidate goal queries for this game
+      queryClient.invalidateQueries({ 
+        queryKey: ['goals', variables.gameId],
+        exact: true 
+      });
       // Invalidate stats queries
       queryClient.invalidateQueries({ 
         queryKey: ['stats', 'matchday', variables.matchdayId],
@@ -360,6 +370,14 @@ export function usePenalties(gameId: string) {
     queryKey: ['penalties', gameId],
     queryFn: () => fetchPenalties(gameId),
     enabled: !!gameId,
+    retry: (failureCount, error: any) => {
+      // Don't retry if no penalty shootout exists (404) - this is expected for most games
+      if (error?.message?.includes('404') || error?.status === 404) {
+        return false;
+      }
+      // Default retry logic for other errors
+      return failureCount < 3;
+    },
   });
 }
 
