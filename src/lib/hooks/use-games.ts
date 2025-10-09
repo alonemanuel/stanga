@@ -212,15 +212,48 @@ export function useStartGame() {
   return useMutation({
     mutationFn: ({ matchdayId, homeTeamId, awayTeamId, force = false }: { matchdayId: string; homeTeamId: string; awayTeamId: string; force?: boolean }) =>
       startGame(matchdayId, homeTeamId, awayTeamId, force),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
-      toast.success('Game started successfully!');
+    
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['games', variables.matchdayId] });
+      
+      // Snapshot previous value
+      const previousGames = queryClient.getQueryData(['games', variables.matchdayId]);
+      
+      // Optimistically add a pending game (will be replaced by server response)
+      queryClient.setQueryData(['games', variables.matchdayId], (old: any) => {
+        if (!old) return old;
+        // Add optimistic game entry
+        const optimisticGame = {
+          id: 'temp-' + Date.now(),
+          matchdayId: variables.matchdayId,
+          homeTeamId: variables.homeTeamId,
+          awayTeamId: variables.awayTeamId,
+          status: 'active' as const,
+          homeScore: 0,
+          awayScore: 0,
+          startedAt: new Date().toISOString(),
+        };
+        return [...old, optimisticGame];
+      });
+      
+      return { previousGames };
     },
-    onError: (error: Error) => {
+    
+    onError: (error: Error, variables, context) => {
+      // Rollback on error
+      if (context?.previousGames) {
+        queryClient.setQueryData(['games', variables.matchdayId], context.previousGames);
+      }
       // Don't show toast for insufficient players error - let the component handle it
       if ((error as any).code !== 'INSUFFICIENT_PLAYERS') {
         toast.error(error.message);
       }
+    },
+    
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
+      toast.success('Game started successfully!');
     },
   });
 }
@@ -231,13 +264,41 @@ export function useEndGame() {
   return useMutation({
     mutationFn: ({ gameId, endReason, winnerTeamId }: { gameId: string; endReason: string; winnerTeamId?: string }) =>
       endGame(gameId, endReason, winnerTeamId),
+    
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['game', variables.gameId] });
+      
+      // Snapshot previous value
+      const previousGame = queryClient.getQueryData(['game', variables.gameId]);
+      
+      // Optimistically update game status
+      queryClient.setQueryData(['game', variables.gameId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          status: 'completed' as const,
+          endedAt: new Date().toISOString(),
+          endReason: variables.endReason,
+          winnerTeamId: variables.winnerTeamId,
+        };
+      });
+      
+      return { previousGame };
+    },
+    
+    onError: (error: Error, variables, context) => {
+      // Rollback on error
+      if (context?.previousGame) {
+        queryClient.setQueryData(['game', variables.gameId], context.previousGame);
+      }
+      toast.error(error.message);
+    },
+    
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['game', data.id] });
       queryClient.invalidateQueries({ queryKey: ['games', data.matchdayId] });
       toast.success('Game ended successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }
@@ -249,10 +310,23 @@ export function useDeleteGame() {
     mutationFn: ({ gameId, matchdayId }: { gameId: string; matchdayId: string }) =>
       deleteGame(gameId),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['game', variables.gameId] });
-      queryClient.invalidateQueries({ queryKey: ['games', variables.matchdayId] });
-      queryClient.invalidateQueries({ queryKey: ['matchday-stats', variables.matchdayId] });
-      queryClient.invalidateQueries({ queryKey: ['overall-stats'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['game', variables.gameId],
+        exact: true 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['games', variables.matchdayId],
+        exact: true 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['stats', 'matchday', variables.matchdayId],
+        exact: true 
+      });
+      // Only invalidate overall stats (allow all group variations)
+      queryClient.invalidateQueries({ 
+        queryKey: ['stats', 'overall'],
+        exact: false 
+      });
       toast.success('Game deleted successfully!');
     },
     onError: (error: Error) => {

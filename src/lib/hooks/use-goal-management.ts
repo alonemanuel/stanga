@@ -96,16 +96,65 @@ export function useAddGoal() {
       playerId: string; 
       assistId?: string; 
     }) => addGoal(gameId, teamId, playerId, assistId),
+    
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['game', variables.gameId] });
+      await queryClient.cancelQueries({ queryKey: ['game-goals', variables.gameId] });
+      
+      // Snapshot previous values
+      const previousGame = queryClient.getQueryData(['game', variables.gameId]);
+      const previousGoals = queryClient.getQueryData(['game-goals', variables.gameId]);
+      
+      // Optimistically update game score
+      queryClient.setQueryData(['game', variables.gameId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          homeScore: variables.teamId === old.homeTeamId 
+            ? old.homeScore + 1 
+            : old.homeScore,
+          awayScore: variables.teamId === old.awayTeamId 
+            ? old.awayScore + 1 
+            : old.awayScore,
+        };
+      });
+      
+      return { previousGame, previousGoals };
+    },
+    
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousGame) {
+        queryClient.setQueryData(['game', variables.gameId], context.previousGame);
+      }
+      if (context?.previousGoals) {
+        queryClient.setQueryData(['game-goals', variables.gameId], context.previousGoals);
+      }
+      toast.error(err.message);
+    },
+    
     onSuccess: (data, variables) => {
-      // Invalidate both the goals query and the game query
-      queryClient.invalidateQueries({ queryKey: ['game-goals', variables.gameId] });
-      queryClient.invalidateQueries({ queryKey: ['game', variables.gameId] });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
+      // Refetch to sync with server
+      queryClient.invalidateQueries({ 
+        queryKey: ['game', variables.gameId],
+        exact: true 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['game-goals', variables.gameId],
+        exact: true 
+      });
+      
+      // Only invalidate games for the specific matchday if we can determine it
+      const game: any = queryClient.getQueryData(['game', variables.gameId]);
+      if (game?.matchdayId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['games', game.matchdayId],
+          exact: true 
+        });
+      }
       
       toast.success('Goal added successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }
@@ -121,11 +170,9 @@ export function useEditGoal() {
       assistId?: string; 
     }) => editGoal(goalId, playerId, assistId),
     onSuccess: (data) => {
-      // We'll need to invalidate the goals for the game this goal belongs to
-      // The API should return the gameId in the response
-      queryClient.invalidateQueries({ queryKey: ['game-goals'] });
-      queryClient.invalidateQueries({ queryKey: ['game'] });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
+      // Invalidate specific queries - API should return gameId
+      queryClient.invalidateQueries({ queryKey: ['game-goals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['game'], exact: false });
       
       toast.success('Goal updated successfully!');
     },
@@ -142,10 +189,9 @@ export function useDeleteGoal() {
   return useMutation({
     mutationFn: (goalId: string) => deleteGoal(goalId),
     onSuccess: () => {
-      // Invalidate all goal-related queries
-      queryClient.invalidateQueries({ queryKey: ['game-goals'] });
-      queryClient.invalidateQueries({ queryKey: ['game'] });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
+      // Invalidate goal-related queries (broader since we don't have gameId context)
+      queryClient.invalidateQueries({ queryKey: ['game-goals'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['game'], exact: false });
       
       toast.success('Goal deleted successfully!');
     },
